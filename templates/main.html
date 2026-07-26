@@ -1,0 +1,4066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthGuardian</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #2563eb;
+    --blue-light: #dbeafe;
+    --blue-mid: #eff6ff;
+    --sidebar-bg: #f8fafc;
+    --white: #ffffff;
+    --text-dark: #1e293b;
+    --text-mid: #64748b;
+    --text-light: #94a3b8;
+    --border: #e2e8f0;
+    --red: #ef4444;
+    --red-light: #fef2f2;
+    --green: #22c55e;
+    --radius: 14px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  body { font-family: 'Inter', sans-serif; background: #f1f5fb; color: var(--text-dark); display: flex; min-height: 100vh; }
+
+  .sidebar { display: none; }
+
+  .main { margin-left: 0; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  .topbar {
+    background: var(--white); border-bottom: 1px solid var(--border);
+    padding: 14px 28px; display: flex; align-items: center;
+    position: sticky; top: 0; z-index: 50;
+    position: relative;
+  }
+  .topbar-greeting { font-size: 12px; color: var(--text-mid); }
+  .topbar-name { font-size: 20px; font-weight: 700; }
+  .topbar-title {
+    font-size: 28px; font-weight: 700; color: var(--blue);
+    display: flex; align-items: center; gap: 6px;
+    position: absolute; 
+    left: 50%; 
+    transform: translateX(-50%);
+  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+  .notif-wrapper { position: relative; }
+  .notif-btn {
+    position: relative; width: 38px; height: 38px; background: #f8fafc;
+    border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .notif-btn svg { width: 18px; height: 18px; }
+  .notif-badge {
+    position: absolute; top: -4px; right: -4px; background: var(--blue);
+    color: #fff; font-size: 9px; font-weight: 700; width: 16px; height: 16px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  }
+  .notif-dropdown {
+    display: none; position: absolute; top: 48px; right: 0; width: 250px;
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12); padding: 8px; z-index: 100; text-align: left;
+  }
+  .notif-dropdown.open { display: block; }
+  .notif-dropdown-title { font-size: 12px; font-weight: 700; color: var(--text-dark); padding: 6px 8px 8px; }
+  .notif-item { font-size: 12px; color: var(--text-mid); padding: 8px 8px; border-top: 1px solid var(--border); line-height: 1.4; }
+  .topbar-avatar { width: 38px; height: 38px; background: var(--blue-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-weight: 700; cursor: pointer; position: relative; }
+
+  .profile-wrapper { position: relative; }
+  .profile-dropdown {
+    display: none; position: absolute; top: 48px; right: 0; width: 220px;
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.14); z-index: 200; overflow: hidden;
+  }
+  .profile-dropdown.open { display: block; }
+  .profile-header { background: var(--blue-mid); padding: 16px; text-align: center; border-bottom: 1px solid var(--border); }
+  .profile-avatar-row { position: relative; width: 52px; margin: 0 auto 6px; }
+  .profile-avatar-lg { width: 52px; height: 52px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 20px; overflow: hidden; }
+  .profile-avatar-lg img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .profile-gallery-btn {
+    position: absolute; bottom: -2px; right: -6px; width: 22px; height: 22px;
+    background: var(--white); border: 1.5px solid var(--blue-light); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  }
+  .profile-gallery-btn svg { width: 12px; height: 12px; color: var(--blue); }
+  .profile-username { font-size: 14px; font-weight: 700; color: var(--text-dark); }
+  .profile-email { font-size: 11px; color: var(--text-mid); margin-bottom: 10px; }
+  .profile-info-list { text-align: left; border-top: 1px dashed var(--border); margin-top: 10px; padding-top: 10px; }
+  .profile-info-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 2px; font-size: 12px; }
+  .profile-info-label { color: var(--text-mid); font-weight: 500; }
+  .profile-info-value { color: var(--text-dark); font-weight: 600; text-align: right; }
+  .profile-info-row-block{
+    margin-top:8px;
+}
+
+.profile-info-row-block .profile-info-label{
+    display:block;
+    color:#64748B;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:8px;
+}
+
+.profile-contact-sublist{
+    padding-left:10px;
+}
+
+.profile-contact-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.profile-contact-item::before{
+    content:"•";
+    color:#2563EB;
+    font-size:18px;
+}
+
+.profile-contact-item .profile-info-value{
+    font-weight:500;
+    color:#1E293B;
+}
+
+  .profile-menu-item { display: flex; align-items: center; gap: 10px; padding: 11px 16px; font-size: 13px; color: var(--text-dark); cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--border); }
+  .profile-menu-item:last-child { border-bottom: none; }
+  .profile-menu-item:hover { background: var(--blue-mid); color: var(--blue); }
+  .profile-menu-item svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--text-mid); }
+  .profile-menu-item:hover svg { color: var(--blue); }
+  .profile-menu-item.logout { color: var(--red); }
+  .profile-menu-item.logout svg { color: var(--red); }
+  .profile-menu-item.logout:hover { background: var(--red-light); }
+
+  .content { padding: 20px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 100%; margin: 0; width: 100%; }
+
+  .stat-cards { grid-column: 1/-1; display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  .stat-card {
+    background: var(--white); border-radius: var(--radius); padding: 14px 16px;
+    display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow);
+  }
+  .stat-icon { width: 40px; height: 40px; background: var(--blue-mid); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .stat-icon svg { width: 20px; height: 20px; color: var(--blue); }
+  .stat-label { font-size: 11px; color: var(--text-mid); margin-bottom: 2px; }
+  .stat-value { font-size: 22px; font-weight: 700; }
+  .stat-value .good { font-size: 13px; font-weight: 600; color: var(--green); margin-left: 4px; }
+  .stat-value .sub { font-size: 12px; font-weight: 500; color: var(--text-mid); }
+
+  .card { background: var(--white); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .card-title { font-size: 18px; font-weight: 700; color: var(--blue); display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .card-title::before { content: ''; width: 8px; height: 8px; background: var(--blue); border-radius: 50%; display: inline-block; }
+
+  .health-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .health-row:last-of-type { border-bottom: none; }
+  .health-metric { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .health-metric svg { width: 15px; height: 15px; color: var(--blue); }
+  .health-val { font-weight: 700; font-size: 15px; }
+  .health-unit { font-size: 11px; color: var(--text-mid); margin-left: 3px; }
+
+  .input-group { margin-top: 14px; }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-label { font-size: 11px; color: var(--text-mid); font-weight: 500; }
+  .field-input {
+    border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px;
+    font-size: 13px; font-family: inherit; outline: none; transition: border .15s;
+  }
+  .field-input:focus { border-color: var(--blue); }
+  select.field-input { cursor: pointer; }
+  .upload-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 10px; padding: 9px; border: 2px dashed var(--blue-light);
+    background: var(--blue-mid); border-radius: 8px; color: var(--blue);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .upload-btn:hover { background: var(--blue-light); }
+  .upload-btn svg { width: 15px; height: 15px; }
+
+  .link-blue { color: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 10px; display: inline-block; }
+
+  .medicine-header { display: flex; align-items: flex-start; justify-content: space-between; }
+  .medicine-name { font-size: 16px; font-weight: 700; }
+  .medicine-dose { font-size: 12px; color: var(--text-mid); margin-bottom: 4px; }
+  .medicine-time { font-size: 12px; color: var(--text-mid); display: flex; align-items: center; gap: 4px; }
+  .medicine-time svg { width: 12px; height: 12px; }
+
+  .action-btns { display: flex; gap: 10px; margin-top: 14px; margin-bottom: 16px; }
+  .btn-outline {
+    flex: 1; padding: 12px; border: 1.5px solid var(--border); border-radius: 8px;
+    background: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .15s;
+  }
+  .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-outline svg { width: 14px; height: 14px; }
+  .btn-outline.taken { color: var(--green); border-color: var(--green); }
+  .btn-outline.missed { color: var(--red); border-color: var(--red); }
+
+  .appointment-row { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; }
+  .appointment-row svg { width: 14px; height: 14px; color: var(--blue); }
+  .apt-time { font-weight: 700; }
+  .apt-doc { color: var(--text-mid); }
+
+  .add-med-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; margin-top: 10px; padding: 12px; background: var(--blue-mid);
+    border: 1.5px dashed var(--blue); border-radius: 8px; color: var(--blue);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .add-med-btn:hover { background: var(--blue-light); }
+  .add-med-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .graph-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .graph-tab {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid var(--border); color: var(--text-mid); transition: all .15s;
+  }
+  .graph-tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .graph-wrap { position: relative; height: 140px; }
+  canvas#healthChart { width: 100% !important; }
+
+  .ai-left { display: flex; flex-direction: column; gap: 12px; height: 100%; }
+  .ai-icon { font-size: 22px; }
+  .ai-title { font-size: 15px; font-weight: 700; color: var(--blue); }
+  .ai-desc { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
+  .start-chat-btn { width: 100%; padding: 12px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .chat-window { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 220px; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+  .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; }
+  .chat-msg.user { background: var(--blue); color: #fff; align-self: flex-end; border-bottom-right-radius: 3px; }
+  .chat-msg.ai { background: #fff; border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 3px; }
+  .chat-input-row { display: flex; gap: 8px; margin-top: 8px; }
+  .chat-input {
+    flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+    font-size: 13px; font-family: inherit; outline: none;
+  }
+  .chat-input:focus { border-color: var(--blue); }
+  .btn-blue {
+    padding: 8px 16px; background: var(--blue); color: #fff; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s;
+  }
+  .btn-blue:hover { opacity: .88; }
+  .btn-blue-outline {
+    padding: 8px 16px; background: #fff; color: var(--blue); border: 1.5px solid var(--blue); border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .btn-blue-outline:hover { background: var(--blue-mid); }
+  .voice-row { display: flex; align-items: center; gap: 10px; background: var(--blue-mid); border-radius: 8px; padding: 10px 14px; }
+  .voice-row svg { width: 16px; height: 16px; color: var(--blue); }
+  .voice-row span { font-size: 12px; color: var(--text-mid); flex: 1; }
+
+  .diet-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .diet-item:last-of-type { border-bottom: none; }
+  .diet-item svg { width: 15px; height: 15px; color: var(--blue); }
+  .diet-label { font-weight: 600; }
+
+  .schedule-item { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .schedule-item:last-child { border-bottom: none; }
+  .sched-time { font-size: 12px; font-weight: 700; color: var(--blue); width: 58px; flex-shrink: 0; }
+  .sched-icon { width: 26px; height: 26px; background: var(--blue-mid); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .sched-icon svg { width: 13px; height: 13px; color: var(--blue); }
+  .sched-text { font-size: 13px; font-weight: 500; }
+
+  .emergency-card { background: var(--red-light); border: 1.5px solid #fecaca; border-radius: var(--radius); padding: 18px; }
+  .emergency-title { font-size: 14px; font-weight: 700; color: var(--red); display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .emergency-title::before { content: ''; width: 8px; height: 8px; background: var(--red); border-radius: 50%; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .emergency-desc { font-size: 12px; color: var(--text-mid); margin-bottom: 14px; line-height: 1.5; }
+  .emergency-btn {
+    width: 100%; padding: 12px; background: var(--red); color: #fff;
+    border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: none; transition: opacity .15s; margin-bottom: 10px;
+  }
+  .emergency-btn:hover { opacity: .88; }
+  .emergency-contacts { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .emg-contact {
+    background: #fff; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 4px;
+    display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer;
+    font-size: 11px; font-weight: 600; color: var(--red); transition: background .15s;
+  }
+  .emg-contact:hover { background: #fee2e2; }
+  .emg-contact svg { width: 18px; height: 18px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 200;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 16px; padding: 24px; width: 360px;
+    max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,.18); position: relative;
+  }
+  .modal.chat-page-modal { width: 560px; }
+  .modal.chat-page-modal .chat-window { min-height: 320px; max-height: 440px; }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-dark); }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-mid); }
+  .media-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .media-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 18px; border: 2px solid var(--border); border-radius: 12px;
+    cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s;
+  }
+  .media-btn:hover { border-color: var(--blue); background: var(--blue-mid); color: var(--blue); }
+  .media-btn svg { width: 28px; height: 28px; color: var(--blue); }
+  #hiddenFileInput, #hiddenCameraInput, #medCameraInput, #medGalleryInput {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; background: var(--white);
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px;
+    font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    z-index: 300; transform: translateY(20px); opacity: 0; transition: all .3s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.green { border-left: 4px solid var(--green); }
+  .toast.red { border-left: 4px solid var(--red); }
+
+  .med-list-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .med-list-item:last-child { border-bottom: none; }
+  .med-list-name { font-size: 13px; font-weight: 700; }
+  .med-list-time { font-size: 11px; color: var(--text-mid); margin-top: 2px; }
+  .med-status { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 20px; flex-shrink: 0; }
+  .med-status.taken { background: #dcfce7; color: var(--green); }
+  .med-status.upcoming { background: var(--blue-mid); color: var(--blue); }
+
+  .alarm-badge { background: #fee2e2; color: var(--red); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-left: auto; }
+
+  .full-col { grid-column: 1 / -1; }
+
+  /* Language modal styles */
+  .lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+  .lang-btn {
+    padding: 10px 8px; border: 2px solid var(--border); border-radius: 10px;
+    background: #fff; font-size: 14px; font-weight: 600; color: var(--text-dark);
+    cursor: pointer; transition: all .15s; text-align: center;
+  }
+  .lang-btn:hover { border-color: var(--blue); background: var(--blue-mid); color: var(--blue); }
+  .lang-btn.active { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+  .lang-btn .native { font-size: 11px; font-weight: 400; color: var(--text-mid); display: block; margin-top: 2px; }
+
+  /* Camera preview video */
+  #cameraPreview, #medCameraPreview {
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: none;
+  }
+  #cameraPreview.active, #medCameraPreview.active {
+    display: block;
+  }
+  .capture-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    display: none;
+  }
+  .capture-btn.active {
+    display: block;
+  }
+  .capture-btn:hover { opacity: .88; }
+
+  /* ── LAYOUT: all sections shown side-by-side (2 columns), on every screen size ── */
+  .topbar { padding: 12px 16px; }
+  @media (max-width: 380px) {
+    .card, .emergency-card { padding: 10px; }
+    .stat-cards { gap: 6px; }
+    .content { gap: 8px; padding: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="main">
+
+  <div class="topbar">
+    <div>
+      <div class="topbar-greeting" id="dynamicGreeting">Good Morning,</div>
+      <div class="topbar-name" id="loggedUsername">{{ user[0] }}</div>
+    </div>
+    <div class="topbar-title">🛡️ <span id="healthGuardianTitle">Health Guardian</span></div>
+    <div class="topbar-right">
+      <div class="profile-wrapper">
+        <div class="topbar-avatar" onclick="toggleProfileDropdown(event)" id="topbarAvatar">
+    {{ user[0][0]|upper }}
+</div>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-header">
+            <div class="profile-avatar-row">
+              <div class="profile-avatar-lg" id="profileAvatar">{{ user[0][0]|upper }}</div>
+              <div class="profile-gallery-btn" onclick="openProfileGallery(event)" title="Change Photo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              </div>
+            </div>
+            <div class="profile-username" id="profileName">{{ user[0] }}</div>
+            <div class="profile-email" id="profileEmail">
+               {{ user[1] if user else "" }}
+            </div>
+            <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+            <div class="profile-info-list">
+              <div class="profile-info-row">
+                <span class="profile-info-label" id="profileUsernameLabel">Username</span>
+                <span class="profile-info-value" id="profileUsernameValue">{{ user[0] }}</span>
+              </div>
+              <div class="profile-info-row">
+                <span class="profile-info-label" id="profileAgeLabel">Age</span>
+                <span class="profile-info-value" id="profileAgeValue">
+                  {{ user[2] if user and user[2] else "--" }}
+                </span>
+              </div>
+              <div class="profile-info-row">
+                <span class="profile-info-label" id="profileGenderLabel">Gender</span>
+                <span class="profile-info-value" id="profileGenderValue">
+                  {{ user[3] if user and user[3] else "--" }}
+                </span>
+              </div>
+              <div class="profile-info-row">
+                <span class="profile-info-label" id="profileDobLabel">Date of Birth</span>
+                <span class="profile-info-value" id="profileDobValue">
+                  {{ user[4] if user and user[4] else "--" }}
+                </span>
+              </div>
+              <div class="profile-info-row profile-info-row-block">
+              <span class="profile-info-label">Family Contact No.</span>
+              <div class="profile-contact-sublist">
+              <div class="profile-contact-item">
+              <span class="profile-info-value">
+                {{ user[8] if user and user[8] else "--" }}
+              </span>
+              </div>
+
+              <div class="profile-contact-item">
+              <span class="profile-info-value">
+                {{ user[9] if user and user[9] else "--" }}
+              </span>
+              </div>
+              <div class="profile-contact-item">
+              <span class="profile-info-value">
+                {{ user[10] if user and user[10] else "--" }}
+              </span>
+              </div>
+              </div>
+              </div>
+            </div>
+          </div>
+          <div class="profile-menu-item" onclick="openProfilePage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span id="switchAccount">Switch Account</span>
+          </div>
+          <div class="profile-menu-item" onclick="openLanguageModal(); closeProfileDropdown();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span id="languageChange">Language Change</span>
+          </div>
+          <div class="profile-menu-item" onclick="openPrivacyModal(); closeProfileDropdown()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span id="privacySecurity">Privacy & Security</span>
+          </div>
+          <div class="profile-menu-item logout" onclick="logoutUser()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span id="logOut">Log Out</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <div>
+          <div class="stat-label" id="healthScoreLabel">Health Score</div>
+          <div class="stat-value"><span id="healthScoreVal">--</span><span class="good" id="goodLabel"></span></div>
+        </div>
+      </div>
+      <div class="stat-card" id="nextMedicineStatCard" style="position:relative;">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div>
+          <div class="stat-label" id="nextMedicineLabel">Next Medicine</div>
+          <div class="stat-value"><span id="nextMedTimeVal">--</span><span class="sub" id="paracetamolLabel"></span></div>
+        </div>
+        <div id="nextMedicineDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,0.12);z-index:30;margin-top:6px;padding:8px;max-height:220px;overflow-y:auto;"></div>
+      </div>
+      <div class="stat-card" id="nextApptStatCard" style="position:relative;">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div>
+          <div class="stat-label" id="todaysMedicinesLabel">Appointment</div>
+          <div class="stat-value"><span id="medsTakenVal">--</span><span class="sub" id="takenLabel"></span></div>
+        </div>
+        <div id="nextApptDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,0.12);z-index:30;margin-top:6px;padding:8px;max-height:220px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="healthMonitoringTitle">Health Monitoring</div>
+
+      <div class="health-row">
+        <div class="health-metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span id="bpLabel">Blood Pressure</span>
+        </div>
+        <div><span class="health-val" id="bpVal">--</span><span class="health-unit">mmHg</span></div>
+      </div>
+      <div class="health-row">
+        <div class="health-metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
+          <span id="bloodSugarLabel">Blood Sugar</span>
+        </div>
+        <div><span class="health-val" id="sugarVal">--</span><span class="health-unit">mg/dL</span></div>
+      </div>
+      <div class="health-row">
+        <div class="health-metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="20" x2="18" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><polyline points="8 8 12 4 16 8"/></svg>
+          <span id="weightLabel">Weight</span>
+        </div>
+        <div><span class="health-val" id="weightVal">--</span><span class="health-unit">kg</span></div>
+      </div>
+      <div class="health-row">
+        <div class="health-metric">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          <span id="bloodGroupLabel">Blood Group</span>
+        </div>
+        <div><span class="health-val" id="bgVal">--</span></div>
+      </div>
+
+      <div class="input-group" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text-mid);" id="updateHealthDataLabel">Update Health Data</div>
+        <div class="input-row">
+          <div class="field-group">
+            <label class="field-label" id="bpFieldLabel">BP (mmHg)</label>
+            <input id="inputBP" class="field-input" inputmode="decimal" placeholder="120/80">
+          </div>
+          <div class="field-group">
+            <label class="field-label" id="sugarFieldLabel">Blood Sugar (mg/dL)</label>
+            <input id="inputSugar" class="field-input" type="number" placeholder="95">
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="field-group">
+            <label class="field-label" id="weightFieldLabel">Weight (kg)</label>
+            <input id="inputWeight" class="field-input" type="number" placeholder="60">
+          </div>
+          <div class="field-group">
+            <label class="field-label" id="bgFieldLabel">Blood Group</label>
+            <select id="inputBG" class="field-input">
+              <option value="" id="selectOption">Select</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-blue" style="width:100%;margin-top:4px;" onclick="saveHealthData()" id="saveHealthBtn">Save Health Data</button>
+        <div class="upload-btn" onclick="openUploadModal()" id="uploadReportBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span id="uploadReportText">Upload Report (Camera / Gallery)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="medicineAppointmentTitle">Medicine &amp; Appointment</div>
+
+      <div id="allMedicinesInlineList" style="display:flex;flex-direction:column;gap:10px;max-height:260px;overflow-y:auto;padding-right:4px;"></div>
+      <div id="noMedicinesInlineMsg" style="font-size:13px;color:var(--text-mid);padding:6px 0;display:none;">No medicines added yet.</div>
+
+      <div class="add-med-btn" onclick="openMedModal()" id="addMedBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span id="addMedText">Add New Medicine (Camera / Gallery)</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <div class="schedule-tile" onclick="openAllMedicines()" id="scheduleMedTile" style="cursor:pointer;border:1.5px solid var(--border);border-radius:10px;padding:16px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--blue);"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7z"/><path d="M8.5 8.5l7 7"/></svg>
+          <span style="font-size:13px;font-weight:700;color:var(--text-dark);" id="scheduleMedTileText">Medicine</span>
+        </div>
+        <div class="schedule-tile" onclick="openAllAppointments()" id="scheduleApptTile" style="cursor:pointer;border:1.5px solid var(--border);border-radius:10px;padding:16px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--blue);"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style="font-size:13px;font-weight:700;color:var(--text-dark);" id="scheduleApptTileText">Appointment</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="healthTrackerTitle">Health Tracker — Monthly Graph</div>
+      <div class="graph-tabs">
+        <div class="graph-tab active" onclick="switchGraph(this,'bp')" id="bpTab">BP</div>
+        <div class="graph-tab" onclick="switchGraph(this,'sugar')" id="sugarTab">Sugar</div>
+        <div class="graph-tab" onclick="switchGraph(this,'weight')" id="weightTab">Weight</div>
+      </div>
+      <div class="graph-wrap">
+        <canvas id="healthChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="ai-left">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:#2563eb;font-size:30px;font-weight:bold;">•</span>
+            <div class="ai-title" style="font-size:18px;font-weight:700;" id="healthGuardianAITitle">Health Guardian AI</div>
+          </div>
+          <div class="ai-desc" style="font-size:13px;margin-top:4px;" id="aiDescText">Ask anything about your health, medicines, symptoms or reports. Available 24/7.</div>
+        </div>
+        <button class="btn-blue start-chat-btn" onclick="openChatPage()" style="margin-top:12px;padding:13px;font-size:14px;" id="startChatBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span id="startChatText">Start Chat with AI</span>
+        </button>
+        <div class="voice-row" style="margin-top:8px;cursor:pointer;" onclick="startVoiceInputGuardian()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <span id="voiceText">Click to talk with AI using your voice — hands-free!</span>
+          <button class="btn-blue" style="padding:7px 14px;font-size:12px;" onclick="event.stopPropagation();startVoiceInputGuardian()" id="voiceBtn">🎙 Voice</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="emergency-card full-col">
+      <div class="emergency-title" id="emergencyTitle">Emergency</div>
+      <div class="emergency-desc" id="emergencyDesc">Need urgent help? Tap below to alert your emergency contacts and family instantly.</div>
+      <button class="emergency-btn" onclick="sendEmergency()" id="emergencyBtn">⚠ Send Emergency Alert</button>
+      <div class="emergency-contacts">
+        <div class="emg-contact" id="emergencyContact" onclick="openContactListModal('emergency')" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.23h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <span id="emergencyContactText">Emergency Contact</span>
+        </div>
+        <div class="emg-contact" id="familyContact" onclick="openContactListModal('family')" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span id="familyContactText">Family Contact</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LANGUAGE MODAL -->
+<div class="modal-overlay" id="languageModal">
+  <div class="modal" style="width:400px;">
+    <div class="modal-title" id="langModalTitle">🌐 Select Language</div>
+    <button class="modal-close" onclick="closeModal('languageModal')">✕</button>
+    <div class="lang-grid">
+      <div class="lang-btn" data-lang="en" onclick="selectLanguage('en')">English <span class="native">(English)</span></div>
+      <div class="lang-btn" data-lang="mr" onclick="selectLanguage('mr')">Marathi <span class="native">(मराठी)</span></div>
+      <div class="lang-btn" data-lang="hi" onclick="selectLanguage('hi')">Hindi <span class="native">(हिन्दी)</span></div>
+      <div class="lang-btn" data-lang="gu" onclick="selectLanguage('gu')">Gujarati <span class="native">(ગુજરાતી)</span></div>
+      <div class="lang-btn" data-lang="ta" onclick="selectLanguage('ta')">Tamil <span class="native">(தமிழ்)</span></div>
+      <div class="lang-btn" data-lang="te" onclick="selectLanguage('te')">Telugu <span class="native">(తెలుగు)</span></div>
+      <div class="lang-btn" data-lang="kn" onclick="selectLanguage('kn')">Kannada <span class="native">(ಕನ್ನಡ)</span></div>
+      <div class="lang-btn" data-lang="bn" onclick="selectLanguage('bn')">Bangali <span class="native">(বাংলা)</span></div>
+      <div class="lang-btn" data-lang="pa" onclick="selectLanguage('pa')">Punjabi <span class="native">(ਪੰਜਾਬੀ)</span></div>
+    </div>
+    <p style="font-size:12px;color:var(--text-mid);margin-top:14px;text-align:center;" id="langSelectHint">Select a language to change the interface</p>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL with camera preview -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal" style="width:400px;">
+    <div class="modal-title" id="uploadReportModalTitle">Upload Report</div>
+    <button class="modal-close" onclick="closeUploadModal()">✕</button>
+    
+    <!-- Camera preview -->
+    <video id="cameraPreview" autoplay></video>
+    <button class="capture-btn" id="captureBtn" onclick="capturePhoto()">📸 Capture Photo</button>
+    
+    <div class="media-options">
+      <div class="media-btn" onclick="openCamera()" id="cameraOption">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span id="cameraText">Camera</span>
+      </div>
+      <div class="media-btn" onclick="document.getElementById('hiddenFileInput').click()" id="galleryOption">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span id="galleryText">Gallery</span>
+      </div>
+    </div>
+    <input id="hiddenFileInput" type="file" accept="image/*,application/pdf" onchange="handleGalleryUpload(event)">
+    <div id="uploadPreview" style="margin-top:8px;font-size:12px;color:var(--text-mid);"></div>
+  </div>
+</div>
+
+<!-- ADD MEDICINE MODAL with camera preview -->
+<div class="modal-overlay" id="medModal">
+  <div class="modal" style="width:400px;">
+    <div class="modal-title" id="addMedModalTitle">Add New Medicine</div>
+    <button class="modal-close" onclick="closeMedModal()">✕</button>
+    <p style="font-size:13px;color:var(--text-mid);margin-bottom:14px;" id="scanUploadText">Scan or upload your medicine prescription</p>
+    
+    <!-- Camera preview for medicine -->
+    <video id="medCameraPreview" autoplay></video>
+    <button class="capture-btn" id="medCaptureBtn" onclick="captureMedPhoto()">📸 Capture Prescription</button>
+    
+    <div class="media-options">
+      <div class="media-btn" onclick="openMedCamera()" id="medCameraOption">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span id="medCameraText">Camera</span>
+      </div>
+      <div class="media-btn" onclick="document.getElementById('medGalleryInput').click()" id="medGalleryOption">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span id="medGalleryText">Gallery</span>
+      </div>
+    </div>
+    <input id="medGalleryInput" type="file" accept="image/*,application/pdf" onchange="handleMedGalleryUpload(event)">
+    <div id="medPreview" style="margin-top:8px;font-size:12px;color:var(--text-mid);"></div>
+  </div>
+</div>
+
+<!-- ALL MEDICINES MODAL -->
+<div class="modal-overlay" id="allMedModal">
+  <div class="modal" style="width:400px;max-height:82vh;overflow-y:auto;">
+    <div class="modal-title" id="todaysMedicinesModalTitle">Today's Medicines</div>
+    <button class="modal-close" onclick="closeModal('allMedModal')">✕</button>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:10px;" id="addMedFormTitle">Add Medicine</div>
+      <div class="input-group" style="margin-top:0;">
+        <div class="field-group" style="margin-bottom:8px;">
+          <span class="field-label" id="medNameLabel">Medicine Name</span>
+          <input type="text" class="field-input" id="medNameInput" placeholder="e.g. Metformin">
+        </div>
+        <div class="field-group">
+          <span class="field-label" id="medTimeLabel">Reminder Time</span>
+          <div style="display:flex;gap:6px;">
+            <select class="field-input" id="medHourInput" style="flex:1;"></select>
+            <select class="field-input" id="medMinuteInput" style="flex:1;"></select>
+            <select class="field-input" id="medAmPmInput" style="flex:1;">
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group" style="margin-top:8px;">
+          <span class="field-label" id="medDaysLabel">Duration (days)</span>
+          <input type="number" min="1" class="field-input" id="medDaysInput" placeholder="e.g. 7 (leave blank for ongoing)">
+        </div>
+      </div>
+      <button class="btn-blue" onclick="addMedicineEntry()" id="saveMedEntryBtn" style="margin-top:8px;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span id="saveMedEntryText">Add Medicine &amp; Set Reminder</span>
+      </button>
+
+      <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px;">
+        <div style="display:flex;gap:8px;">
+          <button onclick="toggleMedEditPanel()" id="editMedToggleBtn" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid var(--blue);background:transparent;color:var(--blue);font-weight:700;font-size:13px;cursor:pointer;">Edit</button>
+          <button onclick="toggleMedDeletePanel()" id="deleteMedToggleBtn" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid #dc2626;background:transparent;color:#dc2626;font-weight:700;font-size:13px;cursor:pointer;">Delete</button>
+        </div>
+        <div id="medEditPanel" style="display:none;flex-direction:column;gap:8px;margin-top:10px;"></div>
+        <div id="medDeletePanel" style="display:none;flex-direction:column;gap:8px;margin-top:10px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TODAY'S APPOINTMENTS MODAL -->
+<div class="modal-overlay" id="allApptModal">
+  <div class="modal" style="width:400px;max-height:82vh;overflow-y:auto;">
+    <div class="modal-title" id="todaysApptModalTitle">Today's Appointments</div>
+    <button class="modal-close" onclick="closeModal('allApptModal')">✕</button>
+
+    <div id="allApptList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <div id="allApptEmpty" style="font-size:13px;color:var(--text-mid);padding:12px 0;text-align:center;">No appointments added yet.</div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:10px;" id="addApptFormTitle">Add Appointment</div>
+      <div class="input-group" style="margin-top:0;">
+        <div class="field-group" style="margin-bottom:8px;">
+          <span class="field-label" id="apptDoctorLabel">Doctor / Reason</span>
+          <input type="text" class="field-input" id="apptDoctorInput" placeholder="e.g. Dr. Sharma — Checkup">
+        </div>
+        <div class="input-row">
+          <div class="field-group">
+            <span class="field-label" id="apptDateLabel">Date</span>
+            <input type="date" class="field-input" id="apptDateInput" style="width:100%;">
+          </div>
+          <div class="field-group">
+            <span class="field-label" id="apptTimeLabel">Time</span>
+            <div style="display:flex;gap:6px;">
+              <select class="field-input" id="apptHourInput" style="flex:1;"></select>
+              <select class="field-input" id="apptMinuteInput" style="flex:1;"></select>
+              <select class="field-input" id="apptAmPmInput" style="flex:1;">
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-blue" onclick="addAppointmentEntry()" id="saveApptEntryBtn" style="margin-top:8px;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span id="saveApptEntryText">Add Appointment &amp; Set Reminder</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT MODAL -->
+<div class="modal-overlay" id="chatPageModal">
+  <div class="modal chat-page-modal">
+    <div class="modal-title" id="chatModalTitle">🛡️ Health Guardian AI</div>
+    <button class="modal-close" onclick="closeModal('chatPageModal')">✕</button>
+    <div class="chat-window" id="chatWindow" style="min-height:380px;max-height:480px;">
+      <div class="chat-msg ai" id="chatWelcomeMsg">Hello! How can I help you today? 😊</div>
+    </div>
+    <div class="chat-input-row" style="margin-top:10px;">
+      <input id="chatInput" class="chat-input" placeholder="Type your question…" onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn-blue" onclick="sendChat()" id="chatSendBtn">Send</button>
+    </div>
+    <div id="voiceStatus" style="font-size:11px;color:var(--text-mid);margin-top:6px;display:none;text-align:center;">🎙 Listening… speak now</div>
+  </div>
+</div>
+
+<!-- DIET CHAT MODAL -->
+<div class="modal-overlay" id="dietChatModal">
+  <div class="modal chat-page-modal">
+    <div class="modal-title" id="dietChatModalTitle">🥗 Diet Assistant AI</div>
+    <button class="modal-close" onclick="closeModal('dietChatModal')">✕</button>
+    <div class="chat-window" id="dietChatWindow" style="min-height:340px;max-height:440px;">
+      <div class="chat-msg ai" id="dietChatWelcome">Hi! I'm your Diet AI. Ask me anything about your diet, nutrition, meal plans or food habits! 🥦</div>
+    </div>
+    <div class="chat-input-row" style="margin-top:10px;">
+      <input id="dietChatInput" class="chat-input" placeholder="Ask about diet, nutrition…" onkeydown="if(event.key==='Enter')sendDietChat()">
+      <button class="btn-blue" onclick="startDietVoiceInput()" title="Voice input" style="padding:8px 12px;background:var(--blue-mid);color:var(--blue);border:1.5px solid var(--blue);" id="dietVoiceBtn">🎙</button>
+      <button class="btn-blue" onclick="sendDietChat()" id="dietSendBtn">Send</button>
+    </div>
+    <div id="dietVoiceStatus" style="font-size:11px;color:var(--text-mid);margin-top:6px;display:none;text-align:center;">🎙 Listening… speak now</div>
+  </div>
+</div>
+
+<!-- EMERGENCY POPUP -->
+<div class="modal-overlay" id="emergencyPopup">
+  <div class="modal" style="max-width:360px;text-align:center;">
+    <div style="font-size:44px;margin-bottom:8px;">🚨</div>
+    <div class="modal-title" style="color:var(--red);font-size:18px;text-align:center;" id="emergencyAlertSent">Emergency Alert Sent!</div>
+    <p style="font-size:13px;color:var(--text-mid);line-height:1.6;margin-bottom:18px;" id="emergencyPopupDesc">Your emergency alert has been sent to your <strong>Emergency Contact</strong> and <strong>Family Contact</strong>. Help is on the way!</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div style="background:var(--red-light);border:1px solid #fecaca;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.23h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <div style="text-align:left;"><div style="font-size:12px;font-weight:700;color:var(--red);" id="emergencyContactSent">Emergency Contact</div><div style="font-size:11px;color:var(--text-mid);" id="alertSentText">Alert sent ✓</div></div>
+      </div>
+      <div style="background:var(--red-light);border:1px solid #fecaca;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div style="text-align:left;"><div style="font-size:12px;font-weight:700;color:var(--red);" id="familyContactSent">Family Contact</div><div style="font-size:11px;color:var(--text-mid);" id="alertSentText2">Alert sent ✓</div></div>
+      </div>
+    </div>
+    <button class="btn-blue" style="width:100%;" onclick="closeModal('emergencyPopup')" id="gotItBtn">OK, Got it</button>
+  </div>
+</div>
+
+<!-- CONTACT LIST MODAL (Emergency / Family) -->
+<div class="modal-overlay" id="contactListModal">
+  <div class="modal" style="max-width:340px;">
+    <div class="modal-title" id="contactListModalTitle">Emergency Contact</div>
+    <button class="modal-close" onclick="closeModal('contactListModal')">✕</button>
+    <div id="contactListBody" style="display:flex;flex-direction:column;gap:8px;">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- PRIVACY MODAL -->
+<div class="modal-overlay" id="privacyModal">
+  <div class="modal" style="max-width:420px;max-height:80vh;overflow-y:auto;">
+    <div class="modal-title" id="privacyTitle">🔒 Privacy &amp; Security</div>
+    <button class="modal-close" onclick="closeModal('privacyModal')">✕</button>
+    <div style="font-size:13px;color:var(--text-mid);line-height:1.7;">
+      <div style="font-weight:700;color:var(--text-dark);margin-bottom:8px;font-size:14px;" id="termsTitle">Terms &amp; Conditions</div>
+      <p style="margin-bottom:10px;" id="termsText1">By using HealthGuardian, you agree to the following terms. Please read them carefully.</p>
+      <div style="font-weight:600;color:var(--text-dark);margin:12px 0 4px;" id="privacyTitle2">1. Data Privacy</div>
+      <p style="margin-bottom:10px;" id="privacyText1">All health data you enter (blood pressure, sugar, weight, medications) is stored securely. We never share your personal health information with third parties without your explicit consent.</p>
+      <div style="font-weight:600;color:var(--text-dark);margin:12px 0 4px;" id="aiTitle">2. AI-Generated Advice</div>
+      <p style="margin-bottom:10px;" id="aiText1">The AI diet and health suggestions provided are for informational purposes only and do not replace professional medical advice. Always consult your doctor for medical decisions.</p>
+      <div style="font-weight:600;color:var(--text-dark);margin:12px 0 4px;" id="emergencyTitle2">3. Emergency Alerts</div>
+      <p style="margin-bottom:10px;" id="emergencyText1">Emergency alerts are sent to your pre-configured contacts. HealthGuardian is not a substitute for emergency services. In life-threatening situations, always call emergency services (112/108).</p>
+      <div style="font-weight:600;color:var(--text-dark);margin:12px 0 4px;" id="voiceTitle">4. Voice Data</div>
+      <p style="margin-bottom:10px;" id="voiceText1">Voice input is processed in real-time through your device's speech recognition. Audio data is not stored or transmitted to our servers.</p>
+      <div style="font-weight:600;color:var(--text-dark);margin:12px 0 4px;" id="accountTitle">5. Account Security</div>
+      <p style="margin-bottom:10px;" id="accountText1">You are responsible for maintaining the confidentiality of your account. Report any unauthorized access immediately.</p>
+      <div style="font-weight:600;color:var(--text-dark);margin:12px 0 4px;" id="updatesTitle">6. Updates to Terms</div>
+      <p id="updatesText1">HealthGuardian reserves the right to update these terms. Continued use of the app constitutes acceptance of the revised terms.</p>
+    </div>
+    <button class="btn-blue" style="width:100%;margin-top:16px;" onclick="closeModal('privacyModal')" id="understandBtn">I Understand &amp; Accept</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<script>
+ 
+let toastTimer = null;
+// ── TRANSLATIONS (same as before, kept full) ──
+const homeTranslations = {
+  en: {
+    healthGuardianTitle: "Health Guardian",
+    greetingPrefix: "Good Morning",
+    goodAfternoon: "Good Afternoon",
+    goodEvening: "Good Evening",
+    goodNight: "Good Night",
+    healthScoreLabel: "Health Score",
+    goodLabel: "Good",
+    nextMedicineLabel: "Next Medicine",
+    paracetamolLabel: "Paracetamol",
+    todaysMedicinesLabel: "Appointment",
+    takenLabel: "/ 5 taken",
+    healthMonitoringTitle: "Health Monitoring",
+    bpLabel: "Blood Pressure",
+    bloodSugarLabel: "Blood Sugar",
+    weightLabel: "Weight",
+    bloodGroupLabel: "Blood Group",
+    updateHealthDataLabel: "Update Health Data",
+    bpFieldLabel: "BP (mmHg)",
+    sugarFieldLabel: "Blood Sugar (mg/dL)",
+    weightFieldLabel: "Weight (kg)",
+    bgFieldLabel: "Blood Group",
+    selectOption: "Select",
+    saveHealthBtn: "Save Health Data",
+    uploadReportText: "Upload Report (Camera / Gallery)",
+    medicineAppointmentTitle: "Medicine & Appointment",
+    nextMedicineName: "Next Medicine",
+    medTimeText: "2:00 PM · After Food",
+    takenBtnText: "Taken",
+    missedBtnText: "Missed",
+    nextAppointmentLabel: "Next Appointment: 7:00 PM",
+    drLabel: "— Dr. Rajesh Patil",
+    addMedText: "Add New Medicine (Camera / Gallery)",
+    viewAllMedicines: "View All Medicines →",
+    healthTrackerTitle: "Health Tracker — Monthly Graph",
+    bpTab: "BP",
+    sugarTab: "Sugar",
+    weightTab: "Weight",
+    dietAssistantTitle: "Diet Assistant",
+    breakfastLabel: "Breakfast",
+    breakfastText: "— Pohe + Tea",
+    lunchLabel: "Lunch",
+    lunchText: "— Dal Rice + Salad",
+    dinnerLabel: "Dinner",
+    dinnerText: "— Khichdi + Dahi",
+    askDietAIText: "Ask Diet AI",
+    healthGuardianAITitle: "Health Guardian AI",
+    aiDescText: "Ask anything about your health, medicines, symptoms or reports. Available 24/7.",
+    startChatText: "Start Chat with AI",
+    voiceText: "Click to talk with AI using your voice — hands-free!",
+    voiceBtn: "🎙 Voice",
+    todayScheduleTitle: "Today's Schedule",
+    scheduleMed1: "Medicine — Metformin",
+    scheduleMed2: "Medicine — Paracetamol",
+    scheduleWater: "💧 Water Reminder",
+    scheduleAppointment: "Doctor Appointment",
+    scheduleMed3: "Medicine — Aspirin",
+    emergencyTitle: "Emergency",
+    emergencyDesc: "Need urgent help? Tap below to alert your emergency contacts and family instantly.",
+    emergencyBtn: "⚠ Send Emergency Alert",
+    emergencyContactText: "Emergency Contact",
+    familyContactText: "Family Contact",
+    uploadReportModalTitle: "Upload Report",
+    cameraText: "Camera",
+    galleryText: "Gallery",
+    addMedModalTitle: "Add New Medicine",
+    scanUploadText: "Scan or upload your medicine prescription",
+    medCameraText: "Camera",
+    medGalleryText: "Gallery",
+    todaysMedicinesModalTitle: "Today's Medicines",
+    takenStatus: "✓ Taken",
+    upcomingStatus: "⏰ Upcoming",
+    chatModalTitle: "🛡️ Health Guardian AI",
+    chatWelcomeMsg: "Hello! How can I help you today? 😊",
+    chatSendBtn: "Send",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 Diet Assistant AI",
+    dietChatWelcome: "Hi! I'm your Diet AI. Ask me anything about your diet, nutrition, meal plans or food habits! 🥦",
+    dietSendBtn: "Send",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "Emergency Alert Sent!",
+    emergencyPopupDesc: "Your emergency alert has been sent to your Emergency Contact and Family Contact. Help is on the way!",
+    emergencyContactSent: "Emergency Contact",
+    familyContactSent: "Family Contact",
+    alertSentText: "Alert sent ✓",
+    gotItBtn: "OK, Got it",
+    privacyTitle: "🔒 Privacy & Security",
+    termsTitle: "Terms & Conditions",
+    termsText1: "By using HealthGuardian, you agree to the following terms. Please read them carefully.",
+    privacyTitle2: "1. Data Privacy",
+    privacyText1: "All health data you enter (blood pressure, sugar, weight, medications) is stored securely. We never share your personal health information with third parties without your explicit consent.",
+    aiTitle: "2. AI-Generated Advice",
+    aiText1: "The AI diet and health suggestions provided are for informational purposes only and do not replace professional medical advice. Always consult your doctor for medical decisions.",
+    emergencyTitle2: "3. Emergency Alerts",
+    emergencyText1: "Emergency alerts are sent to your pre-configured contacts. HealthGuardian is not a substitute for emergency services. In life-threatening situations, always call emergency services (112/108).",
+    voiceTitle: "4. Voice Data",
+    voiceText1: "Voice input is processed in real-time through your device's speech recognition. Audio data is not stored or transmitted to our servers.",
+    accountTitle: "5. Account Security",
+    accountText1: "You are responsible for maintaining the confidentiality of your account. Report any unauthorized access immediately.",
+    updatesTitle: "6. Updates to Terms",
+    updatesText1: "HealthGuardian reserves the right to update these terms. Continued use of the app constitutes acceptance of the revised terms.",
+    understandBtn: "I Understand & Accept",
+    notifTitle: "Notifications",
+    notif1: "🔔 Time to take your Paracetamol at 2:00 PM",
+    notif2: "📋 Your last uploaded report has been analysed",
+    notif3: "📅 Appointment with Dr. Rajesh Patil at 7:00 PM",
+    switchAccount: "Switch Account",
+    languageChange: "Language Change",
+    privacySecurity: "Privacy & Security",
+    logOut: "Log Out",
+    logOutSuccess: "Logged out successfully.",
+    chatPlaceholder: "Type your question…",
+    dietPlaceholder: "Ask about diet, nutrition…",
+    langModalTitle: "🌐 Select Language",
+    langSelectHint: "Select a language to change the interface",
+    toastHealthUpdated: "✅ Health data updated!",
+    toastTaken: "Thank you! 💊 Medicine marked as taken.",
+    toastMissed: "⚠️ Medicine missed! Alarm will ring as reminder.",
+    toastSwitchAccount: "Switch account feature coming soon!",
+    toastReportUploaded: "Report uploaded! AI is analysing…",
+    toastMedicineAdded: "Medicine added from prescription!",
+    toastVoiceNotSupported: "Voice not supported in this browser.",
+    toastCouldNotHear: "Could not hear you. Try again.",
+    toastLoggedOut: "Logged out successfully.",
+    toastLanguageChanged: "✅ Language changed to ",
+    toastReportAnalysed: "📋 Report analysed by AI: ",
+    profileUsernameFieldLabel: "Username",
+    profileAgeFieldLabel: "Age",
+    profileGenderFieldLabel: "Gender",
+    profileDobFieldLabel: "Date of Birth",
+    profileContactFieldLabel: "Family Contact No.",
+    addMedFormTitle: "Add Medicine",
+    medNameFieldLabel: "Medicine Name",
+    medNamePlaceholder: "e.g. Metformin",
+    medTimeFieldLabel: "Reminder Time",
+    saveMedEntryText: "Add Medicine & Set Reminder",
+    testReminderText: "🔔 Test reminder sound",
+    noMedicinesAdded: "No medicines added yet.",
+    ambulanceLabel: "Ambulance",
+    fireBrigadeLabel: "Fire Brigade",
+    doctorLabel: "Doctor",
+    contactLabel: "Contact",
+    scheduleMedTileText: "Medicine",
+    scheduleApptTileText: "Appointment",
+    todaysApptModalTitle: "Today's Appointments",
+    addApptFormTitle: "Add Appointment",
+    apptDoctorLabel: "Doctor / Reason",
+    apptDoctorPlaceholder: "e.g. Dr. Sharma — Checkup",
+    apptDateLabel: "Date",
+    apptTimeLabel: "Time",
+    saveApptEntryText: "Add Appointment & Set Reminder",
+    noAppointmentsAdded: "No appointments added yet.",
+  },
+  mr: {
+    healthGuardianTitle: "हेल्थ गार्डियन",
+    greetingPrefix: "शुभ सकाळ",
+    goodAfternoon: "शुभ दुपार",
+    goodEvening: "शुभ संध्याकाल",
+    goodNight: "शुभ रात्री ",
+    healthScoreLabel: "आरोग्य स्कोअर",
+    goodLabel: "चांगले",
+    nextMedicineLabel: "पुढील औषध",
+    paracetamolLabel: "पॅरासिटामॉल",
+    todaysMedicinesLabel: "अपॉइंटमेंट",
+    takenLabel: "/ ५ घेतली",
+    healthMonitoringTitle: "आरोग्य निरीक्षण",
+    bpLabel: "रक्तदाब",
+    bloodSugarLabel: "रक्तातील साखर",
+    weightLabel: "वजन",
+    bloodGroupLabel: "रक्तगट",
+    updateHealthDataLabel: "आरोग्य माहिती अद्यतनित करा",
+    bpFieldLabel: "रक्तदाब (mmHg)",
+    sugarFieldLabel: "रक्तातील साखर (mg/dL)",
+    weightFieldLabel: "वजन (kg)",
+    bgFieldLabel: "रक्तगट",
+    selectOption: "निवडा",
+    saveHealthBtn: "आरोग्य माहिती जतन करा",
+    uploadReportText: "रिपोर्ट अपलोड करा (कॅमेरा / गॅलरी)",
+    medicineAppointmentTitle: "औषध आणि भेटी",
+    nextMedicineName: "पुढील औषध",
+    medTimeText: "२:०० PM · जेवणानंतर",
+    takenBtnText: "घेतले",
+    missedBtnText: "चुकले",
+    nextAppointmentLabel: "पुढील भेट: ७:०० PM",
+    drLabel: "— डॉ. राजेश पाटील",
+    addMedText: "नवीन औषध घाला (कॅमेरा / गॅलरी)",
+    viewAllMedicines: "सर्व औषधे पहा →",
+    healthTrackerTitle: "आरोग्य ट्रॅकर — मासिक आलेख",
+    bpTab: "रक्तदाब",
+    sugarTab: "साखर",
+    weightTab: "वजन",
+    dietAssistantTitle: "आहार सहाय्यक",
+    breakfastLabel: "नाश्ता",
+    breakfastText: "— पोहे + चहा",
+    lunchLabel: "दुपारचे जेवण",
+    lunchText: "— डाळ भात + सॅलड",
+    dinnerLabel: "रात्रीचे जेवण",
+    dinnerText: "— खिचडी + दही",
+    askDietAIText: "आहार AI ला विचारा",
+    healthGuardianAITitle: "हेल्थ गार्डियन AI",
+    aiDescText: "तुमच्या आरोग्य, औषधे, लक्षणे किंवा रिपोर्ट्सबद्दल काहीही विचारा. २४/७ उपलब्ध.",
+    startChatText: "AI सोबत चॅट सुरू करा",
+    voiceText: "तुमच्या आवाजाने AI शी बोला — हँड्स-फ्री!",
+    voiceBtn: "🎙 आवाज",
+    todayScheduleTitle: "आजचे वेळापत्रक",
+    scheduleMed1: "औषध — मेटफॉर्मिन",
+    scheduleMed2: "औषध — पॅरासिटामॉल",
+    scheduleWater: "💧 पाणी स्मरणपत्र",
+    scheduleAppointment: "डॉक्टर भेट",
+    scheduleMed3: "औषध — ऍस्पिरिन",
+    emergencyTitle: "आणीबाणी",
+    emergencyDesc: "तातडीची मदत हवी आहे? खाली टॅप करा आणि त्वरित तुमच्या आपत्कालीन संपर्कांना सूचित करा.",
+    emergencyBtn: "⚠ आपत्कालीन सूचना पाठवा",
+    emergencyContactText: "आपत्कालीन संपर्क",
+    familyContactText: "कुटुंब संपर्क",
+    uploadReportModalTitle: "रिपोर्ट अपलोड करा",
+    cameraText: "कॅमेरा",
+    galleryText: "गॅलरी",
+    addMedModalTitle: "नवीन औषध घाला",
+    scanUploadText: "तुमची औषध प्रिस्क्रिप्शन स्कॅन किंवा अपलोड करा",
+    medCameraText: "कॅमेरा",
+    medGalleryText: "गॅलरी",
+    todaysMedicinesModalTitle: "आजची औषधे",
+    takenStatus: "✓ घेतले",
+    upcomingStatus: "⏰ येणारे",
+    chatModalTitle: "🛡️ हेल्थ गार्डियन AI",
+    chatWelcomeMsg: "नमस्कार प्रतीक्षा! मी तुम्हाला आज कशी मदत करू शकते? 😊",
+    chatSendBtn: "पाठवा",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 आहार सहाय्यक AI",
+    dietChatWelcome: "नमस्कार प्रतीक्षा! मी तुमचा आहार AI आहे. तुमच्या आहार, पोषण, जेवण योजना किंवा खाण्याच्या सवयींबद्दल काहीही विचारा! 🥦",
+    dietSendBtn: "पाठवा",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "आपत्कालीन सूचना पाठवली!",
+    emergencyPopupDesc: "तुमची आपत्कालीन सूचना तुमच्या आपत्कालीन संपर्क आणि कुटुंब संपर्कांना पाठवली गेली आहे. मदत येत आहे!",
+    emergencyContactSent: "आपत्कालीन संपर्क",
+    familyContactSent: "कुटुंब संपर्क",
+    alertSentText: "सूचना पाठवली ✓",
+    gotItBtn: "ठीक आहे",
+    privacyTitle: "🔒 गोपनीयता आणि सुरक्षा",
+    termsTitle: "अटी आणि शर्ती",
+    termsText1: "हेल्थगार्डियन वापरून, तुम्ही खालील अटींना सहमती देता. कृपया त्या काळजीपूर्वक वाचा.",
+    privacyTitle2: "१. डेटा गोपनीयता",
+    privacyText1: "तुम्ही प्रविष्ट केलेला सर्व आरोग्य डेटा (रक्तदाब, साखर, वजन, औषधे) सुरक्षितपणे संग्रहित केला जातो. तुमची स्पष्ट संमतीशिवाय आम्ही तुमची वैयक्तिक आरोग्य माहिती तृतीय पक्षांशी कधीही शेअर करत नाही.",
+    aiTitle: "२. AI-जनरेटेड सल्ला",
+    aiText1: "दिलेले AI आहार आणि आरोग्य सूचना केवळ माहितीपूर्ण हेतूंसाठी आहेत आणि व्यावसायिक वैद्यकीय सल्ल्याची जागा घेत नाहीत. वैद्यकीय निर्णयांसाठी नेहमी तुमच्या डॉक्टरांचा सल्ला घ्या.",
+    emergencyTitle2: "३. आपत्कालीन सूचना",
+    emergencyText1: "आपत्कालीन सूचना तुमच्या पूर्व-कॉन्फिगर केलेल्या संपर्कांना पाठवल्या जातात. हेल्थगार्डियन आपत्कालीन सेवांचा पर्याय नाही. जीवघेण्या परिस्थितीत, नेहमी आपत्कालीन सेवांना (११२/१०८) कॉल करा.",
+    voiceTitle: "४. आवाज डेटा",
+    voiceText1: "आवाज इनपुट तुमच्या डिव्हाइसच्या स्पीच रिकग्निशनद्वारे रिअल-टाइममध्ये प्रक्रिया केला जातो. ऑडिओ डेटा आमच्या सर्व्हरवर संग्रहित किंवा प्रसारित केला जात नाही.",
+    accountTitle: "५. खाते सुरक्षा",
+    accountText1: "तुमच्या खात्याची गोपनीयता राखण्यासाठी तुम्ही जबाबदार आहात. कोणत्याही अनधिकृत प्रवेशाची त्वरित तक्रार करा.",
+    updatesTitle: "६. अटींमध्ये अद्यतने",
+    updatesText1: "हेल्थगार्डियन या अटी अद्यतनित करण्याचा अधिकार राखून ठेवते. अॅपचा सतत वापर म्हणजे सुधारित अटींची स्वीकृती.",
+    understandBtn: "मला समजले आणि मान्य आहे",
+    notifTitle: "सूचना",
+    notif1: "🔔 २:०० PM ला पॅरासिटामॉल घेण्याची वेळ",
+    notif2: "📋 तुमचा शेवटचा अपलोड केलेला रिपोर्ट विश्लेषित केला गेला",
+    notif3: "📅 ७:०० PM ला डॉ. राजेश पाटील यांची भेट",
+    switchAccount: "खाते बदला",
+    languageChange: "भाषा बदला",
+    privacySecurity: "गोपनीयता आणि सुरक्षा",
+    logOut: "बाहेर पडा",
+    logOutSuccess: "बाहेर पडलात.",
+    chatPlaceholder: "तुमचा प्रश्न टाइप करा…",
+    dietPlaceholder: "आहार, पोषण बद्दल विचारा…",
+    langModalTitle: "🌐 भाषा निवडा",
+    langSelectHint: "इंटरफेस बदलण्यासाठी भाषा निवडा",
+    toastHealthUpdated: "✅ आरोग्य माहिती अद्यतनित!",
+    toastTaken: "धन्यवाद, प्रतीक्षा! 💊 औषध घेतले म्हणून चिन्हांकित केले.",
+    toastMissed: "⚠️ औषध चुकले! अलार्म वाजेल.",
+    toastSwitchAccount: "खाते बदलण्याची सुविधा लवकरच येत आहे!",
+    toastReportUploaded: "रिपोर्ट अपलोड केला! AI विश्लेषण करत आहे…",
+    toastMedicineAdded: "प्रिस्क्रिप्शनमधून औषध जोडले!",
+    toastVoiceNotSupported: "या ब्राउझरमध्ये आवाज समर्थित नाही.",
+    toastCouldNotHear: "तुमचा आवाज ऐकू आला नाही. पुन्हा प्रयत्न करा.",
+    toastLoggedOut: "बाहेर पडलात.",
+    toastLanguageChanged: "✅ भाषा बदलली ",
+    toastReportAnalysed: "📋 AI ने रिपोर्टचे विश्लेषण केले: ",
+    profileUsernameFieldLabel: "युजरनेम",
+    profileAgeFieldLabel: "वय",
+    profileGenderFieldLabel: "लिंग",
+    profileDobFieldLabel: "जन्मतारीख",
+    profileContactFieldLabel: "फॅमिली कॉन्टॅक्ट नं.",
+    addMedFormTitle: "औषध जोडा",
+    medNameFieldLabel: "औषधाचे नाव",
+    medNamePlaceholder: "उदा. मेटफॉर्मिन",
+    medTimeFieldLabel: "रिमाइंडर वेळ",
+    saveMedEntryText: "औषध जोडा आणि रिमाइंडर सेट करा",
+    testReminderText: "🔔 रिमाइंडर आवाज तपासा",
+    noMedicinesAdded: "अजून कोणतेही औषध जोडलेले नाही.",
+    ambulanceLabel: "रुग्णवाहिका",
+    fireBrigadeLabel: "अग्निशमन दल",
+    doctorLabel: "डॉक्टर",
+    contactLabel: "कॉन्टॅक्ट",
+    scheduleMedTileText: "औषध",
+    scheduleApptTileText: "अपॉइंटमेंट",
+    todaysApptModalTitle: "आजच्या अपॉइंटमेंट्स",
+    addApptFormTitle: "अपॉइंटमेंट जोडा",
+    apptDoctorLabel: "डॉक्टर / कारण",
+    apptDoctorPlaceholder: "उदा. डॉ. शर्मा — तपासणी",
+    apptDateLabel: "तारीख",
+    apptTimeLabel: "वेळ",
+    saveApptEntryText: "अपॉइंटमेंट जोडा आणि रिमाइंडर सेट करा",
+    noAppointmentsAdded: "अजून कोणतीही अपॉइंटमेंट जोडलेली नाही.",
+  },
+  hi: {
+    healthGuardianTitle: "हेल्थ गार्डियन",
+    greetingPrefix: "शुभ प्रभात",
+    goodAfternoon: "शुभ दोपहर",
+    goodEvening: "शुभ संध्या",
+    goodNight: "शुभ रात्रि",
+    healthScoreLabel: "स्वास्थ्य स्कोर",
+    goodLabel: "अच्छा",
+    nextMedicineLabel: "अगली दवा",
+    paracetamolLabel: "पैरासिटामोल",
+    todaysMedicinesLabel: "अपॉइंटमेंट",
+    takenLabel: "/ 5 ली गईं",
+    healthMonitoringTitle: "स्वास्थ्य निगरानी",
+    bpLabel: "रक्तचाप",
+    bloodSugarLabel: "रक्त शर्करा",
+    weightLabel: "वजन",
+    bloodGroupLabel: "रक्त समूह",
+    updateHealthDataLabel: "स्वास्थ्य डेटा अपडेट करें",
+    bpFieldLabel: "बीपी (mmHg)",
+    sugarFieldLabel: "रक्त शर्करा (mg/dL)",
+    weightFieldLabel: "वजन (kg)",
+    bgFieldLabel: "रक्त समूह",
+    selectOption: "चुनें",
+    saveHealthBtn: "स्वास्थ्य डेटा सहेजें",
+    uploadReportText: "रिपोर्ट अपलोड करें (कैमरा / गैलरी)",
+    medicineAppointmentTitle: "दवा और अपॉइंटमेंट",
+    nextMedicineName: "अगली दवा",
+    medTimeText: "२:०० PM · भोजन के बाद",
+    takenBtnText: "ली गई",
+    missedBtnText: "छूट गई",
+    nextAppointmentLabel: "अगली अपॉइंटमेंट: ७:०० PM",
+    drLabel: "— डॉ. राजेश पाटिल",
+    addMedText: "नई दवा जोड़ें (कैमरा / गैलरी)",
+    viewAllMedicines: "सभी दवाइयाँ देखें →",
+    healthTrackerTitle: "स्वास्थ्य ट्रैकर — मासिक ग्राफ",
+    bpTab: "बीपी",
+    sugarTab: "शुगर",
+    weightTab: "वजन",
+    dietAssistantTitle: "आहार सहायक",
+    breakfastLabel: "नाश्ता",
+    breakfastText: "— पोहे + चाय",
+    lunchLabel: "दोपहर का भोजन",
+    lunchText: "— दाल चावल + सलाद",
+    dinnerLabel: "रात का भोजन",
+    dinnerText: "— खिचड़ी + दही",
+    askDietAIText: "आहार AI से पूछें",
+    healthGuardianAITitle: "हेल्थ गार्डियन AI",
+    aiDescText: "अपने स्वास्थ्य, दवाइयों, लक्षणों या रिपोर्टों के बारे में कुछ भी पूछें। २४/७ उपलब्ध।",
+    startChatText: "AI के साथ चैट शुरू करें",
+    voiceText: "अपनी आवाज़ से AI से बात करें — हाथ-मुक्त!",
+    voiceBtn: "🎙 आवाज़",
+    todayScheduleTitle: "आज का शेड्यूल",
+    scheduleMed1: "दवा — मेटफॉर्मिन",
+    scheduleMed2: "दवा — पैरासिटामोल",
+    scheduleWater: "💧 पानी रिमाइंडर",
+    scheduleAppointment: "डॉक्टर अपॉइंटमेंट",
+    scheduleMed3: "दवा — एस्पिरिन",
+    emergencyTitle: "आपातकालीन",
+    emergencyDesc: "तत्काल मदद चाहिए? नीचे टैप करें और तुरंत अपने आपातकालीन संपर्कों को सचेत करें।",
+    emergencyBtn: "⚠ आपातकालीन अलर्ट भेजें",
+    emergencyContactText: "आपातकालीन संपर्क",
+    familyContactText: "परिवार संपर्क",
+    uploadReportModalTitle: "रिपोर्ट अपलोड करें",
+    cameraText: "कैमरा",
+    galleryText: "गैलरी",
+    addMedModalTitle: "नई दवा जोड़ें",
+    scanUploadText: "अपनी दवा प्रिस्क्रिप्शन स्कैन या अपलोड करें",
+    medCameraText: "कैमरा",
+    medGalleryText: "गैलरी",
+    todaysMedicinesModalTitle: "आज की दवाइयाँ",
+    takenStatus: "✓ ली गई",
+    upcomingStatus: "⏰ आगामी",
+    chatModalTitle: "🛡️ हेल्थ गार्डियन AI",
+    chatWelcomeMsg: "नमस्ते प्रतीक्षा! मैं आज आपकी कैसे मदद कर सकता हूँ? 😊",
+    chatSendBtn: "भेजें",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 आहार सहायक AI",
+    dietChatWelcome: "नमस्ते प्रतीक्षा! मैं आपका आहार AI हूँ। मुझसे अपने आहार, पोषण, भोजन योजना या खाने की आदतों के बारे में कुछ भी पूछें! 🥦",
+    dietSendBtn: "भेजें",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "आपातकालीन अलर्ट भेजा गया!",
+    emergencyPopupDesc: "आपका आपातकालीन अलर्ट आपके आपातकालीन संपर्क और परिवार संपर्क को भेजा गया है। मदद आ रही है!",
+    emergencyContactSent: "आपातकालीन संपर्क",
+    familyContactSent: "परिवार संपर्क",
+    alertSentText: "अलर्ट भेजा ✓",
+    gotItBtn: "ठीक है",
+    privacyTitle: "🔒 गोपनीयता और सुरक्षा",
+    termsTitle: "नियम और शर्तें",
+    termsText1: "हेल्थगार्डियन का उपयोग करके, आप निम्नलिखित नियमों से सहमत हैं। कृपया उन्हें ध्यान से पढ़ें।",
+    privacyTitle2: "१. डेटा गोपनीयता",
+    privacyText1: "आपके द्वारा दर्ज किया गया सभी स्वास्थ्य डेटा (रक्तचाप, शुगर, वजन, दवाइयाँ) सुरक्षित रूप से संग्रहीत किया जाता है। हम आपकी स्पष्ट सहमति के बिना आपकी व्यक्तिगत स्वास्थ्य जानकारी कभी भी तृतीय पक्षों के साथ साझा नहीं करते हैं।",
+    aiTitle: "२. AI-जनरेटेड सलाह",
+    aiText1: "दी गई AI आहार और स्वास्थ्य सुझाव केवल सूचनात्मक उद्देश्यों के लिए हैं और पेशेवर चिकित्सा सलाह का स्थान नहीं लेते हैं। चिकित्सा निर्णयों के लिए हमेशा अपने डॉक्टर से सलाह लें।",
+    emergencyTitle2: "३. आपातकालीन अलर्ट",
+    emergencyText1: "आपातकालीन अलर्ट आपके पूर्व-कॉन्फ़िगर किए गए संपर्कों को भेजे जाते हैं। हेल्थगार्डियन आपातकालीन सेवाओं का विकल्प नहीं है। जीवन-खतरे की स्थितियों में, हमेशा आपातकालीन सेवाओं (११२/१०८) को कॉल करें।",
+    voiceTitle: "४. वॉइस डेटा",
+    voiceText1: "वॉइस इनपुट आपके डिवाइस की स्पीच रिकग्निशन के माध्यम से रीयल-टाइम में संसाधित किया जाता है। ऑडियो डेटा हमारे सर्वर पर संग्रहीत या प्रसारित नहीं किया जाता है।",
+    accountTitle: "५. खाता सुरक्षा",
+    accountText1: "आप अपने खाते की गोपनीयता बनाए रखने के लिए जिम्मेदार हैं। किसी भी अनधिकृत पहुंच की तुरंत रिपोर्ट करें।",
+    updatesTitle: "६. नियमों में अद्यतन",
+    updatesText1: "हेल्थगार्डियन इन नियमों को अद्यतन करने का अधिकार सुरक्षित रखता है। ऐप का निरंतर उपयोग संशोधित नियमों की स्वीकृति का गठन करता है।",
+    understandBtn: "मैं समझता हूँ और स्वीकार करता हूँ",
+    notifTitle: "सूचनाएं",
+    notif1: "🔔 २:०० PM पर पैरासिटामोल लेने का समय",
+    notif2: "📋 आपकी अंतिम अपलोड की गई रिपोर्ट का विश्लेषण किया गया",
+    notif3: "📅 ७:०० PM पर डॉ. राजेश पाटिल के साथ अपॉइंटमेंट",
+    switchAccount: "खाता बदलें",
+    languageChange: "भाषा बदलें",
+    privacySecurity: "गोपनीयता और सुरक्षा",
+    logOut: "लॉग आउट",
+    logOutSuccess: "लॉग आउट किया गया।",
+    chatPlaceholder: "अपना प्रश्न टाइप करें…",
+    dietPlaceholder: "आहार, पोषण के बारे में पूछें…",
+    langModalTitle: "🌐 भाषा चुनें",
+    langSelectHint: "इंटरफ़ेस बदलने के लिए भाषा चुनें",
+    toastHealthUpdated: "✅ स्वास्थ्य डेटा अपडेट किया गया!",
+    toastTaken: "धन्यवाद, प्रतीक्षा! 💊 दवा ली गई के रूप में चिह्नित।",
+    toastMissed: "⚠️ दवा छूट गई! अलार्म बजेगा।",
+    toastSwitchAccount: "खाता बदलने की सुविधा जल्द आ रही है!",
+    toastReportUploaded: "रिपोर्ट अपलोड की गई! AI विश्लेषण कर रहा है…",
+    toastMedicineAdded: "प्रिस्क्रिप्शन से दवा जोड़ी गई!",
+    toastVoiceNotSupported: "इस ब्राउज़र में आवाज़ समर्थित नहीं है।",
+    toastCouldNotHear: "आपकी आवाज़ नहीं सुनाई दी। पुनः प्रयास करें।",
+    toastLoggedOut: "लॉग आउट किया गया।",
+    toastLanguageChanged: "✅ भाषा बदली गई ",
+    toastReportAnalysed: "📋 AI ने रिपोर्ट का विश्लेषण किया: ",
+    profileUsernameFieldLabel: "यूज़रनेम",
+    profileAgeFieldLabel: "उम्र",
+    profileGenderFieldLabel: "लिंग",
+    profileDobFieldLabel: "जन्म तिथि",
+    profileContactFieldLabel: "फैमिली कॉन्टैक्ट नं.",
+    addMedFormTitle: "दवा जोड़ें",
+    medNameFieldLabel: "दवा का नाम",
+    medNamePlaceholder: "उदा. मेटफॉर्मिन",
+    medTimeFieldLabel: "रिमाइंडर समय",
+    saveMedEntryText: "दवा जोड़ें और रिमाइंडर सेट करें",
+    testReminderText: "🔔 रिमाइंडर आवाज़ जांचें",
+    noMedicinesAdded: "अभी तक कोई दवा नहीं जोड़ी गई।",
+    ambulanceLabel: "एम्बुलेंस",
+    fireBrigadeLabel: "फायर ब्रिगेड",
+    doctorLabel: "डॉक्टर",
+    contactLabel: "कॉन्टैक्ट",
+    scheduleMedTileText: "दवा",
+    scheduleApptTileText: "अपॉइंटमेंट",
+    todaysApptModalTitle: "आज की अपॉइंटमेंट्स",
+    addApptFormTitle: "अपॉइंटमेंट जोड़ें",
+    apptDoctorLabel: "डॉक्टर / कारण",
+    apptDoctorPlaceholder: "उदा. डॉ. शर्मा — जांच",
+    apptDateLabel: "तारीख",
+    apptTimeLabel: "समय",
+    saveApptEntryText: "अपॉइंटमेंट जोड़ें और रिमाइंडर सेट करें",
+    noAppointmentsAdded: "अभी तक कोई अपॉइंटमेंट नहीं जोड़ी गई।",
+  },
+  gu: {
+    healthGuardianTitle: "હેલ્થ ગાર્ડિયન",
+    greetingPrefix: "શુભ સવાર",
+    goodAfternoon: "શુભ બપોર",
+    goodEvening: "શુભ સાંજ",
+    goodNight: "શુભ રાત્રિ",
+    healthScoreLabel: "આરોગ્ય સ્કોર",
+    goodLabel: "સારું",
+    nextMedicineLabel: "આગળની દવા",
+    paracetamolLabel: "પેરાસિટામોલ",
+    todaysMedicinesLabel: "એપોઇન્ટમેન્ટ",
+    takenLabel: "/ ૫ લીધી",
+    healthMonitoringTitle: "આરોગ્ય દેખરેખ",
+    bpLabel: "રક્તદબાણ",
+    bloodSugarLabel: "રક્ત શર્કરા",
+    weightLabel: "વજન",
+    bloodGroupLabel: "રક્ત જૂથ",
+    updateHealthDataLabel: "આરોગ્ય ડેટા અપડેટ કરો",
+    bpFieldLabel: "બીપી (mmHg)",
+    sugarFieldLabel: "રક્ત શર્કરા (mg/dL)",
+    weightFieldLabel: "વજન (kg)",
+    bgFieldLabel: "રક્ત જૂથ",
+    selectOption: "પસંદ કરો",
+    saveHealthBtn: "આરોગ્ય ડેટા સાચવો",
+    uploadReportText: "રિપોર્ટ અપલોડ કરો (કૅમેરા / ગૅલેરી)",
+    medicineAppointmentTitle: "દવા અને એપોઇન્ટમેન્ટ",
+    nextMedicineName: "આગળની દવા",
+    medTimeText: "૨:૦૦ PM · ભોજન પછી",
+    takenBtnText: "લીધી",
+    missedBtnText: "ચૂકી",
+    nextAppointmentLabel: "આગળની એપોઇન્ટમેન્ટ: ૭:૦૦ PM",
+    drLabel: "— ડૉ. રાજેશ પાટિલ",
+    addMedText: "નવી દવા ઉમેરો (કૅમેરા / ગૅલેરી)",
+    viewAllMedicines: "બધી દવાઓ જુઓ →",
+    healthTrackerTitle: "આરોગ્ય ટ્રૅકર — માસિક ગ્રાફ",
+    bpTab: "બીપી",
+    sugarTab: "શુગર",
+    weightTab: "વજન",
+    dietAssistantTitle: "આહાર સહાયક",
+    breakfastLabel: "નાસ્તો",
+    breakfastText: "— પોહા + ચા",
+    lunchLabel: "બપોરનું ભોજન",
+    lunchText: "— દાળ ભાત + સલાડ",
+    dinnerLabel: "રાત્રિભોજન",
+    dinnerText: "— ખિચડી + દહીં",
+    askDietAIText: "આહાર AI ને પૂછો",
+    healthGuardianAITitle: "હેલ્થ ગાર્ડિયન AI",
+    aiDescText: "તમારા આરોગ્ય, દવાઓ, લક્ષણો અથવા રિપોર્ટ્સ વિશે કંઈપણ પૂછો. ૨૪/૭ ઉપલબ્ધ.",
+    startChatText: "AI સાથે ચેટ શરૂ કરો",
+    voiceText: "તમારા અવાજથી AI સાથે વાત કરો — હેન્ડ્સ-ફ્રી!",
+    voiceBtn: "🎙 અવાજ",
+    todayScheduleTitle: "આજનું શેડ્યૂલ",
+    scheduleMed1: "દવા — મેટફોર્મિન",
+    scheduleMed2: "દવા — પેરાસિટામોલ",
+    scheduleWater: "💧 પાણી રિમાઇન્ડર",
+    scheduleAppointment: "ડૉક્ટર એપોઇન્ટમેન્ટ",
+    scheduleMed3: "દવા — એસ્પિરિન",
+    emergencyTitle: "કટોકટી",
+    emergencyDesc: "તાત્કાલિક મદદ જોઈએ? નીચે ટેપ કરો અને તરત જ તમારા કટોકટી સંપર્કોને સૂચિત કરો.",
+    emergencyBtn: "⚠ કટોકટી એલર્ટ મોકલો",
+    emergencyContactText: "કટોકટી સંપર્ક",
+    familyContactText: "કુટુંબ સંપર્ક",
+    uploadReportModalTitle: "રિપોર્ટ અપલોડ કરો",
+    cameraText: "કૅમેરા",
+    galleryText: "ગૅલેરી",
+    addMedModalTitle: "નવી દવા ઉમેરો",
+    scanUploadText: "તમારી દવા પ્રિસ્ક્રિપ્શન સ્કેન અથવા અપલોડ કરો",
+    medCameraText: "કૅમેરા",
+    medGalleryText: "ગૅલેરી",
+    todaysMedicinesModalTitle: "આજની દવાઓ",
+    takenStatus: "✓ લીધી",
+    upcomingStatus: "⏰ આગામી",
+    chatModalTitle: "🛡️ હેલ્થ ગાર્ડિયન AI",
+    chatWelcomeMsg: "નમસ્તે પ્રતિક્ષા! હું આજે તમારી કેવી રીતે મદદ કરી શકું? 😊",
+    chatSendBtn: "મોકલો",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 આહાર સહાયક AI",
+    dietChatWelcome: "નમસ્તે પ્રતિક્ષા! હું તમારો આહાર AI છું. મને તમારા આહાર, પોષણ, ભોજન યોજના અથવા ખાવાની આદતો વિશે કંઈપણ પૂછો! 🥦",
+    dietSendBtn: "મોકલો",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "કટોકટી એલર્ટ મોકલાઈ!",
+    emergencyPopupDesc: "તમારી કટોકટી એલર્ટ તમારા કટોકટી સંપર્ક અને કુટુંબ સંપર્કને મોકલવામાં આવી છે. મદદ આવી રહી છે!",
+    emergencyContactSent: "કટોકટી સંપર્ક",
+    familyContactSent: "કુટુંબ સંપર્ક",
+    alertSentText: "એલર્ટ મોકલાઈ ✓",
+    gotItBtn: "ઠીક છે",
+    privacyTitle: "🔒 ગોપનીયતા અને સુરક્ષા",
+    termsTitle: "શરતો અને નિયમો",
+    termsText1: "હેલ્થગાર્ડિયનનો ઉપયોગ કરીને, તમે નીચેની શરતો સ્વીકારો છો. કૃપા કરીને તેમને ધ્યાનથી વાંચો.",
+    privacyTitle2: "૧. ડેટા ગોપનીયતા",
+    privacyText1: "તમે દાખલ કરેલો તમામ આરોગ્ય ડેટા (રક્તદબાણ, શુગર, વજન, દવાઓ) સુરક્ષિત રીતે સંગ્રહિત થાય છે. અમે તમારી સ્પષ્ટ સંમતિ વિના ક્યારેય તમારી વ્યક્તિગત આરોગ્ય માહિતી તૃતીય પક્ષો સાથે શેર કરતા નથી.",
+    aiTitle: "૨. AI-જનરેટેડ સલાહ",
+    aiText1: "આપવામાં આવેલી AI આહાર અને આરોગ્ય સૂચનો માત્ર માહિતીપ્રદ હેતુઓ માટે છે અને વ્યાવસાયિક તબીબી સલાહનું સ્થાન લેતી નથી. તબીબી નિર્ણયો માટે હંમેશા તમારા ડૉક્ટરની સલાહ લો.",
+    emergencyTitle2: "૩. કટોકટી એલર્ટ",
+    emergencyText1: "કટોકટી એલર્ટ તમારા પૂર્વ-કોન્ફિગર કરેલા સંપર્કોને મોકલવામાં આવે છે. હેલ્થગાર્ડિયન કટોકટી સેવાઓનો વિકલ્પ નથી. જીવન-જોખમી પરિસ્થિતિઓમાં, હંમેશા કટોકટી સેવાઓ (૧૧૨/૧૦૮) ને કૉલ કરો.",
+    voiceTitle: "૪. અવાજ ડેટા",
+    voiceText1: "અવાજ ઇનપુટ તમારા ઉપકરણની સ્પીચ રિકગ્નિશન દ્વારા રીઅલ-ટાઇમમાં પ્રક્રિયા કરવામાં આવે છે. ઑડિયો ડેટા અમારા સર્વર પર સંગ્રહિત અથવા પ્રસારિત થતો નથી.",
+    accountTitle: "૫. ખાતું સુરક્ષા",
+    accountText1: "તમારા ખાતાની ગોપનીયતા જાળવવા માટે તમે જવાબદાર છો. કોઈપણ અનધિકૃત પ્રવેશની તાત્કાલિક જાણ કરો.",
+    updatesTitle: "૬. શરતોમાં અપડેટ્સ",
+    updatesText1: "હેલ્થગાર્ડિયન આ શરતોને અપડેટ કરવાનો અધિકાર અનામત રાખે છે. ઍપનો સતત ઉપયોગ સંશોધિત શરતોની સ્વીકૃતિ દર્શાવે છે.",
+    understandBtn: "હું સમજું છું અને સ્વીકારું છું",
+    notifTitle: "સૂચનાઓ",
+    notif1: "🔔 ૨:૦૦ PM પર પેરાસિટામોલ લેવાનો સમય",
+    notif2: "📋 તમારો છેલ્લો અપલોડ કરેલો રિપોર્ટ વિશ્લેષિત કરવામાં આવ્યો",
+    notif3: "📅 ૭:૦૦ PM પર ડૉ. રાજેશ પાટિલ સાથે એપોઇન્ટમેન્ટ",
+    switchAccount: "ખાતું બદલો",
+    languageChange: "ભાષા બદલો",
+    privacySecurity: "ગોપનીયતા અને સુરક્ષા",
+    logOut: "લૉગ આઉટ",
+    logOutSuccess: "લૉગ આઉટ કર્યું.",
+    chatPlaceholder: "તમારો પ્રશ્ન ટાઇપ કરો…",
+    dietPlaceholder: "આહાર, પોષણ વિશે પૂછો…",
+    langModalTitle: "🌐 ભાષા પસંદ કરો",
+    langSelectHint: "ઇન્ટરફેસ બદલવા માટે ભાષા પસંદ કરો",
+    toastHealthUpdated: "✅ આરોગ્ય ડેટા અપડેટ થયો!",
+    toastTaken: "આભાર, પ્રતિક્ષા! 💊 દવા લીધી તરીકે ચિહ્નિત.",
+    toastMissed: "⚠️ દવા ચૂકી! અલાર્મ વાગશે.",
+    toastSwitchAccount: "ખાતું બદલવાની સુવિધા ટૂંક સમયમાં આવી રહી છે!",
+    toastReportUploaded: "રિપોર્ટ અપલોડ થયો! AI વિશ્લેષણ કરી રહ્યું છે…",
+    toastMedicineAdded: "પ્રિસ્ક્રિપ્શનમાંથી દવા ઉમેરાઈ!",
+    toastVoiceNotSupported: "આ બ્રાઉઝરમાં અવાજ સમર્થિત નથી.",
+    toastCouldNotHear: "તમારો અવાજ સંભળાયો નહીં. ફરી પ્રયાસ કરો.",
+    toastLoggedOut: "લૉગ આઉટ કર્યું.",
+    toastLanguageChanged: "✅ ભાષા બદલાઈ ",
+    toastReportAnalysed: "📋 AI દ્વારા રિપોર્ટનું વિશ્લેષણ કરવામાં આવ્યું: ",
+    profileUsernameFieldLabel: "યુઝરનેમ",
+    profileAgeFieldLabel: "ઉંમર",
+    profileGenderFieldLabel: "લિંગ",
+    profileDobFieldLabel: "જન્મ તારીખ",
+    profileContactFieldLabel: "ફેમિલી કોન્ટેક્ટ નં.",
+    addMedFormTitle: "દવા ઉમેરો",
+    medNameFieldLabel: "દવાનું નામ",
+    medNamePlaceholder: "દા.ત. મેટફોર્મિન",
+    medTimeFieldLabel: "રિમાઇન્ડર સમય",
+    saveMedEntryText: "દવા ઉમેરો અને રિમાઇન્ડર સેટ કરો",
+    testReminderText: "🔔 રિમાઇન્ડર અવાજ ચકાસો",
+    noMedicinesAdded: "હજુ સુધી કોઈ દવા ઉમેરાઈ નથી.",
+    ambulanceLabel: "એમ્બ્યુલન્સ",
+    fireBrigadeLabel: "ફાયર બ્રિગેડ",
+    doctorLabel: "ડૉક્ટર",
+    contactLabel: "કોન્ટેક્ટ",
+    scheduleMedTileText: "દવા",
+    scheduleApptTileText: "એપોઇન્ટમેન્ટ",
+    todaysApptModalTitle: "આજની એપોઇન્ટમેન્ટ",
+    addApptFormTitle: "એપોઇન્ટમેન્ટ ઉમેરો",
+    apptDoctorLabel: "ડૉક્ટર / કારણ",
+    apptDoctorPlaceholder: "દા.ત. ડૉ. શર્મા — તપાસ",
+    apptDateLabel: "તારીખ",
+    apptTimeLabel: "સમય",
+    saveApptEntryText: "એપોઇન્ટમેન્ટ ઉમેરો અને રિમાઇન્ડર સેટ કરો",
+    noAppointmentsAdded: "હજુ સુધી કોઈ એપોઇન્ટમેન્ટ ઉમેરાઈ નથી.",
+  },
+  ta: {
+    healthGuardianTitle: "ஹெல்த் கார்டியன்",
+    greetingPrefix: "காலை வணக்கம்",
+    goodAfternoon: "மதிய வணக்கம்",
+    goodEvening: "மாலை வணக்கம்",
+    goodNight: "இனிய இரவு",
+    healthScoreLabel: "உடல்நல மதிப்பெண்",
+    goodLabel: "நல்லது",
+    nextMedicineLabel: "அடுத்த மருந்து",
+    paracetamolLabel: "பாராசிட்டாமால்",
+    todaysMedicinesLabel: "அப்பாய்ன்ட்மென்ட்",
+    takenLabel: "/ 5 எடுக்கப்பட்டது",
+    healthMonitoringTitle: "உடல்நல கண்காணிப்பு",
+    bpLabel: "இரத்த அழுத்தம்",
+    bloodSugarLabel: "இரத்த சர்க்கரை",
+    weightLabel: "எடை",
+    bloodGroupLabel: "இரத்த குழு",
+    updateHealthDataLabel: "உடல்நல தரவை புதுப்பிக்கவும்",
+    bpFieldLabel: "இரத்த அழுத்தம் (mmHg)",
+    sugarFieldLabel: "இரத்த சர்க்கரை (mg/dL)",
+    weightFieldLabel: "எடை (kg)",
+    bgFieldLabel: "இரத்த குழு",
+    selectOption: "தேர்ந்தெடுக்கவும்",
+    saveHealthBtn: "உடல்நல தரவை சேமிக்கவும்",
+    uploadReportText: "அறிக்கையை பதிவேற்றவும் (கேமரா / கேலரி)",
+    medicineAppointmentTitle: "மருந்து மற்றும் சந்திப்பு",
+    nextMedicineName: "அடுத்த மருந்து",
+    medTimeText: "2:00 PM · உணவிற்கு பிறகு",
+    takenBtnText: "எடுக்கப்பட்டது",
+    missedBtnText: "தவறவிடப்பட்டது",
+    nextAppointmentLabel: "அடுத்த சந்திப்பு: 7:00 PM",
+    drLabel: "— டாக்டர். ராஜேஷ் பாட்டீல்",
+    addMedText: "புதிய மருந்து சேர்க்கவும் (கேமரா / கேலரி)",
+    viewAllMedicines: "அனைத்து மருந்துகளையும் காண்க →",
+    healthTrackerTitle: "உடல்நல கண்காணிப்பு — மாதாந்திர வரைபடம்",
+    bpTab: "இரத்த அழுத்தம்",
+    sugarTab: "சர்க்கரை",
+    weightTab: "எடை",
+    dietAssistantTitle: "உணவு உதவியாளர்",
+    breakfastLabel: "காலை உணவு",
+    breakfastText: "— போஹே + தேநீர்",
+    lunchLabel: "மதிய உணவு",
+    lunchText: "— பருப்பு சாதம் + சாலட்",
+    dinnerLabel: "இரவு உணவு",
+    dinnerText: "— கிச்சடி + தயிர்",
+    askDietAIText: "உணவு AI க்கு கேளுங்கள்",
+    healthGuardianAITitle: "ஹெல்த் கார்டியன் AI",
+    aiDescText: "உங்கள் உடல்நலம், மருந்துகள், அறிகுறிகள் அல்லது அறிக்கைகள் பற்றி எதுவும் கேளுங்கள். 24/7 கிடைக்கும்.",
+    startChatText: "AI உடன் அரட்டை தொடங்கவும்",
+    voiceText: "உங்கள் குரலுடன் AI உடன் பேசுங்கள் — கை-இல்லாத!",
+    voiceBtn: "🎙 குரல்",
+    todayScheduleTitle: "இன்றைய அட்டவணை",
+    scheduleMed1: "மருந்து — மெட்ஃபார்மின்",
+    scheduleMed2: "மருந்து — பாராசிட்டாமால்",
+    scheduleWater: "💧 தண்ணீர் நினைவூட்டல்",
+    scheduleAppointment: "மருத்துவர் சந்திப்பு",
+    scheduleMed3: "மருந்து — ஆஸ்பிரின்",
+    emergencyTitle: "அவசர நிலை",
+    emergencyDesc: "உடனடி உதவி தேவையா? உங்கள் அவசர தொடர்புகள் மற்றும் குடும்பத்திற்கு உடனடியாக எச்சரிக்கை செய்ய கீழே தட்டவும்.",
+    emergencyBtn: "⚠ அவசர எச்சரிக்கை அனுப்பு",
+    emergencyContactText: "அவசர தொடர்பு",
+    familyContactText: "குடும்ப தொடர்பு",
+    uploadReportModalTitle: "அறிக்கையை பதிவேற்றவும்",
+    cameraText: "கேமரா",
+    galleryText: "கேலரி",
+    addMedModalTitle: "புதிய மருந்து சேர்க்கவும்",
+    scanUploadText: "உங்கள் மருந்து மருந்துச் சீட்டை ஸ்கேன் அல்லது பதிவேற்றவும்",
+    medCameraText: "கேமரா",
+    medGalleryText: "கேலரி",
+    todaysMedicinesModalTitle: "இன்றைய மருந்துகள்",
+    takenStatus: "✓ எடுக்கப்பட்டது",
+    upcomingStatus: "⏰ வரவிருக்கும்",
+    chatModalTitle: "🛡️ ஹெல்த் கார்டியன் AI",
+    chatWelcomeMsg: "வணக்கம் பிரதிக்ஷா! இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்? 😊",
+    chatSendBtn: "அனுப்பு",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 உணவு உதவியாளர் AI",
+    dietChatWelcome: "வணக்கம் பிரதிக்ஷா! நான் உங்கள் உணவு AI. உங்கள் உணவு, ஊட்டச்சத்து, உணவு திட்டங்கள் அல்லது உணவு பழக்கவழக்கங்கள் பற்றி எதுவும் கேளுங்கள்! 🥦",
+    dietSendBtn: "அனுப்பு",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "அவசர எச்சரிக்கை அனுப்பப்பட்டது!",
+    emergencyPopupDesc: "உங்கள் அவசர எச்சரிக்கை உங்கள் அவசர தொடர்பு மற்றும் குடும்ப தொடர்புக்கு அனுப்பப்பட்டுள்ளது. உதவி வருகிறது!",
+    emergencyContactSent: "அவசர தொடர்பு",
+    familyContactSent: "குடும்ப தொடர்பு",
+    alertSentText: "எச்சரிக்கை அனுப்பப்பட்டது ✓",
+    gotItBtn: "சரி, புரிந்தது",
+    privacyTitle: "🔒 தனியுரிமை மற்றும் பாதுகாப்பு",
+    termsTitle: "விதிமுறைகள் மற்றும் நிபந்தனைகள்",
+    termsText1: "ஹெல்த்கார்டியனைப் பயன்படுத்துவதன் மூலம், நீங்கள் பின்வரும் விதிமுறைகளுக்கு ஒப்புக்கொள்கிறீர்கள். அவற்றை கவனமாக படிக்கவும்.",
+    privacyTitle2: "1. தரவு தனியுரிமை",
+    privacyText1: "நீங்கள் உள்ளிட்ட அனைத்து உடல்நல தரவுகளும் (இரத்த அழுத்தம், சர்க்கரை, எடை, மருந்துகள்) பாதுகாப்பாக சேமிக்கப்படுகின்றன. உங்கள் வெளிப்படையான ஒப்புதல் இல்லாமல் உங்கள் தனிப்பட்ட உடல்நல தகவல்களை நாங்கள் மூன்றாம் தரப்பினருடன் பகிர்ந்து கொள்ள மாட்டோம்.",
+    aiTitle: "2. AI-உருவாக்கிய ஆலோசனை",
+    aiText1: "வழங்கப்படும் AI உணவு மற்றும் உடல்நல பரிந்துரைகள் தகவல் நோக்கங்களுக்காக மட்டுமே மற்றும் தொழில்முறை மருத்துவ ஆலோசனையை மாற்றாது. மருத்துவ முடிவுகளுக்கு எப்போதும் உங்கள் மருத்துவரை அணுகவும்.",
+    emergencyTitle2: "3. அவசர எச்சரிக்கைகள்",
+    emergencyText1: "அவசர எச்சரிக்கைகள் உங்கள் முன்-கட்டமைக்கப்பட்ட தொடர்புகளுக்கு அனுப்பப்படுகின்றன. ஹெல்த்கார்டியன் அவசர சேவைகளுக்கு மாற்று அல்ல. உயிர் ஆபத்தான சூழ்நிலைகளில், எப்போதும் அவசர சேவைகளை (112/108) அழைக்கவும்.",
+    voiceTitle: "4. குரல் தரவு",
+    voiceText1: "குரல் உள்ளீடு உங்கள் சாதனத்தின் பேச்சு அங்கீகாரத்தின் மூலம் நிகழ்நேரத்தில் செயலாக்கப்படுகிறது. ஆடியோ தரவு எங்கள் சேவையகங்களில் சேமிக்கப்படவோ அல்லது அனுப்பப்படவோ இல்லை.",
+    accountTitle: "5. கணக்கு பாதுகாப்பு",
+    accountText1: "உங்கள் கணக்கின் ரகசியத்தன்மையை பராமரிக்க நீங்கள் பொறுப்பு. ஏதேனும் அங்கீகரிக்கப்படாத அணுகலை உடனடியாக புகாரளிக்கவும்.",
+    updatesTitle: "6. விதிமுறைகளுக்கான புதுப்பிப்புகள்",
+    updatesText1: "ஹெல்த்கார்டியன் இந்த விதிமுறைகளை புதுப்பிக்க உரிமையை வைத்திருக்கிறது. பயன்பாட்டின் தொடர்ச்சியான பயன்பாடு திருத்தப்பட்ட விதிமுறைகளை ஏற்றுக்கொள்வதை குறிக்கிறது.",
+    understandBtn: "நான் புரிந்துகொள்கிறேன் மற்றும் ஏற்றுக்கொள்கிறேன்",
+    notifTitle: "அறிவிப்புகள்",
+    notif1: "🔔 பாராசிட்டாமால் எடுக்க நேரம் 2:00 PM",
+    notif2: "📋 உங்கள் கடைசியாக பதிவேற்றிய அறிக்கை பகுப்பாய்வு செய்யப்பட்டது",
+    notif3: "📅 டாக்டர். ராஜேஷ் பாட்டீலுடன் சந்திப்பு 7:00 PM",
+    switchAccount: "கணக்கை மாற்று",
+    languageChange: "மொழி மாற்று",
+    privacySecurity: "தனியுரிமை மற்றும் பாதுகாப்பு",
+    logOut: "வெளியேறு",
+    logOutSuccess: "வெளியேறப்பட்டது.",
+    chatPlaceholder: "உங்கள் கேள்வியை தட்டச்சு செய்யவும்…",
+    dietPlaceholder: "உணவு, ஊட்டச்சத்து பற்றி கேளுங்கள்…",
+    langModalTitle: "🌐 மொழியைத் தேர்ந்தெடுக்கவும்",
+    langSelectHint: "இடைமுகத்தை மாற்ற மொழியைத் தேர்ந்தெடுக்கவும்",
+    toastHealthUpdated: "✅ உடல்நல தரவு புதுப்பிக்கப்பட்டது!",
+    toastTaken: "நன்றி, பிரதிக்ஷா! 💊 மருந்து எடுக்கப்பட்டதாக குறிக்கப்பட்டது.",
+    toastMissed: "⚠️ மருந்து தவறவிடப்பட்டது! அலாரம் ஒலிக்கும்.",
+    toastSwitchAccount: "கணக்கை மாற்றும் அம்சம் விரைவில் வருகிறது!",
+    toastReportUploaded: "அறிக்கை பதிவேற்றப்பட்டது! AI பகுப்பாய்வு செய்கிறது…",
+    toastMedicineAdded: "மருந்துச் சீட்டிலிருந்து மருந்து சேர்க்கப்பட்டது!",
+    toastVoiceNotSupported: "இந்த உலாவியில் குரல் ஆதரிக்கப்படவில்லை.",
+    toastCouldNotHear: "உங்கள் குரல் கேட்கவில்லை. மீண்டும் முயற்சிக்கவும்.",
+    toastLoggedOut: "வெளியேறப்பட்டது.",
+    toastLanguageChanged: "✅ மொழி மாற்றப்பட்டது ",
+    toastReportAnalysed: "📋 AI மூலம் அறிக்கை பகுப்பாய்வு செய்யப்பட்டது: ",
+    profileUsernameFieldLabel: "பயனர்பெயர்",
+    profileAgeFieldLabel: "வயது",
+    profileGenderFieldLabel: "பாலினம்",
+    profileDobFieldLabel: "பிறந்த தேதி",
+    profileContactFieldLabel: "குடும்ப தொடர்பு எண்.",
+    addMedFormTitle: "மருந்து சேர்க்கவும்",
+    medNameFieldLabel: "மருந்தின் பெயர்",
+    medNamePlaceholder: "எ.கா. மெட்ஃபார்மின்",
+    medTimeFieldLabel: "நினைவூட்டல் நேரம்",
+    saveMedEntryText: "மருந்து சேர்த்து நினைவூட்டலை அமைக்கவும்",
+    testReminderText: "🔔 நினைவூட்டல் ஒலியை சோதிக்கவும்",
+    noMedicinesAdded: "இதுவரை மருந்து எதுவும் சேர்க்கப்படவில்லை.",
+    ambulanceLabel: "ஆம்புலன்ஸ்",
+    fireBrigadeLabel: "தீயணைப்பு படை",
+    doctorLabel: "மருத்துவர்",
+    contactLabel: "தொடர்பு",
+    scheduleMedTileText: "மருந்து",
+    scheduleApptTileText: "அப்பாய்ன்ட்மென்ட்",
+    todaysApptModalTitle: "இன்றைய அப்பாய்ன்ட்மென்ட்கள்",
+    addApptFormTitle: "அப்பாய்ன்ட்மென்ட் சேர்க்கவும்",
+    apptDoctorLabel: "மருத்துவர் / காரணம்",
+    apptDoctorPlaceholder: "எ.கா. டாக்டர் சர்மா — பரிசோதனை",
+    apptDateLabel: "தேதி",
+    apptTimeLabel: "நேரம்",
+    saveApptEntryText: "அப்பாய்ன்ட்மென்ட் சேர்த்து நினைவூட்டலை அமைக்கவும்",
+    noAppointmentsAdded: "இதுவரை அப்பாய்ன்ட்மென்ட் எதுவும் சேர்க்கப்படவில்லை.",
+  },
+  te: {
+    healthGuardianTitle: "హెల్త్ గార్డియన్",
+    greetingPrefix: "శుభోదయం",
+    goodAfternoon: "శుభ మధ్యాహ్నం",
+    goodEvening: "శుభ సాయంత్రం",
+    goodNight: "శుభ రాత్రి",
+    healthScoreLabel: "ఆరోగ్య స్కోరు",
+    goodLabel: "మంచిది",
+    nextMedicineLabel: "తరువాతి మందు",
+    paracetamolLabel: "పారాసిటమాల్",
+    todaysMedicinesLabel: "అపాయింట్‌మెంట్",
+    takenLabel: "/ 5 తీసుకున్నారు",
+    healthMonitoringTitle: "ఆరోగ్య పర్యవేక్షణ",
+    bpLabel: "రక్తపోటు",
+    bloodSugarLabel: "రక్త చక్కెర",
+    weightLabel: "బరువు",
+    bloodGroupLabel: "రక్త గ్రూపు",
+    updateHealthDataLabel: "ఆరోగ్య డేటాను అప్డేట్ చేయండి",
+    bpFieldLabel: "బీపీ (mmHg)",
+    sugarFieldLabel: "రక్త చక్కెర (mg/dL)",
+    weightFieldLabel: "బరువు (kg)",
+    bgFieldLabel: "రక్త గ్రూపు",
+    selectOption: "ఎంచుకోండి",
+    saveHealthBtn: "ఆరోగ్య డేటాను సేవ్ చేయండి",
+    uploadReportText: "నివేదికను అప్లోడ్ చేయండి (కెమెరా / గ్యాలరీ)",
+    medicineAppointmentTitle: "మందు మరియు అపాయింట్మెంట్",
+    nextMedicineName: "తరువాతి మందు",
+    medTimeText: "2:00 PM · భోజనం తర్వాత",
+    takenBtnText: "తీసుకున్నారు",
+    missedBtnText: "తప్పిపోయింది",
+    nextAppointmentLabel: "తరువాతి అపాయింట్మెంట్: 7:00 PM",
+    drLabel: "— డా. రాజేష్ పాటిల్",
+    addMedText: "కొత్త మందును జోడించండి (కెమెరా / గ్యాలరీ)",
+    viewAllMedicines: "అన్ని మందులను చూడండి →",
+    healthTrackerTitle: "ఆరోగ్య ట్రాకర్ — నెలవారీ గ్రాఫ్",
+    bpTab: "బీపీ",
+    sugarTab: "షుగర్",
+    weightTab: "బరువు",
+    dietAssistantTitle: "ఆహార సహాయకుడు",
+    breakfastLabel: "అల్పాహారం",
+    breakfastText: "— పోహే + టీ",
+    lunchLabel: "మధ్యాహ్న భోజనం",
+    lunchText: "— పప్పు అన్నం + సలాడ్",
+    dinnerLabel: "రాత్రి భోజనం",
+    dinnerText: "— ఖిచడీ + పెరుగు",
+    askDietAIText: "ఆహార AI ని అడగండి",
+    healthGuardianAITitle: "హెల్త్ గార్డియన్ AI",
+    aiDescText: "మీ ఆరోగ్యం, మందులు, లక్షణాలు లేదా నివేదికల గురించి ఏదైనా అడగండి. 24/7 అందుబాటులో ఉంటుంది.",
+    startChatText: "AI తో చాట్ ప్రారంభించండి",
+    voiceText: "మీ వాయిస్ తో AI తో మాట్లాడండి — హ్యాండ్స్-ఫ్రీ!",
+    voiceBtn: "🎙 వాయిస్",
+    todayScheduleTitle: "నేటి షెడ్యూల్",
+    scheduleMed1: "మందు — మెట్ఫార్మిన్",
+    scheduleMed2: "మందు — పారాసిటమాల్",
+    scheduleWater: "💧 నీరు రిమైండర్",
+    scheduleAppointment: "డాక్టర్ అపాయింట్మెంట్",
+    scheduleMed3: "మందు — ఆస్పిరిన్",
+    emergencyTitle: "అత్యవసర",
+    emergencyDesc: "తక్షణ సహాయం కావాలా? మీ అత్యవసర పరిచయాలు మరియు కుటుంబానికి వెంటనే హెచ్చరించడానికి క్రింద నొక్కండి.",
+    emergencyBtn: "⚠ అత్యవసర హెచ్చరిక పంపండి",
+    emergencyContactText: "అత్యవసర పరిచయం",
+    familyContactText: "కుటుంబ పరిచయం",
+    uploadReportModalTitle: "నివేదికను అప్లోడ్ చేయండి",
+    cameraText: "కెమెరా",
+    galleryText: "గ్యాలరీ",
+    addMedModalTitle: "కొత్త మందును జోడించండి",
+    scanUploadText: "మీ మందు ప్రిస్క్రిప్షన్ స్కాన్ లేదా అప్లోడ్ చేయండి",
+    medCameraText: "కెమెరా",
+    medGalleryText: "గ్యాలరీ",
+    todaysMedicinesModalTitle: "నేటి మందులు",
+    takenStatus: "✓ తీసుకున్నారు",
+    upcomingStatus: "⏰ రాబోయేది",
+    chatModalTitle: "🛡️ హెల్త్ గార్డియన్ AI",
+    chatWelcomeMsg: "నమస్తే ప్రతిక్ష! నేను ఈరోజు మీకు ఎలా సహాయపడగలను? 😊",
+    chatSendBtn: "పంపండి",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 ఆహార సహాయకుడు AI",
+    dietChatWelcome: "నమస్తే ప్రతిక్ష! నేను మీ ఆహార AI. మీ ఆహారం, పోషణ, భోజన ప్రణాళికలు లేదా ఆహార అలవాట్ల గురించి ఏదైనా అడగండి! 🥦",
+    dietSendBtn: "పంపండి",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "అత్యవసర హెచ్చరిక పంపబడింది!",
+    emergencyPopupDesc: "మీ అత్యవసర హెచ్చరిక మీ అత్యవసర పరిచయం మరియు కుటుంబ పరిచయానికి పంపబడింది. సహాయం వస్తోంది!",
+    emergencyContactSent: "అత్యవసర పరిచయం",
+    familyContactSent: "కుటుంబ పరిచయం",
+    alertSentText: "హెచ్చరిక పంపబడింది ✓",
+    gotItBtn: "సరే, అర్థమైంది",
+    privacyTitle: "🔒 గోప్యత మరియు భద్రత",
+    termsTitle: "నిబంధనలు మరియు షరతులు",
+    termsText1: "హెల్త్గార్డియన్ ఉపయోగించడం ద్వారా, మీరు క్రింది నిబంధనలకు అంగీకరిస్తున్నారు. దయచేసి వాటిని జాగ్రత్తగా చదవండి.",
+    privacyTitle2: "1. డేటా గోప్యత",
+    privacyText1: "మీరు నమోదు చేసిన అన్ని ఆరోగ్య డేటా (రక్తపోటు, చక్కెర, బరువు, మందులు) సురక్షితంగా నిల్వ చేయబడుతుంది. మీ స్పష్టమైన సమ్మతి లేకుండా మేము మీ వ్యక్తిగత ఆరోగ్య సమాచారాన్ని మూడవ పక్షాలతో ఎప్పుడూ పంచుకోము.",
+    aiTitle: "2. AI-ఉత్పత్తి సలహా",
+    aiText1: "అందించిన AI ఆహారం మరియు ఆరోగ్య సూచనలు సమాచార ప్రయోజనాల కోసం మాత్రమే మరియు వృత్తిపరమైన వైద్య సలహాను భర్తీ చేయవు. వైద్య నిర్ణయాల కోసం ఎల్లప్పుడూ మీ వైద్యుడిని సంప్రదించండి.",
+    emergencyTitle2: "3. అత్యవసర హెచ్చరికలు",
+    emergencyText1: "అత్యవసర హెచ్చరికలు మీ ముందే కాన్ఫిగర్ చేసిన పరిచయాలకు పంపబడతాయి. హెల్త్గార్డియన్ అత్యవసర సేవలకు ప్రత్యామ్నాయం కాదు. ప్రాణాపాయ పరిస్థితులలో, ఎల్లప్పుడూ అత్యవసర సేవలను (112/108) కాల్ చేయండి.",
+    voiceTitle: "4. వాయిస్ డేటా",
+    voiceText1: "వాయిస్ ఇన్పుట్ మీ పరికరం యొక్క స్పీచ్ రికగ్నిషన్ ద్వారా రియల్-టైమ్లో ప్రాసెస్ చేయబడుతుంది. ఆడియో డేటా మా సర్వర్లలో నిల్వ చేయబడదు లేదా ప్రసారం చేయబడదు.",
+    accountTitle: "5. ఖాతా భద్రత",
+    accountText1: "మీ ఖాతా యొక్క గోప్యతను నిర్వహించడానికి మీరు బాధ్యత వహిస్తారు. ఏదైనా అనధికారిక యాక్సెస్ను వెంటనే నివేదించండి.",
+    updatesTitle: "6. నిబంధనలకు అప్డేట్లు",
+    updatesText1: "హెల్త్గార్డియన్ ఈ నిబంధనలను అప్డేట్ చేసే హక్కును కలిగి ఉంది. యాప్ యొక్క నిరంతర వినియోగం సవరించిన నిబంధనలను అంగీకరించడం.",
+    understandBtn: "నేను అర్థం చేసుకున్నాను మరియు అంగీకరిస్తున్నాను",
+    notifTitle: "నోటిఫికేషన్లు",
+    notif1: "🔔 పారాసిటమాల్ తీసుకునే సమయం 2:00 PM",
+    notif2: "📋 మీ చివరిగా అప్లోడ్ చేసిన నివేదిక విశ్లేషించబడింది",
+    notif3: "📅 డా. రాజేష్ పాటిల్ తో అపాయింట్మెంట్ 7:00 PM",
+    switchAccount: "ఖాతా మార్చండి",
+    languageChange: "భాష మార్చండి",
+    privacySecurity: "గోప్యత మరియు భద్రత",
+    logOut: "లాగ్ అవుట్",
+    logOutSuccess: "లాగ్ అవుట్ చేయబడింది.",
+    chatPlaceholder: "మీ ప్రశ్నను టైప్ చేయండి…",
+    dietPlaceholder: "ఆహారం, పోషణ గురించి అడగండి…",
+    langModalTitle: "🌐 భాషను ఎంచుకోండి",
+    langSelectHint: "ఇంటర్ఫేస్ మార్చడానికి భాషను ఎంచుకోండి",
+    toastHealthUpdated: "✅ ఆరోగ్య డేటా అప్డేట్ చేయబడింది!",
+    toastTaken: "ధన్యవాదాలు, ప్రతిక్ష! 💊 మందు తీసుకున్నట్లు గుర్తించబడింది.",
+    toastMissed: "⚠️ మందు తప్పిపోయింది! అలారం మోగుతుంది.",
+    toastSwitchAccount: "ఖాతా మార్చే ఫీచర్ త్వరలో వస్తుంది!",
+    toastReportUploaded: "నివేదిక అప్లోడ్ చేయబడింది! AI విశ్లేషిస్తుంది…",
+    toastMedicineAdded: "ప్రిస్క్రిప్షన్ నుండి మందు జోడించబడింది!",
+    toastVoiceNotSupported: "ఈ బ్రౌజర్లో వాయిస్ మద్దతు లేదు.",
+    toastCouldNotHear: "మీ వాయిస్ వినిపించలేదు. మళ్ళీ ప్రయత్నించండి.",
+    toastLoggedOut: "లాగ్ అవుట్ చేయబడింది.",
+    toastLanguageChanged: "✅ భాష మార్చబడింది ",
+    toastReportAnalysed: "📋 AI ద్వారా నివేదిక విశ్లేషించబడింది: ",
+    profileUsernameFieldLabel: "యూజర్‌నేమ్",
+    profileAgeFieldLabel: "వయస్సు",
+    profileGenderFieldLabel: "లింగం",
+    profileDobFieldLabel: "పుట్టిన తేదీ",
+    profileContactFieldLabel: "కుటుంబ కాంటాక్ట్ నం.",
+    addMedFormTitle: "మందు జోడించండి",
+    medNameFieldLabel: "మందు పేరు",
+    medNamePlaceholder: "ఉదా. మెట్‌ఫార్మిన్",
+    medTimeFieldLabel: "రిమైండర్ సమయం",
+    saveMedEntryText: "మందు జోడించి రిమైండర్ సెట్ చేయండి",
+    testReminderText: "🔔 రిమైండర్ శబ్దాన్ని పరీక్షించండి",
+    noMedicinesAdded: "ఇంకా ఏ మందులు జోడించలేదు.",
+    ambulanceLabel: "అంబులెన్స్",
+    fireBrigadeLabel: "ఫైర్ బ్రిగేడ్",
+    doctorLabel: "డాక్టర్",
+    contactLabel: "కాంటాక్ట్",
+    scheduleMedTileText: "మందు",
+    scheduleApptTileText: "అపాయింట్‌మెంట్",
+    todaysApptModalTitle: "నేటి అపాయింట్‌మెంట్‌లు",
+    addApptFormTitle: "అపాయింట్‌మెంట్ జోడించండి",
+    apptDoctorLabel: "డాక్టర్ / కారణం",
+    apptDoctorPlaceholder: "ఉదా. డా. శర్మ — చెకప్",
+    apptDateLabel: "తేదీ",
+    apptTimeLabel: "సమయం",
+    saveApptEntryText: "అపాయింట్‌మెంట్ జోడించి రిమైండర్ సెట్ చేయండి",
+    noAppointmentsAdded: "ఇంకా అపాయింట్‌మెంట్‌లు జోడించలేదు.",
+  },
+  kn: {
+    healthGuardianTitle: "ಹೆಲ್ತ್ ಗಾರ್ಡಿಯನ್",
+    greetingPrefix: "ಶುಭೋದಯ",
+    goodAfternoon: "ಶುಭ ಮಧ್ಯಾಹ್ನ",
+    goodEvening: "ಶುಭ ಸಂಜೆ",
+    goodNight: "ಶುಭ ರಾತ್ರಿ",
+    healthScoreLabel: "ಆರೋಗ್ಯ ಸ್ಕೋರ್",
+    goodLabel: "ಒಳ್ಳೆಯದು",
+    nextMedicineLabel: "ಮುಂದಿನ ಔಷಧಿ",
+    paracetamolLabel: "ಪ್ಯಾರಾಸಿಟಾಮಾಲ್",
+    todaysMedicinesLabel: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್",
+    takenLabel: "/ 5 ತೆಗೆದುಕೊಂಡಿದ್ದಾರೆ",
+    healthMonitoringTitle: "ಆರೋಗ್ಯ ಮೇಲ್ವಿಚಾರಣೆ",
+    bpLabel: "ರಕ್ತದೊತ್ತಡ",
+    bloodSugarLabel: "ರಕ್ತದ ಸಕ್ಕರೆ",
+    weightLabel: "ತೂಕ",
+    bloodGroupLabel: "ರಕ್ತದ ಗುಂಪು",
+    updateHealthDataLabel: "ಆರೋಗ್ಯ ಡೇಟಾವನ್ನು ಅಪ್ಡೇಟ್ ಮಾಡಿ",
+    bpFieldLabel: "ಬಿಪಿ (mmHg)",
+    sugarFieldLabel: "ರಕ್ತದ ಸಕ್ಕರೆ (mg/dL)",
+    weightFieldLabel: "ತೂಕ (kg)",
+    bgFieldLabel: "ರಕ್ತದ ಗುಂಪು",
+    selectOption: "ಆಯ್ಕೆಮಾಡಿ",
+    saveHealthBtn: "ಆರೋಗ್ಯ ಡೇಟಾವನ್ನು ಉಳಿಸಿ",
+    uploadReportText: "ವರದಿಯನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಿ (ಕ್ಯಾಮೆರಾ / ಗ್ಯಾಲರಿ)",
+    medicineAppointmentTitle: "ಔಷಧಿ ಮತ್ತು ಅಪಾಯಿಂಟ್ಮೆಂಟ್",
+    nextMedicineName: "ಮುಂದಿನ ಔಷಧಿ",
+    medTimeText: "2:00 PM · ಊಟದ ನಂತರ",
+    takenBtnText: "ತೆಗೆದುಕೊಂಡಿದ್ದಾರೆ",
+    missedBtnText: "ತಪ್ಪಿಹೋಗಿದೆ",
+    nextAppointmentLabel: "ಮುಂದಿನ ಅಪಾಯಿಂಟ್ಮೆಂಟ್: 7:00 PM",
+    drLabel: "— ಡಾ. ರಾಜೇಶ್ ಪಾಟೀಲ್",
+    addMedText: "ಹೊಸ ಔಷಧಿ ಸೇರಿಸಿ (ಕ್ಯಾಮೆರಾ / ಗ್ಯಾಲರಿ)",
+    viewAllMedicines: "ಎಲ್ಲಾ ಔಷಧಿಗಳನ್ನು ನೋಡಿ →",
+    healthTrackerTitle: "ಆರೋಗ್ಯ ಟ್ರ್ಯಾಕರ್ — ಮಾಸಿಕ ಗ್ರಾಫ್",
+    bpTab: "ಬಿಪಿ",
+    sugarTab: "ಸಕ್ಕರೆ",
+    weightTab: "ತೂಕ",
+    dietAssistantTitle: "ಆಹಾರ ಸಹಾಯಕ",
+    breakfastLabel: "ಉಪಾಹಾರ",
+    breakfastText: "— ಪೋಹೆ + ಚಹಾ",
+    lunchLabel: "ಮಧ್ಯಾಹ್ನದ ಊಟ",
+    lunchText: "— ತೊವ್ವೆ ಅನ್ನ + ಸಲಾಡ್",
+    dinnerLabel: "ರಾತ್ರಿಯ ಊಟ",
+    dinnerText: "— ಖಿಚಡಿ + ಮೊಸರು",
+    askDietAIText: "ಆಹಾರ AI ನನ್ನು ಕೇಳಿ",
+    healthGuardianAITitle: "ಹೆಲ್ತ್ ಗಾರ್ಡಿಯನ್ AI",
+    aiDescText: "ನಿಮ್ಮ ಆರೋಗ್ಯ, ಔಷಧಿಗಳು, ಲಕ್ಷಣಗಳು ಅಥವಾ ವರದಿಗಳ ಬಗ್ಗೆ ಏನಾದರೂ ಕೇಳಿ. 24/7 ಲಭ್ಯವಿದೆ.",
+    startChatText: "AI ನೊಂದಿಗೆ ಚಾಟ್ ಪ್ರಾರಂಭಿಸಿ",
+    voiceText: "ನಿಮ್ಮ ಧ್ವನಿಯೊಂದಿಗೆ AI ನೊಂದಿಗೆ ಮಾತನಾಡಿ — ಹ್ಯಾಂಡ್ಸ್-ಫ್ರೀ!",
+    voiceBtn: "🎙 ಧ್ವನಿ",
+    todayScheduleTitle: "ಇಂದಿನ ವೇಳಾಪಟ್ಟಿ",
+    scheduleMed1: "ಔಷಧಿ — ಮೆಟ್ಫಾರ್ಮಿನ್",
+    scheduleMed2: "ಔಷಧಿ — ಪ್ಯಾರಾಸಿಟಾಮಾಲ್",
+    scheduleWater: "💧 ನೀರು ಜ್ಞಾಪನೆ",
+    scheduleAppointment: "ವೈದ್ಯರ ಅಪಾಯಿಂಟ್ಮೆಂಟ್",
+    scheduleMed3: "ಔಷಧಿ — ಆಸ್ಪಿರಿನ್",
+    emergencyTitle: "ತುರ್ತು",
+    emergencyDesc: "ತುರ್ತು ಸಹಾಯ ಬೇಕೇ? ಕೆಳಗೆ ಟ್ಯಾಪ್ ಮಾಡಿ ಮತ್ತು ತಕ್ಷಣ ನಿಮ್ಮ ತುರ್ತು ಸಂಪರ್ಕಗಳು ಮತ್ತು ಕುಟುಂಬಕ್ಕೆ ಎಚ್ಚರಿಸಿ.",
+    emergencyBtn: "⚠ ತುರ್ತು ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಿ",
+    emergencyContactText: "ತುರ್ತು ಸಂಪರ್ಕ",
+    familyContactText: "ಕುಟುಂಬ ಸಂಪರ್ಕ",
+    uploadReportModalTitle: "ವರದಿಯನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಿ",
+    cameraText: "ಕ್ಯಾಮೆರಾ",
+    galleryText: "ಗ್ಯಾಲರಿ",
+    addMedModalTitle: "ಹೊಸ ಔಷಧಿ ಸೇರಿಸಿ",
+    scanUploadText: "ನಿಮ್ಮ ಔಷಧಿ ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ ಸ್ಕ್ಯಾನ್ ಅಥವಾ ಅಪ್ಲೋಡ್ ಮಾಡಿ",
+    medCameraText: "ಕ್ಯಾಮೆರಾ",
+    medGalleryText: "ಗ್ಯಾಲರಿ",
+    todaysMedicinesModalTitle: "ಇಂದಿನ ಔಷಧಿಗಳು",
+    takenStatus: "✓ ತೆಗೆದುಕೊಂಡಿದ್ದಾರೆ",
+    upcomingStatus: "⏰ ಮುಂದಿನದು",
+    chatModalTitle: "🛡️ ಹೆಲ್ತ್ ಗಾರ್ಡಿಯನ್ AI",
+    chatWelcomeMsg: "ನಮಸ್ಕಾರ ಪ್ರತಿಕ್ಷಾ! ನಾನು ಇಂದು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು? 😊",
+    chatSendBtn: "ಕಳುಹಿಸಿ",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 ಆಹಾರ ಸಹಾಯಕ AI",
+    dietChatWelcome: "ನಮಸ್ಕಾರ ಪ್ರತಿಕ್ಷಾ! ನಾನು ನಿಮ್ಮ ಆಹಾರ AI. ನಿಮ್ಮ ಆಹಾರ, ಪೋಷಣೆ, ಊಟದ ಯೋಜನೆಗಳು ಅಥವಾ ಆಹಾರ ಅಭ್ಯಾಸಗಳ ಬಗ್ಗೆ ಏನಾದರೂ ಕೇಳಿ! 🥦",
+    dietSendBtn: "ಕಳುಹಿಸಿ",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "ತುರ್ತು ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಲಾಗಿದೆ!",
+    emergencyPopupDesc: "ನಿಮ್ಮ ತುರ್ತು ಎಚ್ಚರಿಕೆ ನಿಮ್ಮ ತುರ್ತು ಸಂಪರ್ಕ ಮತ್ತು ಕುಟುಂಬ ಸಂಪರ್ಕಕ್ಕೆ ಕಳುಹಿಸಲಾಗಿದೆ. ಸಹಾಯ ಬರುತ್ತಿದೆ!",
+    emergencyContactSent: "ತುರ್ತು ಸಂಪರ್ಕ",
+    familyContactSent: "ಕುಟುಂಬ ಸಂಪರ್ಕ",
+    alertSentText: "ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಲಾಗಿದೆ ✓",
+    gotItBtn: "ಸರಿ, ಅರ್ಥವಾಯಿತು",
+    privacyTitle: "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಭದ್ರತೆ",
+    termsTitle: "ನಿಯಮಗಳು ಮತ್ತು ಷರತ್ತುಗಳು",
+    termsText1: "ಹೆಲ್ತ್ಗಾರ್ಡಿಯನ್ ಬಳಸುವುದರ ಮೂಲಕ, ನೀವು ಈ ಕೆಳಗಿನ ನಿಯಮಗಳಿಗೆ ಸಮ್ಮತಿಸುತ್ತೀರಿ. ದಯವಿಟ್ಟು ಅವುಗಳನ್ನು ಎಚ್ಚರಿಕೆಯಿಂದ ಓದಿ.",
+    privacyTitle2: "1. ಡೇಟಾ ಗೌಪ್ಯತೆ",
+    privacyText1: "ನೀವು ನಮೂದಿಸಿದ ಎಲ್ಲಾ ಆರೋಗ್ಯ ಡೇಟಾ (ರಕ್ತದೊತ್ತಡ, ಸಕ್ಕರೆ, ತೂಕ, ಔಷಧಿಗಳು) ಸುರಕ್ಷಿತವಾಗಿ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ. ನಿಮ್ಮ ಸ್ಪಷ್ಟ ಒಪ್ಪಿಗೆಯಿಲ್ಲದೆ ನಾವು ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಆರೋಗ್ಯ ಮಾಹಿತಿಯನ್ನು ಮೂರನೇ ವ್ಯಕ್ತಿಗಳೊಂದಿಗೆ ಎಂದಿಗೂ ಹಂಚಿಕೊಳ್ಳುವುದಿಲ್ಲ.",
+    aiTitle: "2. AI-ಉತ್ಪತ್ತಿ ಸಲಹೆ",
+    aiText1: "ಒದಗಿಸಲಾದ AI ಆಹಾರ ಮತ್ತು ಆರೋಗ್ಯ ಸಲಹೆಗಳು ಮಾಹಿತಿ ಉದ್ದೇಶಗಳಿಗಾಗಿ ಮಾತ್ರ ಮತ್ತು ವೃತ್ತಿಪರ ವೈದ್ಯಕೀಯ ಸಲಹೆಯನ್ನು ಬದಲಿಸುವುದಿಲ್ಲ. ವೈದ್ಯಕೀಯ ನಿರ್ಧಾರಗಳಿಗೆ ಯಾವಾಗಲೂ ನಿಮ್ಮ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+    emergencyTitle2: "3. ತುರ್ತು ಎಚ್ಚರಿಕೆಗಳು",
+    emergencyText1: "ತುರ್ತು ಎಚ್ಚರಿಕೆಗಳು ನಿಮ್ಮ ಪೂರ್ವ-ಸಂರಚಿತ ಸಂಪರ್ಕಗಳಿಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ. ಹೆಲ್ತ್ಗಾರ್ಡಿಯನ್ ತುರ್ತು ಸೇವೆಗಳಿಗೆ ಪರ್ಯಾಯವಲ್ಲ. ಪ್ರಾಣಾಪಾಯ ಸಂದರ್ಭಗಳಲ್ಲಿ, ಯಾವಾಗಲೂ ತುರ್ತು ಸೇವೆಗಳನ್ನು (112/108) ಕರೆ ಮಾಡಿ.",
+    voiceTitle: "4. ಧ್ವನಿ ಡೇಟಾ",
+    voiceText1: "ಧ್ವನಿ ಇನ್ಪುಟ್ ನಿಮ್ಮ ಸಾಧನದ ಸ್ಪೀಚ್ ರೆಕಗ್ನಿಷನ್ ಮೂಲಕ ನೈಜ-ಸಮಯದಲ್ಲಿ ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲಾಗುತ್ತದೆ. ಆಡಿಯೊ ಡೇಟಾವನ್ನು ನಮ್ಮ ಸರ್ವರ್ಗಳಲ್ಲಿ ಸಂಗ್ರಹಿಸಲಾಗುವುದಿಲ್ಲ ಅಥವಾ ಪ್ರಸಾರ ಮಾಡಲಾಗುವುದಿಲ್ಲ.",
+    accountTitle: "5. ಖಾತೆ ಭದ್ರತೆ",
+    accountText1: "ನಿಮ್ಮ ಖಾತೆಯ ಗೌಪ್ಯತೆಯನ್ನು ಕಾಪಾಡಿಕೊಳ್ಳಲು ನೀವು ಜವಾಬ್ದಾರರು. ಯಾವುದೇ ಅನಧಿಕೃತ ಪ್ರವೇಶವನ್ನು ತಕ್ಷಣ ವರದಿ ಮಾಡಿ.",
+    updatesTitle: "6. ನಿಯಮಗಳಿಗೆ ನವೀಕರಣಗಳು",
+    updatesText1: "ಹೆಲ್ತ್ಗಾರ್ಡಿಯನ್ ಈ ನಿಯಮಗಳನ್ನು ನವೀಕರಿಸುವ ಹಕ್ಕನ್ನು ಹೊಂದಿದೆ. ಅಪ್ಲಿಕೇಶನ್ನ ನಿರಂತರ ಬಳಕೆಯು ಪರಿಷ್ಕೃತ ನಿಯಮಗಳನ್ನು ಸ್ವೀಕರಿಸುವುದನ್ನು ಸೂಚಿಸುತ್ತದೆ.",
+    understandBtn: "ನಾನು ಅರ್ಥಮಾಡಿಕೊಂಡಿದ್ದೇನೆ ಮತ್ತು ಸ್ವೀಕರಿಸುತ್ತೇನೆ",
+    notifTitle: "ಅಧಿಸೂಚನೆಗಳು",
+    notif1: "🔔 ಪ್ಯಾರಾಸಿಟಾಮಾಲ್ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯ 2:00 PM",
+    notif2: "📋 ನಿಮ್ಮ ಕೊನೆಯ ಅಪ್ಲೋಡ್ ಮಾಡಿದ ವರದಿಯನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗಿದೆ",
+    notif3: "📅 ಡಾ. ರಾಜೇಶ್ ಪಾಟೀಲ್ ಅವರೊಂದಿಗೆ ಅಪಾಯಿಂಟ್ಮೆಂಟ್ 7:00 PM",
+    switchAccount: "ಖಾತೆ ಬದಲಾಯಿಸಿ",
+    languageChange: "ಭಾಷೆ ಬದಲಾಯಿಸಿ",
+    privacySecurity: "ಗೌಪ್ಯತೆ ಮತ್ತು ಭದ್ರತೆ",
+    logOut: "ಲಾಗ್ ಔಟ್",
+    logOutSuccess: "ಲಾಗ್ ಔಟ್ ಮಾಡಲಾಗಿದೆ.",
+    chatPlaceholder: "ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ…",
+    dietPlaceholder: "ಆಹಾರ, ಪೋಷಣೆ ಬಗ್ಗೆ ಕೇಳಿ…",
+    langModalTitle: "🌐 ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    langSelectHint: "ಇಂಟರ್ಫೇಸ್ ಬದಲಾಯಿಸಲು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    toastHealthUpdated: "✅ ಆರೋಗ್ಯ ಡೇಟಾ ಅಪ್ಡೇಟ್ ಮಾಡಲಾಗಿದೆ!",
+    toastTaken: "ಧನ್ಯವಾದಗಳು, ಪ್ರತಿಕ್ಷಾ! 💊 ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿದ್ದಾರೆ ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ.",
+    toastMissed: "⚠️ ಔಷಧಿ ತಪ್ಪಿಹೋಗಿದೆ! ಅಲಾರಾಂ ಮೊಳಗುತ್ತದೆ.",
+    toastSwitchAccount: "ಖಾತೆ ಬದಲಾಯಿಸುವ ವೈಶಿಷ್ಟ್ಯ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ!",
+    toastReportUploaded: "ವರದಿ ಅಪ್ಲೋಡ್ ಮಾಡಲಾಗಿದೆ! AI ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ…",
+    toastMedicineAdded: "ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ನಿಂದ ಔಷಧಿ ಸೇರಿಸಲಾಗಿದೆ!",
+    toastVoiceNotSupported: "ಈ ಬ್ರೌಸರ್ನಲ್ಲಿ ಧ್ವನಿ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ.",
+    toastCouldNotHear: "ನಿಮ್ಮ ಧ್ವನಿ ಕೇಳಿಸಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    toastLoggedOut: "ಲಾಗ್ ಔಟ್ ಮಾಡಲಾಗಿದೆ.",
+    toastLanguageChanged: "✅ ಭಾಷೆ ಬದಲಾಯಿಸಲಾಗಿದೆ ",
+    toastReportAnalysed: "📋 AI ಮೂಲಕ ವರದಿ ವಿಶ್ಲೇಷಿಸಲಾಗಿದೆ: ",
+    profileUsernameFieldLabel: "ಬಳಕೆದಾರ ಹೆಸರು",
+    profileAgeFieldLabel: "ವಯಸ್ಸು",
+    profileGenderFieldLabel: "ಲಿಂಗ",
+    profileDobFieldLabel: "ಜನ್ಮ ದಿನಾಂಕ",
+    profileContactFieldLabel: "ಕುಟುಂಬ ಸಂಪರ್ಕ ಸಂಖ್ಯೆ.",
+    addMedFormTitle: "ಔಷಧಿ ಸೇರಿಸಿ",
+    medNameFieldLabel: "ಔಷಧಿಯ ಹೆಸರು",
+    medNamePlaceholder: "ಉದಾ. ಮೆಟ್‌ಫಾರ್ಮಿನ್",
+    medTimeFieldLabel: "ರಿಮೈಂಡರ್ ಸಮಯ",
+    saveMedEntryText: "ಔಷಧಿ ಸೇರಿಸಿ ಮತ್ತು ರಿಮೈಂಡರ್ ಸೆಟ್ ಮಾಡಿ",
+    testReminderText: "🔔 ರಿಮೈಂಡರ್ ಶಬ್ದವನ್ನು ಪರೀಕ್ಷಿಸಿ",
+    noMedicinesAdded: "ಇನ್ನೂ ಯಾವುದೇ ಔಷಧಿ ಸೇರಿಸಿಲ್ಲ.",
+    ambulanceLabel: "ಆಂಬ್ಯುಲೆನ್ಸ್",
+    fireBrigadeLabel: "ಅಗ್ನಿಶಾಮಕ ದಳ",
+    doctorLabel: "ವೈದ್ಯರು",
+    contactLabel: "ಸಂಪರ್ಕ",
+    scheduleMedTileText: "ಔಷಧಿ",
+    scheduleApptTileText: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್",
+    todaysApptModalTitle: "ಇಂದಿನ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್‌ಗಳು",
+    addApptFormTitle: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಸೇರಿಸಿ",
+    apptDoctorLabel: "ವೈದ್ಯರು / ಕಾರಣ",
+    apptDoctorPlaceholder: "ಉದಾ. ಡಾ. ಶರ್ಮಾ — ತಪಾಸಣೆ",
+    apptDateLabel: "ದಿನಾಂಕ",
+    apptTimeLabel: "ಸಮಯ",
+    saveApptEntryText: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಸೇರಿಸಿ ಮತ್ತು ರಿಮೈಂಡರ್ ಸೆಟ್ ಮಾಡಿ",
+    noAppointmentsAdded: "ಇನ್ನೂ ಯಾವುದೇ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಸೇರಿಸಿಲ್ಲ.",
+  },
+  bn: {
+    healthGuardianTitle: "হেলথ গার্ডিয়ান",
+    greetingPrefix: "শুভ সকাল",
+    goodAfternoon: "শুভ দুপুর",
+    goodEvening: "শুভ সন্ধ্যা",
+    goodNight: "শুভ রাত্রি",
+    healthScoreLabel: "স্বাস্থ্য স্কোর",
+    goodLabel: "ভালো",
+    nextMedicineLabel: "পরবর্তী ওষুধ",
+    paracetamolLabel: "প্যারাসিটামল",
+    todaysMedicinesLabel: "অ্যাপয়েন্টমেন্ট",
+    takenLabel: "/ ৫ নেওয়া হয়েছে",
+    healthMonitoringTitle: "স্বাস্থ্য পর্যবেক্ষণ",
+    bpLabel: "রক্তচাপ",
+    bloodSugarLabel: "রক্তের শর্করা",
+    weightLabel: "ওজন",
+    bloodGroupLabel: "রক্তের গ্রুপ",
+    updateHealthDataLabel: "স্বাস্থ্য ডেটা আপডেট করুন",
+    bpFieldLabel: "বিপি (mmHg)",
+    sugarFieldLabel: "রক্তের শর্করা (mg/dL)",
+    weightFieldLabel: "ওজন (kg)",
+    bgFieldLabel: "রক্তের গ্রুপ",
+    selectOption: "নির্বাচন করুন",
+    saveHealthBtn: "স্বাস্থ্য ডেটা সংরক্ষণ করুন",
+    uploadReportText: "রিপোর্ট আপলোড করুন (ক্যামেরা / গ্যালারি)",
+    medicineAppointmentTitle: "ওষুধ এবং অ্যাপয়েন্টমেন্ট",
+    nextMedicineName: "পরবর্তী ওষুধ",
+    medTimeText: "২:০০ PM · খাবারের পরে",
+    takenBtnText: "নেওয়া হয়েছে",
+    missedBtnText: "মিস হয়েছে",
+    nextAppointmentLabel: "পরবর্তী অ্যাপয়েন্টমেন্ট: ৭:০০ PM",
+    drLabel: "— ডা. রাজেশ পাটিল",
+    addMedText: "নতুন ওষুধ যোগ করুন (ক্যামেরা / গ্যালারি)",
+    viewAllMedicines: "সব ওষুধ দেখুন →",
+    healthTrackerTitle: "স্বাস্থ্য ট্র্যাকার — মাসিক গ্রাফ",
+    bpTab: "বিপি",
+    sugarTab: "শুгар",
+    weightTab: "ওজন",
+    dietAssistantTitle: "খাদ্য সহায়ক",
+    breakfastLabel: "সকালের নাস্তা",
+    breakfastText: "— পোহে + চা",
+    lunchLabel: "দুপুরের খাবার",
+    lunchText: "— ডাল ভাত + সালাদ",
+    dinnerLabel: "রাতের খাবার",
+    dinnerText: "— খিচুড়ি + দই",
+    askDietAIText: "খাদ্য AI কে জিজ্ঞাসা করুন",
+    healthGuardianAITitle: "হেলথ গার্ডিয়ান AI",
+    aiDescText: "আপনার স্বাস্থ্য, ওষুধ, লক্ষণ বা রিপোর্ট সম্পর্কে কিছু জিজ্ঞাসা করুন। ২৪/৭ উপলব্ধ।",
+    startChatText: "AI এর সাথে চ্যাট শুরু করুন",
+    voiceText: "আপনার কণ্ঠ দিয়ে AI এর সাথে কথা বলুন — হ্যান্ডস-ফ্রি!",
+    voiceBtn: "🎙 কণ্ঠ",
+    todayScheduleTitle: "আজকের সময়সূচী",
+    scheduleMed1: "ওষুধ — মেটফর্মিন",
+    scheduleMed2: "ওষুধ — প্যারাসিটামল",
+    scheduleWater: "💧 পানি স্মারক",
+    scheduleAppointment: "ডাক্তার অ্যাপয়েন্টমেন্ট",
+    scheduleMed3: "ওষুধ — অ্যাসপিরিন",
+    emergencyTitle: "জরুরি",
+    emergencyDesc: "জরুরি সাহায্য প্রয়োজন? নীচে ট্যাপ করুন এবং তৎক্ষণাৎ আপনার জরুরি যোগাযোগ এবং পরিবারকে সতর্ক করুন।",
+    emergencyBtn: "⚠ জরুরি সতর্কতা পাঠান",
+    emergencyContactText: "জরুরি যোগাযোগ",
+    familyContactText: "পরিবার যোগাযোগ",
+    uploadReportModalTitle: "রিপোর্ট আপলোড করুন",
+    cameraText: "ক্যামেরা",
+    galleryText: "গ্যালারি",
+    addMedModalTitle: "নতুন ওষুধ যোগ করুন",
+    scanUploadText: "আপনার ওষুধের প্রেসক্রিপশন স্ক্যান বা আপলোড করুন",
+    medCameraText: "ক্যামেরা",
+    medGalleryText: "গ্যালারি",
+    todaysMedicinesModalTitle: "আজকের ওষুধ",
+    takenStatus: "✓ নেওয়া হয়েছে",
+    upcomingStatus: "⏰ আসন্ন",
+    chatModalTitle: "🛡️ হেলথ গার্ডিয়ান AI",
+    chatWelcomeMsg: "নমস্কার প্রতীক্ষা! আমি আজ আপনাকে কীভাবে সাহায্য করতে পারি? 😊",
+    chatSendBtn: "পাঠান",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 খাদ্য সহায়ক AI",
+    dietChatWelcome: "নমস্কার প্রতীক্ষা! আমি আপনার খাদ্য AI। আপনার খাদ্য, পুষ্টি, খাবার পরিকল্পনা বা খাদ্য অভ্যাস সম্পর্কে কিছু জিজ্ঞাসা করুন! 🥦",
+    dietSendBtn: "পাঠান",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "জরুরি সতর্কতা পাঠানো হয়েছে!",
+    emergencyPopupDesc: "আপনার জরুরি সতর্কতা আপনার জরুরি যোগাযোগ এবং পরিবার যোগাযোগে পাঠানো হয়েছে। সাহায্য আসছে!",
+    emergencyContactSent: "জরুরি যোগাযোগ",
+    familyContactSent: "পরিবার যোগাযোগ",
+    alertSentText: "সতর্কতা পাঠানো হয়েছে ✓",
+    gotItBtn: "ঠিক আছে",
+    privacyTitle: "🔒 গোপনীয়তা এবং নিরাপত্তা",
+    termsTitle: "শর্তাবলী",
+    termsText1: "হেলথগার্ডিয়ান ব্যবহার করে, আপনি নিম্নলিখিত শর্তাবলীতে সম্মত হন। অনুগ্রহ করে সেগুলি মনোযোগ দিয়ে পড়ুন।",
+    privacyTitle2: "১. ডেটা গোপনীয়তা",
+    privacyText1: "আপনার প্রবেশ করা সমস্ত স্বাস্থ্য ডেটা (রক্তচাপ, শর্করা, ওজন, ওষুধ) নিরাপদে সংরক্ষণ করা হয়। আপনার স্পষ্ট সম্মতি ছাড়া আমরা আপনার ব্যক্তিগত স্বাস্থ্য তথ্য তৃতীয় পক্ষের সাথে কখনও শেয়ার করি না।",
+    aiTitle: "২. AI-উত্পন্ন পরামর্শ",
+    aiText1: "প্রদত্ত AI খাদ্য এবং স্বাস্থ্য পরামর্শ শুধুমাত্র তথ্যের উদ্দেশ্যে এবং পেশাদার চিকিৎসা পরামর্শের বিকল্প নয়। চিকিৎসা সিদ্ধান্তের জন্য সর্বদা আপনার ডাক্তারের সাথে পরামর্শ করুন।",
+    emergencyTitle2: "৩. জরুরি সতর্কতা",
+    emergencyText1: "জরুরি সতর্কতা আপনার পূর্ব-কনফিগার করা যোগাযোগগুলিতে পাঠানো হয়। হেলথগার্ডিয়ান জরুরি পরিষেবার বিকল্প নয়। জীবন-হুমকির পরিস্থিতিতে, সর্বদা জরুরি পরিষেবাগুলি (১১২/১০৮) কল করুন।",
+    voiceTitle: "৪. কণ্ঠ ডেটা",
+    voiceText1: "কণ্ঠ ইনপুট আপনার ডিভাইসের স্পিচ রিকগনিশনের মাধ্যমে রিয়েল-টাইমে প্রক্রিয়া করা হয়। অডিও ডেটা আমাদের সার্ভারে সংরক্ষণ বা প্রেরণ করা হয় না।",
+    accountTitle: "৫. অ্যাকাউন্ট নিরাপত্তা",
+    accountText1: "আপনার অ্যাকাউন্টের গোপনীয়তা বজায় রাখার জন্য আপনি দায়ী। কোনো অননুমোদিত অ্যাক্সেসের অবিলম্বে রিপোর্ট করুন।",
+    updatesTitle: "৬. শর্তাবলীতে আপডেট",
+    updatesText1: "হেলথগার্ডিয়ান এই শর্তাবলী আপডেট করার অধিকার সংরক্ষণ করে। অ্যাপের অব্যাহত ব্যবহার সংশোধিত শর্তাবলী গ্রহণ করে।",
+    understandBtn: "আমি বুঝতে পেরেছি এবং স্বীকার করছি",
+    notifTitle: "বিজ্ঞপ্তি",
+    notif1: "🔔 প্যারাসিটামল নেওয়ার সময় ২:০০ PM",
+    notif2: "📋 আপনার শেষ আপলোড করা রিপোর্ট বিশ্লেষণ করা হয়েছে",
+    notif3: "📅 ডা. রাজেশ পাটিলের সাথে অ্যাপয়েন্টমেন্ট ৭:০০ PM",
+    switchAccount: "অ্যাকাউন্ট পরিবর্তন করুন",
+    languageChange: "ভাষা পরিবর্তন করুন",
+    privacySecurity: "গোপনীয়তা এবং নিরাপত্তা",
+    logOut: "লগ আউট",
+    logOutSuccess: "লগ আউট করা হয়েছে।",
+    chatPlaceholder: "আপনার প্রশ্ন টাইপ করুন…",
+    dietPlaceholder: "খাদ্য, পুষ্টি সম্পর্কে জিজ্ঞাসা করুন…",
+    langModalTitle: "🌐 ভাষা নির্বাচন করুন",
+    langSelectHint: "ইন্টারফেস পরিবর্তন করতে ভাষা নির্বাচন করুন",
+    toastHealthUpdated: "✅ স্বাস্থ্য ডেটা আপডেট করা হয়েছে!",
+    toastTaken: "ধন্যবাদ, প্রতীক্ষা! 💊 ওষুধ নেওয়া হয়েছে হিসেবে চিহ্নিত।",
+    toastMissed: "⚠️ ওষুধ মিস হয়েছে! অ্যালার্ম বাজবে।",
+    toastSwitchAccount: "অ্যাকাউন্ট পরিবর্তনের বৈশিষ্ট্য শীঘ্রই আসছে!",
+    toastReportUploaded: "রিপোর্ট আপলোড করা হয়েছে! AI বিশ্লেষণ করছে…",
+    toastMedicineAdded: "প্রেসক্রিপশন থেকে ওষুধ যোগ করা হয়েছে!",
+    toastVoiceNotSupported: "এই ব্রাউজারে কণ্ঠ সমর্থিত নয়।",
+    toastCouldNotHear: "আপনার কণ্ঠ শোনা যায়নি। আবার চেষ্টা করুন।",
+    toastLoggedOut: "লগ আউট করা হয়েছে।",
+    toastLanguageChanged: "✅ ভাষা পরিবর্তন করা হয়েছে ",
+    toastReportAnalysed: "📋 AI দ্বারা রিপোর্ট বিশ্লেষণ করা হয়েছে: ",
+    profileUsernameFieldLabel: "ইউজারনেম",
+    profileAgeFieldLabel: "বয়স",
+    profileGenderFieldLabel: "লিঙ্গ",
+    profileDobFieldLabel: "জন্ম তারিখ",
+    profileContactFieldLabel: "ফ্যামিলি কন্টাক্ট নং.",
+    addMedFormTitle: "ওষুধ যোগ করুন",
+    medNameFieldLabel: "ওষুধের নাম",
+    medNamePlaceholder: "যেমন. মেটফরমিন",
+    medTimeFieldLabel: "রিমাইন্ডার সময়",
+    saveMedEntryText: "ওষুধ যোগ করুন ও রিমাইন্ডার সেট করুন",
+    testReminderText: "🔔 রিমাইন্ডার শব্দ পরীক্ষা করুন",
+    noMedicinesAdded: "এখনও কোনো ওষুধ যোগ করা হয়নি।",
+    ambulanceLabel: "অ্যাম্বুলেন্স",
+    fireBrigadeLabel: "ফায়ার ব্রিগেড",
+    doctorLabel: "ডাক্তার",
+    contactLabel: "কন্টাক্ট",
+    scheduleMedTileText: "ওষুধ",
+    scheduleApptTileText: "অ্যাপয়েন্টমেন্ট",
+    todaysApptModalTitle: "আজকের অ্যাপয়েন্টমেন্ট",
+    addApptFormTitle: "অ্যাপয়েন্টমেন্ট যোগ করুন",
+    apptDoctorLabel: "ডাক্তার / কারণ",
+    apptDoctorPlaceholder: "যেমন. ডা. শর্মা — চেকআপ",
+    apptDateLabel: "তারিখ",
+    apptTimeLabel: "সময়",
+    saveApptEntryText: "অ্যাপয়েন্টমেন্ট যোগ করুন ও রিমাইন্ডার সেট করুন",
+    noAppointmentsAdded: "এখনও কোনো অ্যাপয়েন্টমেন্ট যোগ করা হয়নি।",
+  },
+  pa: {
+    healthGuardianTitle: "ਹੈਲਥ ਗਾਰਡੀਅਨ",
+    greetingPrefix: "ਸ਼ੁਭ ਸਵੇਰ",
+    goodAfternoon: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ",
+    goodEvening: "ਸ਼ੁਭ ਸ਼ਾਮ",
+    goodNight: "ਸ਼ੁਭ ਰਾਤ",
+    healthScoreLabel: "ਸਿਹਤ ਸਕੋਰ",
+    goodLabel: "ਚੰਗਾ",
+    nextMedicineLabel: "ਅਗਲੀ ਦਵਾਈ",
+    paracetamolLabel: "ਪੈਰਾਸਿਟਾਮੋਲ",
+    todaysMedicinesLabel: "ਅਪਾਇੰਟਮੈਂਟ",
+    takenLabel: "/ 5 ਲਈਆਂ",
+    healthMonitoringTitle: "ਸਿਹਤ ਨਿਗਰਾਨੀ",
+    bpLabel: "ਖੂਨ ਦਾ ਦਬਾਅ",
+    bloodSugarLabel: "ਖੂਨ ਦੀ ਸ਼ੱਕਰ",
+    weightLabel: "ਵਜ਼ਨ",
+    bloodGroupLabel: "ਖੂਨ ਦਾ ਗਰੁੱਪ",
+    updateHealthDataLabel: "ਸਿਹਤ ਡੇਟਾ ਅਪਡੇਟ ਕਰੋ",
+    bpFieldLabel: "ਬੀਪੀ (mmHg)",
+    sugarFieldLabel: "ਖੂਨ ਦੀ ਸ਼ੱਕਰ (mg/dL)",
+    weightFieldLabel: "ਵਜ਼ਨ (kg)",
+    bgFieldLabel: "ਖੂਨ ਦਾ ਗਰੁੱਪ",
+    selectOption: "ਚੁਣੋ",
+    saveHealthBtn: "ਸਿਹਤ ਡੇਟਾ ਸੇਵ ਕਰੋ",
+    uploadReportText: "ਰਿਪੋਰਟ ਅਪਲੋਡ ਕਰੋ (ਕੈਮਰਾ / ਗੈਲਰੀ)",
+    medicineAppointmentTitle: "ਦਵਾਈ ਅਤੇ ਮੁਲਾਕਾਤ",
+    nextMedicineName: "ਅਗਲੀ ਦਵਾਈ",
+    medTimeText: "2:00 PM · ਖਾਣੇ ਤੋਂ ਬਾਅਦ",
+    takenBtnText: "ਲਈ ਗਈ",
+    missedBtnText: "ਖੁੰਝ ਗਈ",
+    nextAppointmentLabel: "ਅਗਲੀ ਮੁਲਾਕਾਤ: 7:00 PM",
+    drLabel: "— ਡਾ. ਰਾਜੇਸ਼ ਪਾਟਿਲ",
+    addMedText: "ਨਵੀਂ ਦਵਾਈ ਸ਼ਾਮਲ ਕਰੋ (ਕੈਮਰਾ / ਗੈਲਰੀ)",
+    viewAllMedicines: "ਸਾਰੀਆਂ ਦਵਾਈਆਂ ਵੇਖੋ →",
+    healthTrackerTitle: "ਸਿਹਤ ਟ੍ਰੈਕਰ — ਮਾਸਿਕ ਗ੍ਰਾਫ",
+    bpTab: "ਬੀਪੀ",
+    sugarTab: "ਸ਼ੱਕਰ",
+    weightTab: "ਵਜ਼ਨ",
+    dietAssistantTitle: "ਖੁਰਾਕ ਸਹਾਇਕ",
+    breakfastLabel: "ਨਾਸ਼ਤਾ",
+    breakfastText: "— ਪੋਹੇ + ਚਾਹ",
+    lunchLabel: "ਦੁਪਹਿਰ ਦਾ ਖਾਣਾ",
+    lunchText: "— ਦਾਲ ਭਾਤ + ਸਲਾਦ",
+    dinnerLabel: "ਰਾਤ ਦਾ ਖਾਣਾ",
+    dinnerText: "— ਖਿਚੜੀ + ਦਹੀਂ",
+    askDietAIText: "ਖੁਰਾਕ AI ਨੂੰ ਪੁੱਛੋ",
+    healthGuardianAITitle: "ਹੈਲਥ ਗਾਰਡੀਅਨ AI",
+    aiDescText: "ਆਪਣੀ ਸਿਹਤ, ਦਵਾਈਆਂ, ਲੱਛਣਾਂ ਜਾਂ ਰਿਪੋਰਟਾਂ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ। 24/7 ਉਪਲਬਧ।",
+    startChatText: "AI ਨਾਲ ਚੈਟ ਸ਼ੁਰੂ ਕਰੋ",
+    voiceText: "ਆਪਣੀ ਆਵਾਜ਼ ਨਾਲ AI ਨਾਲ ਗੱਲ ਕਰੋ — ਹੈਂਡਸ-ਫ੍ਰੀ!",
+    voiceBtn: "🎙 ਆਵਾਜ਼",
+    todayScheduleTitle: "ਅੱਜ ਦਾ ਸਮਾਂ-ਸਾਰਣੀ",
+    scheduleMed1: "ਦਵਾਈ — ਮੈਟਫਾਰਮਿਨ",
+    scheduleMed2: "ਦਵਾਈ — ਪੈਰਾਸਿਟਾਮੋਲ",
+    scheduleWater: "💧 ਪਾਣੀ ਯਾਦ ਦਿਵਾਉਣਾ",
+    scheduleAppointment: "ਡਾਕਟਰ ਮੁਲਾਕਾਤ",
+    scheduleMed3: "ਦਵਾਈ — ਐਸਪਰੀਨ",
+    emergencyTitle: "ਐਮਰਜੈਂਸੀ",
+    emergencyDesc: "ਤੁਰੰਤ ਮਦਦ ਚਾਹੀਦੀ ਹੈ? ਹੇਠਾਂ ਟੈਪ ਕਰੋ ਅਤੇ ਤੁਰੰਤ ਆਪਣੇ ਐਮਰਜੈਂਸੀ ਸੰਪਰਕਾਂ ਅਤੇ ਪਰਿਵਾਰ ਨੂੰ ਸੁਚੇਤ ਕਰੋ।",
+    emergencyBtn: "⚠ ਐਮਰਜੈਂਸੀ ਚੇਤਾਵਨੀ ਭੇਜੋ",
+    emergencyContactText: "ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ",
+    familyContactText: "ਪਰਿਵਾਰ ਸੰਪਰਕ",
+    uploadReportModalTitle: "ਰਿਪੋਰਟ ਅਪਲੋਡ ਕਰੋ",
+    cameraText: "ਕੈਮਰਾ",
+    galleryText: "ਗੈਲਰੀ",
+    addMedModalTitle: "ਨਵੀਂ ਦਵਾਈ ਸ਼ਾਮਲ ਕਰੋ",
+    scanUploadText: "ਆਪਣੀ ਦਵਾਈ ਪ੍ਰਿਸਕ੍ਰਿਪਸ਼ਨ ਸਕੈਨ ਜਾਂ ਅਪਲੋਡ ਕਰੋ",
+    medCameraText: "ਕੈਮਰਾ",
+    medGalleryText: "ਗੈਲਰੀ",
+    todaysMedicinesModalTitle: "ਅੱਜ ਦੀਆਂ ਦਵਾਈਆਂ",
+    takenStatus: "✓ ਲਈ ਗਈ",
+    upcomingStatus: "⏰ ਆਉਣ ਵਾਲੀ",
+    chatModalTitle: "🛡️ ਹੈਲਥ ਗਾਰਡੀਅਨ AI",
+    chatWelcomeMsg: "ਨਮਸਕਾਰ ਪ੍ਰਤੀਕਸ਼ਾ! ਅੱਜ ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ? 😊",
+    chatSendBtn: "ਭੇਜੋ",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 ਖੁਰਾਕ ਸਹਾਇਕ AI",
+    dietChatWelcome: "ਨਮਸਕਾਰ ਪ੍ਰਤੀਕਸ਼ਾ! ਮੈਂ ਤੁਹਾਡਾ ਖੁਰਾਕ AI ਹਾਂ। ਮੈਨੂੰ ਆਪਣੀ ਖੁਰਾਕ, ਪੋਸ਼ਣ, ਭੋਜਨ ਯੋਜਨਾਵਾਂ ਜਾਂ ਖਾਣ-ਪੀਣ ਦੀਆਂ ਆਦਤਾਂ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ! 🥦",
+    dietSendBtn: "ਭੇਜੋ",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "ਐਮਰਜੈਂਸੀ ਚੇਤਾਵਨੀ ਭੇਜੀ ਗਈ!",
+    emergencyPopupDesc: "ਤੁਹਾਡੀ ਐਮਰਜੈਂਸੀ ਚੇਤਾਵਨੀ ਤੁਹਾਡੇ ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ ਅਤੇ ਪਰਿਵਾਰ ਸੰਪਰਕ ਨੂੰ ਭੇਜੀ ਗਈ ਹੈ। ਮਦਦ ਆ ਰਹੀ ਹੈ!",
+    emergencyContactSent: "ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ",
+    familyContactSent: "ਪਰਿਵਾਰ ਸੰਪਰਕ",
+    alertSentText: "ਚੇਤਾਵਨੀ ਭੇਜੀ ✓",
+    gotItBtn: "ਠੀਕ ਹੈ",
+    privacyTitle: "🔒 ਗੋਪਨੀਯਤਾ ਅਤੇ ਸੁਰੱਖਿਆ",
+    termsTitle: "ਨਿਯਮ ਅਤੇ ਸ਼ਰਤਾਂ",
+    termsText1: "ਹੈਲਥਗਾਰਡੀਅਨ ਦੀ ਵਰਤੋਂ ਕਰਕੇ, ਤੁਸੀਂ ਹੇਠਾਂ ਦਿੱਤੇ ਨਿਯਮਾਂ ਨਾਲ ਸਹਿਮਤ ਹੁੰਦੇ ਹੋ। ਕਿਰਪਾ ਕਰਕੇ ਉਹਨਾਂ ਨੂੰ ਧਿਆਨ ਨਾਲ ਪੜ੍ਹੋ।",
+    privacyTitle2: "1. ਡੇਟਾ ਗੋਪਨੀਯਤਾ",
+    privacyText1: "ਤੁਹਾਡੇ ਦੁਆਰਾ ਦਾਖਲ ਕੀਤਾ ਗਿਆ ਸਾਰਾ ਸਿਹਤ ਡੇਟਾ (ਖੂਨ ਦਾ ਦਬਾਅ, ਸ਼ੱਕਰ, ਵਜ਼ਨ, ਦਵਾਈਆਂ) ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਸਟੋਰ ਕੀਤਾ ਜਾਂਦਾ ਹੈ। ਅਸੀਂ ਤੁਹਾਡੀ ਸਪੱਸ਼ਟ ਸਹਿਮਤੀ ਤੋਂ ਬਿਨਾਂ ਕਦੇ ਵੀ ਤੁਹਾਡੀ ਨਿੱਜੀ ਸਿਹਤ ਜਾਣਕਾਰੀ ਤੀਜੀਆਂ ਧਿਰਾਂ ਨਾਲ ਸਾਂਝੀ ਨਹੀਂ ਕਰਦੇ।",
+    aiTitle: "2. AI-ਜਨਰੇਟਡ ਸਲਾਹ",
+    aiText1: "ਦਿੱਤੀਆਂ ਗਈਆਂ AI ਖੁਰਾਕ ਅਤੇ ਸਿਹਤ ਸੁਝਾਅ ਸਿਰਫ ਜਾਣਕਾਰੀ ਦੇ ਉਦੇਸ਼ਾਂ ਲਈ ਹਨ ਅਤੇ ਪੇਸ਼ੇਵਰ ਡਾਕਟਰੀ ਸਲਾਹ ਦੀ ਥਾਂ ਨਹੀਂ ਲੈਂਦੇ। ਡਾਕਟਰੀ ਫੈਸਲਿਆਂ ਲਈ ਹਮੇਸ਼ਾ ਆਪਣੇ ਡਾਕਟਰ ਨਾਲ ਸਲਾਹ ਕਰੋ।",
+    emergencyTitle2: "3. ਐਮਰਜੈਂਸੀ ਚੇਤਾਵਨੀਆਂ",
+    emergencyText1: "ਐਮਰਜੈਂਸੀ ਚੇਤਾਵਨੀਆਂ ਤੁਹਾਡੇ ਪਹਿਲਾਂ-ਕੌਨਫਿਗਰ ਕੀਤੇ ਸੰਪਰਕਾਂ ਨੂੰ ਭੇਜੀਆਂ ਜਾਂਦੀਆਂ ਹਨ। ਹੈਲਥਗਾਰਡੀਅਨ ਐਮਰਜੈਂਸੀ ਸੇਵਾਵਾਂ ਦਾ ਬਦਲ ਨਹੀਂ ਹੈ। ਜਾਨ-ਖਤਰੇ ਵਾਲੀਆਂ ਸਥਿਤੀਆਂ ਵਿੱਚ, ਹਮੇਸ਼ਾ ਐਮਰਜੈਂਸੀ ਸੇਵਾਵਾਂ (112/108) ਨੂੰ ਕਾਲ ਕਰੋ।",
+    voiceTitle: "4. ਆਵਾਜ਼ ਡੇਟਾ",
+    voiceText1: "ਆਵਾਜ਼ ਇਨਪੁਟ ਤੁਹਾਡੇ ਡਿਵਾਈਸ ਦੀ ਸਪੀਚ ਰਿਕੋਗਨੀਸ਼ਨ ਰਾਹੀਂ ਰੀਅਲ-ਟਾਈਮ ਵਿੱਚ ਪ੍ਰੋਸੈਸ ਕੀਤਾ ਜਾਂਦਾ ਹੈ। ਆਡੀਓ ਡੇਟਾ ਸਾਡੇ ਸਰਵਰਾਂ 'ਤੇ ਸਟੋਰ ਜਾਂ ਟ੍ਰਾਂਸਮਿਟ ਨਹੀਂ ਕੀਤਾ ਜਾਂਦਾ।",
+    accountTitle: "5. ਖਾਤਾ ਸੁਰੱਖਿਆ",
+    accountText1: "ਤੁਸੀਂ ਆਪਣੇ ਖਾਤੇ ਦੀ ਗੋਪਨੀਯਤਾ ਬਣਾਈ ਰੱਖਣ ਲਈ ਜ਼ਿੰਮੇਵਾਰ ਹੋ। ਕਿਸੇ ਵੀ ਅਣਅਧਿਕਾਰਤ ਪਹੁੰਚ ਦੀ ਤੁਰੰਤ ਰਿਪੋਰਟ ਕਰੋ।",
+    updatesTitle: "6. ਨਿਯਮਾਂ ਵਿੱਚ ਅਪਡੇਟ",
+    updatesText1: "ਹੈਲਥਗਾਰਡੀਅਨ ਇਹਨਾਂ ਨਿਯਮਾਂ ਨੂੰ ਅਪਡੇਟ ਕਰਨ ਦਾ ਅਧਿਕਾਰ ਰਾਖਵਾਂ ਰੱਖਦਾ ਹੈ। ਐਪ ਦੀ ਨਿਰੰਤਰ ਵਰਤੋਂ ਸੋਧੇ ਹੋਏ ਨਿਯਮਾਂ ਨੂੰ ਸਵੀਕਾਰ ਕਰਨ ਦਾ ਗਠਨ ਕਰਦੀ ਹੈ।",
+    understandBtn: "ਮੈਂ ਸਮਝ ਗਿਆ ਹਾਂ ਅਤੇ ਸਵੀਕਾਰ ਕਰਦਾ ਹਾਂ",
+    notifTitle: "ਸੂਚਨਾਵਾਂ",
+    notif1: "🔔 ਪੈਰਾਸਿਟਾਮੋਲ ਲੈਣ ਦਾ ਸਮਾਂ 2:00 PM",
+    notif2: "📋 ਤੁਹਾਡੀ ਆਖਰੀ ਅਪਲੋਡ ਕੀਤੀ ਰਿਪੋਰਟ ਦਾ ਵਿਸ਼ਲੇਸ਼ਣ ਕੀਤਾ ਗਿਆ",
+    notif3: "📅 ਡਾ. ਰਾਜੇਸ਼ ਪਾਟਿਲ ਨਾਲ ਮੁਲਾਕਾਤ 7:00 PM",
+    switchAccount: "ਖਾਤਾ ਬਦਲੋ",
+    languageChange: "ਭਾਸ਼ਾ ਬਦਲੋ",
+    privacySecurity: "ਗੋਪਨੀਯਤਾ ਅਤੇ ਸੁਰੱਖਿਆ",
+    logOut: "ਲੌਗ ਆਉਟ",
+    logOutSuccess: "ਲੌਗ ਆਉਟ ਕੀਤਾ ਗਿਆ।",
+    chatPlaceholder: "ਆਪਣਾ ਪ੍ਰਸ਼ਨ ਟਾਈਪ ਕਰੋ…",
+    dietPlaceholder: "ਖੁਰਾਕ, ਪੋਸ਼ਣ ਬਾਰੇ ਪੁੱਛੋ…",
+    langModalTitle: "🌐 ਭਾਸ਼ਾ ਚੁਣੋ",
+    langSelectHint: "ਇੰਟਰਫੇਸ ਬਦਲਣ ਲਈ ਭਾਸ਼ਾ ਚੁਣੋ",
+    toastHealthUpdated: "✅ ਸਿਹਤ ਡੇਟਾ ਅਪਡੇਟ ਕੀਤਾ ਗਿਆ!",
+    toastTaken: "ਧੰਨਵਾਦ, ਪ੍ਰਤੀਕਸ਼ਾ! 💊 ਦਵਾਈ ਲਈ ਗਈ ਵਜੋਂ ਚਿੰਨ੍ਹਿਤ।",
+    toastMissed: "⚠️ ਦਵਾਈ ਖੁੰਝ ਗਈ! ਅਲਾਰਮ ਵੱਜੇਗਾ।",
+    toastSwitchAccount: "ਖਾਤਾ ਬਦਲਣ ਦੀ ਸਹੂਲਤ ਜਲਦੀ ਆ ਰਹੀ ਹੈ!",
+    toastReportUploaded: "ਰਿਪੋਰਟ ਅਪਲੋਡ ਕੀਤੀ ਗਈ! AI ਵਿਸ਼ਲੇਸ਼ਣ ਕਰ ਰਿਹਾ ਹੈ…",
+    toastMedicineAdded: "ਪ੍ਰਿਸਕ੍ਰਿਪਸ਼ਨ ਤੋਂ ਦਵਾਈ ਜੋੜੀ ਗਈ!",
+    toastVoiceNotSupported: "ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਆਵਾਜ਼ ਸਮਰਥਿਤ ਨਹੀਂ ਹੈ।",
+    toastCouldNotHear: "ਤੁਹਾਡੀ ਆਵਾਜ਼ ਨਹੀਂ ਸੁਣੀ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    toastLoggedOut: "ਲੌਗ ਆਉਟ ਕੀਤਾ ਗਿਆ।",
+    toastLanguageChanged: "✅ ਭਾਸ਼ਾ ਬਦਲੀ ਗਈ ",
+    toastReportAnalysed: "📋 AI ਦੁਆਰਾ ਰਿਪੋਰਟ ਦਾ ਵਿਸ਼ਲੇਸ਼ਣ ਕੀਤਾ ਗਿਆ: ",
+    profileUsernameFieldLabel: "ਯੂਜ਼ਰਨੇਮ",
+    profileAgeFieldLabel: "ਉਮਰ",
+    profileGenderFieldLabel: "ਲਿੰਗ",
+    profileDobFieldLabel: "ਜਨਮ ਮਿਤੀ",
+    profileContactFieldLabel: "ਫੈਮਿਲੀ ਕਾਂਟੈਕਟ ਨੰ.",
+    addMedFormTitle: "ਦਵਾਈ ਸ਼ਾਮਲ ਕਰੋ",
+    medNameFieldLabel: "ਦਵਾਈ ਦਾ ਨਾਮ",
+    medNamePlaceholder: "ਜਿਵੇਂ. ਮੈਟਫਾਰਮਿਨ",
+    medTimeFieldLabel: "ਰਿਮਾਈਂਡਰ ਸਮਾਂ",
+    saveMedEntryText: "ਦਵਾਈ ਸ਼ਾਮਲ ਕਰੋ ਅਤੇ ਰਿਮਾਈਂਡਰ ਸੈੱਟ ਕਰੋ",
+    testReminderText: "🔔 ਰਿਮਾਈਂਡਰ ਆਵਾਜ਼ ਦੀ ਜਾਂਚ ਕਰੋ",
+    noMedicinesAdded: "ਹਾਲੇ ਤੱਕ ਕੋਈ ਦਵਾਈ ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ।",
+    ambulanceLabel: "ਐਂਬੂਲੈਂਸ",
+    fireBrigadeLabel: "ਫਾਇਰ ਬ੍ਰਿਗੇਡ",
+    doctorLabel: "ਡਾਕਟਰ",
+    contactLabel: "ਕਾਂਟੈਕਟ",
+    scheduleMedTileText: "ਦਵਾਈ",
+    scheduleApptTileText: "ਅਪਾਇੰਟਮੈਂਟ",
+    todaysApptModalTitle: "ਅੱਜ ਦੀਆਂ ਅਪਾਇੰਟਮੈਂਟਾਂ",
+    addApptFormTitle: "ਅਪਾਇੰਟਮੈਂਟ ਸ਼ਾਮਲ ਕਰੋ",
+    apptDoctorLabel: "ਡਾਕਟਰ / ਕਾਰਨ",
+    apptDoctorPlaceholder: "ਜਿਵੇਂ. ਡਾ. ਸ਼ਰਮਾ — ਜਾਂਚ",
+    apptDateLabel: "ਮਿਤੀ",
+    apptTimeLabel: "ਸਮਾਂ",
+    saveApptEntryText: "ਅਪਾਇੰਟਮੈਂਟ ਸ਼ਾਮਲ ਕਰੋ ਅਤੇ ਰਿਮਾਈਂਡਰ ਸੈੱਟ ਕਰੋ",
+    noAppointmentsAdded: "ਹਾਲੇ ਤੱਕ ਕੋਈ ਅਪਾਇੰਟਮੈਂਟ ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ।",
+  }
+};
+
+// ── LANGUAGE SELECTION ──
+let currentLang = localStorage.getItem('selectedLanguage') || 'en';
+let langData = homeTranslations[currentLang] || homeTranslations.en;
+
+function openLanguageModal() {
+  document.getElementById('languageModal').classList.add('open');
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+}
+
+function selectLanguage(lang) {
+  if (homeTranslations[lang]) {
+    currentLang = lang;
+    localStorage.setItem('selectedLanguage', lang);
+    langData = homeTranslations[lang];
+    applyHomeLanguage();
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    showToast(langData.toastLanguageChanged + langData.healthGuardianTitle, 'green');
+    closeModal('languageModal');
+  }
+}
+
+function applyHomeLanguage() {
+  const d = langData;
+  document.documentElement.lang = currentLang;
+  
+  // Topbar
+  document.getElementById('healthGuardianTitle').textContent = d.healthGuardianTitle;
+  
+  // Stat cards
+  document.getElementById('healthScoreLabel').textContent = d.healthScoreLabel;
+  
+  document.getElementById('nextMedicineLabel').textContent = d.nextMedicineLabel;
+  
+  document.getElementById('todaysMedicinesLabel').textContent = d.todaysMedicinesLabel;
+  
+  
+  // Health Monitoring
+  document.getElementById('healthMonitoringTitle').textContent = d.healthMonitoringTitle;
+  document.getElementById('bpLabel').textContent = d.bpLabel;
+  document.getElementById('bloodSugarLabel').textContent = d.bloodSugarLabel;
+  document.getElementById('weightLabel').textContent = d.weightLabel;
+  document.getElementById('bloodGroupLabel').textContent = d.bloodGroupLabel;
+  document.getElementById('updateHealthDataLabel').textContent = d.updateHealthDataLabel;
+  document.getElementById('bpFieldLabel').textContent = d.bpFieldLabel;
+  document.getElementById('sugarFieldLabel').textContent = d.sugarFieldLabel;
+  document.getElementById('weightFieldLabel').textContent = d.weightFieldLabel;
+  document.getElementById('bgFieldLabel').textContent = d.bgFieldLabel;
+  document.getElementById('selectOption').textContent = d.selectOption;
+  document.getElementById('saveHealthBtn').textContent = d.saveHealthBtn;
+  document.getElementById('uploadReportText').textContent = d.uploadReportText;
+  
+  // Medicine
+  document.getElementById('medicineAppointmentTitle').textContent = d.medicineAppointmentTitle;
+  document.getElementById('addMedText').textContent = d.addMedText;
+  
+  // Graph
+  document.getElementById('healthTrackerTitle').textContent = d.healthTrackerTitle;
+  document.getElementById('bpTab').textContent = d.bpTab;
+  document.getElementById('sugarTab').textContent = d.sugarTab;
+  document.getElementById('weightTab').textContent = d.weightTab;
+  
+  // AI
+  document.getElementById('healthGuardianAITitle').textContent = d.healthGuardianAITitle;
+  document.getElementById('aiDescText').textContent = d.aiDescText;
+  document.getElementById('startChatText').textContent = d.startChatText;
+  document.getElementById('voiceText').textContent = d.voiceText;
+  document.getElementById('voiceBtn').textContent = d.voiceBtn;
+  
+  
+  
+  
+  
+  
+  // Emergency
+  document.getElementById('emergencyTitle').textContent = d.emergencyTitle;
+  document.getElementById('emergencyDesc').textContent = d.emergencyDesc;
+  document.getElementById('emergencyBtn').textContent = d.emergencyBtn;
+  document.getElementById('emergencyContactText').textContent = d.emergencyContactText;
+  document.getElementById('familyContactText').textContent = d.familyContactText;
+  
+  // Modals
+  document.getElementById('uploadReportModalTitle').textContent = d.uploadReportModalTitle;
+  document.getElementById('cameraText').textContent = d.cameraText;
+  document.getElementById('galleryText').textContent = d.galleryText;
+  document.getElementById('addMedModalTitle').textContent = d.addMedModalTitle;
+  document.getElementById('scanUploadText').textContent = d.scanUploadText;
+  document.getElementById('medCameraText').textContent = d.medCameraText;
+  document.getElementById('medGalleryText').textContent = d.medGalleryText;
+  document.getElementById('todaysMedicinesModalTitle').textContent = d.todaysMedicinesModalTitle;
+  
+  
+  document.getElementById('chatModalTitle').textContent = d.chatModalTitle;
+  document.getElementById('chatWelcomeMsg').textContent = d.chatWelcomeMsg;
+  document.getElementById('chatSendBtn').textContent = d.chatSendBtn;
+  document.getElementById('dietChatModalTitle').textContent = d.dietChatModalTitle;
+  document.getElementById('dietChatWelcome').textContent = d.dietChatWelcome;
+  document.getElementById('dietSendBtn').textContent = d.dietSendBtn;
+  document.getElementById('dietVoiceBtn').textContent = d.dietVoiceBtn;
+  document.getElementById('emergencyAlertSent').textContent = d.emergencyAlertSent;
+  document.getElementById('emergencyPopupDesc').innerHTML = d.emergencyPopupDesc;
+  document.getElementById('emergencyContactSent').textContent = d.emergencyContactSent;
+  document.getElementById('familyContactSent').textContent = d.familyContactSent;
+  document.getElementById('alertSentText').textContent = d.alertSentText;
+  document.getElementById('alertSentText2').textContent = d.alertSentText;
+  document.getElementById('gotItBtn').textContent = d.gotItBtn;
+  document.getElementById('privacyTitle').textContent = d.privacyTitle;
+  document.getElementById('termsTitle').textContent = d.termsTitle;
+  document.getElementById('termsText1').textContent = d.termsText1;
+  document.getElementById('privacyTitle2').textContent = d.privacyTitle2;
+  document.getElementById('privacyText1').textContent = d.privacyText1;
+  document.getElementById('aiTitle').textContent = d.aiTitle;
+  document.getElementById('aiText1').textContent = d.aiText1;
+  document.getElementById('emergencyTitle2').textContent = d.emergencyTitle2;
+  document.getElementById('emergencyText1').textContent = d.emergencyText1;
+  document.getElementById('voiceTitle').textContent = d.voiceTitle;
+  document.getElementById('voiceText1').textContent = d.voiceText1;
+  document.getElementById('accountTitle').textContent = d.accountTitle;
+  document.getElementById('accountText1').textContent = d.accountText1;
+  document.getElementById('updatesTitle').textContent = d.updatesTitle;
+  document.getElementById('updatesText1').textContent = d.updatesText1;
+  document.getElementById('understandBtn').textContent = d.understandBtn;
+  { const el = document.getElementById('notifTitle'); if (el) el.textContent = d.notifTitle; }
+  
+  
+  
+  document.getElementById('switchAccount').textContent = d.switchAccount;
+  document.getElementById('languageChange').textContent = d.languageChange;
+  document.getElementById('privacySecurity').textContent = d.privacySecurity;
+  document.getElementById('logOut').textContent = d.logOut;
+  document.getElementById('chatInput').placeholder = d.chatPlaceholder;
+  document.getElementById('dietChatInput').placeholder = d.dietPlaceholder;
+  document.getElementById('langModalTitle').textContent = d.langModalTitle;
+  document.getElementById('langSelectHint').textContent = d.langSelectHint;
+
+  // Profile dropdown info fields
+  document.getElementById('profileUsernameLabel').textContent = d.profileUsernameFieldLabel;
+  document.getElementById('profileAgeLabel').textContent = d.profileAgeFieldLabel;
+  document.getElementById('profileGenderLabel').textContent = d.profileGenderFieldLabel;
+  document.getElementById('profileDobLabel').textContent = d.profileDobFieldLabel;
+  { const el = document.getElementById('profileContactLabel'); if (el) el.textContent = d.profileContactFieldLabel; }
+
+  // Add Medicine form (inside Today's Medicines modal)
+  { const el = document.getElementById('allMedEmpty'); if (el) el.textContent = d.noMedicinesAdded; }
+  document.getElementById('addMedFormTitle').textContent = d.addMedFormTitle;
+  document.getElementById('medNameLabel').textContent = d.medNameFieldLabel;
+  document.getElementById('medNameInput').placeholder = d.medNamePlaceholder;
+  document.getElementById('medTimeLabel').textContent = d.medTimeFieldLabel;
+  document.getElementById('saveMedEntryText').textContent = d.saveMedEntryText;
+
+  // Today's Schedule tiles
+  document.getElementById('scheduleMedTileText').textContent = d.scheduleMedTileText;
+  document.getElementById('scheduleApptTileText').textContent = d.scheduleApptTileText;
+
+  // Today's Appointments modal
+  document.getElementById('todaysApptModalTitle').textContent = d.todaysApptModalTitle;
+  document.getElementById('allApptEmpty').textContent = d.noAppointmentsAdded;
+  document.getElementById('addApptFormTitle').textContent = d.addApptFormTitle;
+  document.getElementById('apptDoctorLabel').textContent = d.apptDoctorLabel;
+  document.getElementById('apptDoctorInput').placeholder = d.apptDoctorPlaceholder;
+  document.getElementById('apptDateLabel').textContent = d.apptDateLabel;
+  document.getElementById('apptTimeLabel').textContent = d.apptTimeLabel;
+  document.getElementById('saveApptEntryText').textContent = d.saveApptEntryText;
+
+  // Notification dropdown items
+  { const el = document.getElementById('notif1'); if (el) el.textContent = d.notif1; }
+  { const el = document.getElementById('notif2'); if (el) el.textContent = d.notif2; }
+  { const el = document.getElementById('notif3'); if (el) el.textContent = d.notif3; }
+
+  // Next Appointment label (prefix only — time stays dynamic)
+  const apptPrefixEl = document.getElementById('nextApptPrefixText');
+  if (apptPrefixEl && d.nextAppointmentLabel) {
+    apptPrefixEl.textContent = d.nextAppointmentLabel.replace(/:.*$/, ':');
+  }
+
+  setDynamicGreeting();
+  if (typeof renderHomeMedicineList === 'function') renderHomeMedicineList();
+  if (typeof renderNextMedicineStat === 'function') renderNextMedicineStat();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+  if (typeof renderMedicineList === 'function') renderMedicineList();
+}
+
+function setDynamicGreeting() {
+  const h = new Date().getHours();
+  let greeting = '';
+
+  if (h >= 5 && h < 12) {
+    greeting = langData.goodMorning || 'Good Morning, ';
+  } else if (h >= 12 && h < 16) {
+    greeting = langData.goodAfternoon || 'Good Afternoon, ';
+  } else if (h >= 16 && h < 20) {
+    greeting = langData.goodEvening || 'Good Evening, ';
+  } else {
+    greeting = langData.goodNight || 'Good Night, ';
+  }
+
+  document.getElementById('dynamicGreeting').textContent = greeting;
+}
+
+// Apply on load
+applyHomeLanguage();
+renderHomeMedicineList();
+  renderNextMedicineStat();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+
+// ── CAMERA UPLOAD FUNCTIONS ──
+let cameraStream = null;
+
+function openUploadModal() {
+  document.getElementById('uploadModal').classList.add('open');
+  // Reset camera preview
+  const video = document.getElementById('cameraPreview');
+  video.classList.remove('active');
+  video.srcObject = null;
+  document.getElementById('captureBtn').classList.remove('active');
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+}
+
+function closeUploadModal() {
+  document.getElementById('uploadModal').classList.remove('open');
+  const video = document.getElementById('cameraPreview');
+  video.classList.remove('active');
+  video.srcObject = null;
+  document.getElementById('captureBtn').classList.remove('active');
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+}
+
+async function openCamera() {
+  try {
+    const video = document.getElementById('cameraPreview');
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'environment' } 
+    });
+    cameraStream = stream;
+    video.srcObject = stream;
+    video.classList.add('active');
+    document.getElementById('captureBtn').classList.add('active');
+    document.getElementById('uploadPreview').textContent = '📸 Camera is ready. Click "Capture Photo" to take a picture.';
+  } catch(err) {
+    console.error(err);
+    showToast('⚠️ Camera access denied. Please allow camera permission.', 'red');
+  }
+}
+
+function capturePhoto() {
+  const video = document.getElementById('cameraPreview');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  // Convert to blob and send to AI
+  canvas.toBlob(function(blob) {
+    const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+    processReportFile(file);
+  }, 'image/jpeg', 0.95);
+}
+
+function handleGalleryUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  processReportFile(file);
+  event.target.value = '';
+}
+
+function processReportFile(file) {
+  document.getElementById('uploadPreview').textContent = `✅ "${file.name}" uploaded & sent to AI for analysis.`;
+
+  // Close upload modal
+  closeUploadModal();
+
+  // Open chat modal and send the image to AI
+  openChatPage();
+
+  // Add message to chat window
+  const win = document.getElementById('chatWindow');
+  win.innerHTML += `<div class="chat-msg user">📷 I've uploaded a report: "${file.name}"</div>`;
+  win.scrollTop = win.scrollHeight;
+
+  // Show thinking
+  const thinking = document.createElement('div');
+  thinking.className = 'chat-msg ai';
+  thinking.textContent = '📋 Analysing your report... Please wait.';
+  win.appendChild(thinking);
+  win.scrollTop = win.scrollHeight;
+  showToast(langData.toastReportUploaded || 'Report uploaded! AI is analysing…', 'green');
+
+  // Read the uploaded file and let the AI analyse THIS image (not any pre-stored data)
+  const reader = new FileReader();
+  reader.onload = async function() {
+    const base64 = String(reader.result).split(',')[1];
+    const mediaType = file.type || 'image/jpeg';
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6', max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+              { type: 'text', text: 'You are HealthGuardian AI. Analyse ONLY this uploaded medical report/image and explain the findings to the patient in a friendly, concise way. Base your answer strictly on what is actually visible in this image — do not assume any previous health data.' }
+            ]
+          }]
+        })
+      });
+      const data = await resp.json();
+      const reply = data.content?.[0]?.text || 'Sorry, I could not analyse this report.';
+      thinking.textContent = reply;
+      speakText(reply);
+    } catch(e) {
+      thinking.textContent = '⚠️ Connection error. Please try again.';
+    }
+    win.scrollTop = win.scrollHeight;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── ADD MEDICINE CAMERA FUNCTIONS ──
+let medCameraStream = null;
+
+function openMedModal() {
+  document.getElementById('medModal').classList.add('open');
+  // Reset camera preview
+  const video = document.getElementById('medCameraPreview');
+  video.classList.remove('active');
+  video.srcObject = null;
+  document.getElementById('medCaptureBtn').classList.remove('active');
+  if (medCameraStream) {
+    medCameraStream.getTracks().forEach(t => t.stop());
+    medCameraStream = null;
+  }
+}
+
+function closeMedModal() {
+  document.getElementById('medModal').classList.remove('open');
+  const video = document.getElementById('medCameraPreview');
+  video.classList.remove('active');
+  video.srcObject = null;
+  document.getElementById('medCaptureBtn').classList.remove('active');
+  if (medCameraStream) {
+    medCameraStream.getTracks().forEach(t => t.stop());
+    medCameraStream = null;
+  }
+}
+
+async function openMedCamera() {
+  try {
+    const video = document.getElementById('medCameraPreview');
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'environment' } 
+    });
+    medCameraStream = stream;
+    video.srcObject = stream;
+    video.classList.add('active');
+    document.getElementById('medCaptureBtn').classList.add('active');
+    document.getElementById('medPreview').textContent = '📸 Camera is ready. Click "Capture Prescription" to take a picture.';
+  } catch(err) {
+    console.error(err);
+    showToast('⚠️ Camera access denied. Please allow camera permission.', 'red');
+  }
+}
+
+function captureMedPhoto() {
+  const video = document.getElementById('medCameraPreview');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  // Convert to blob and save to database
+  canvas.toBlob(function(blob) {
+    const file = new File([blob], 'med-prescription.jpg', { type: 'image/jpeg' });
+    processMedFile(file);
+  }, 'image/jpeg', 0.95);
+}
+
+function handleMedGalleryUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  processMedFile(file);
+  event.target.value = '';
+}
+
+function processMedFile(file) {
+  document.getElementById('medPreview').textContent = `✅ "${file.name}" scanned. Medicine details extracted and saved to database.`;
+  
+  // Close med modal
+  closeMedModal();
+  
+  // Show toast that medicine is saved to database
+  showToast(langData.toastMedicineSaved || '💊 Medicine prescription saved to database!', 'green');
+  
+  // Also show the medicine added message
+  setTimeout(() => {
+    showToast(langData.toastMedicineAdded || 'Medicine added from prescription! 💊', 'green');
+  }, 1500);
+}
+
+// ── EXISTING FUNCTIONS (unchanged) ──
+function getLast6MonthLabels() {
+  const labels = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    labels.push(d.toLocaleString('en-US', { month: 'short' }));
+  }
+  return labels;
+}
+const months = getLast6MonthLabels();
+const graphData = {
+  bp:     [null, null, null, null, null, null],
+  sugar:  [null, null, null, null, null, null],
+  weight: [null, null, null, null, null, null]
+};
+const graphLabels = { bp:'Blood Pressure (mmHg)', sugar:'Blood Sugar (mg/dL)', weight:'Weight (kg)' };
+let currentGraph = 'bp';
+let chart;
+
+function initChart() {
+  const ctx = document.getElementById('healthChart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: graphLabels[currentGraph],
+        data: graphData[currentGraph],
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37,99,235,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#2563eb',
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: '#f1f5fb' }, ticks: { font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function switchGraph(el, key) {
+  document.querySelectorAll('.graph-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentGraph = key;
+  chart.data.datasets[0].data = graphData[key];
+  chart.data.datasets[0].label = graphLabels[key];
+  chart.update();
+}
+
+initChart();
+
+
+function saveHealthData() {
+  const bp = document.getElementById('inputBP').value;
+  const sugar = document.getElementById('inputSugar').value;
+  const weight = document.getElementById('inputWeight').value;
+  const bg = document.getElementById('inputBG').value;
+  const lastIdx = graphData.bp.length - 1;
+
+  if (bp) {
+    document.getElementById('bpVal').textContent = bp;
+    const systolic = parseFloat(bp.split('/')[0]);
+    if (!isNaN(systolic)) graphData.bp[lastIdx] = systolic;
+  }
+  if (sugar) {
+    document.getElementById('sugarVal').textContent = sugar;
+    graphData.sugar[lastIdx] = Number(sugar);
+  }
+  if (weight) {
+    document.getElementById('weightVal').textContent = weight;
+    graphData.weight[lastIdx] = Number(weight);
+  }
+  if (bg) document.getElementById('bgVal').textContent = bg;
+
+  chart.data.datasets[0].data = graphData[currentGraph];
+  chart.update();
+
+  // Health Score auto-calculate karto jevha koni bhi BP/Sugar/Weight save karto
+  updateHealthScoreDisplay();
+
+  const formData = new FormData();
+
+formData.append("bp", bp);
+formData.append("sugar", sugar);
+formData.append("weight", weight);
+formData.append("blood_group", bg);
+
+fetch("/save_health", {
+    method: "POST",
+    body: formData
+})
+.then(response => response.text())
+.then(data => {
+
+    if (data === "success") {
+        console.log("Health data saved successfully.");
+    } else {
+        console.log("Database save failed.");
+    }
+
+})
+.catch(error => console.error(error));
+
+  showToast(langData.toastHealthUpdated || '✅ Health data updated!', 'green');
+}
+
+// ── HEALTH SCORE CALCULATION ──
+// BP, Sugar, Weight cha current saved value ghevun 0-100 score kadhto.
+// Height nasल्यामुळे weight साठी approximate healthy-range वापरलाय (exact BMI नाही).
+function calculateHealthScore() {
+  const bpText = document.getElementById('bpVal').textContent.trim();
+  const sugarText = document.getElementById('sugarVal').textContent.trim();
+  const weightText = document.getElementById('weightVal').textContent.trim();
+
+  let score = 100;
+  let factors = 0;
+
+  // Blood Pressure
+  if (bpText && bpText !== '--') {
+    const parts = bpText.split('/');
+    const systolic = parseFloat(parts[0]);
+    const diastolic = parseFloat(parts[1]);
+    if (!isNaN(systolic) && !isNaN(diastolic)) {
+      factors++;
+      if (systolic >= 140 || diastolic >= 90) score -= 25;       // high
+      else if (systolic >= 130 || diastolic >= 85) score -= 15;  // elevated-high
+      else if (systolic > 120 || diastolic > 80) score -= 8;     // slightly elevated
+      else if (systolic < 90 || diastolic < 60) score -= 15;     // low BP
+    }
+  }
+
+  // Blood Sugar (mg/dL)
+  if (sugarText && sugarText !== '--') {
+    const sugar = Number(sugarText);
+    if (!isNaN(sugar) && sugar > 0) {
+      factors++;
+      if (sugar > 180) score -= 25;
+      else if (sugar > 125) score -= 18;
+      else if (sugar > 100) score -= 8;
+      else if (sugar < 70) score -= 15;
+    }
+  }
+
+  // Weight (kg) — approximate healthy range, height nasल्यामुळे
+  if (weightText && weightText !== '--') {
+    const weight = Number(weightText);
+    if (!isNaN(weight) && weight > 0) {
+      factors++;
+      if (weight < 40 || weight > 100) score -= 10;
+      else if (weight < 45 || weight > 90) score -= 5;
+    }
+  }
+
+  if (factors === 0) return null;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function updateHealthScoreDisplay() {
+  const score = calculateHealthScore();
+  const scoreEl = document.getElementById('healthScoreVal');
+  const goodEl = document.getElementById('goodLabel');
+
+  if (score === null) {
+    scoreEl.textContent = '--';
+    goodEl.textContent = '';
+    return;
+  }
+
+  scoreEl.textContent = score;
+
+  if (score >= 85) {
+    goodEl.textContent = langData.goodLabel || 'Good';
+    goodEl.style.color = 'var(--green)';
+  } else if (score >= 65) {
+    goodEl.textContent = langData.fairLabel || 'Fair';
+    goodEl.style.color = '#f59e0b';
+  } else {
+    goodEl.textContent = langData.lowLabel || 'Low';
+    goodEl.style.color = 'var(--red)';
+  }
+}
+
+// ── SHARED AUDIO CONTEXT (unlocked on first tap so background reminders can actually play sound) ──
+let sharedAudioCtx = null;
+function getAudioCtx() {
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new AudioContext();
+  }
+  if (sharedAudioCtx.state === 'suspended') {
+    sharedAudioCtx.resume();
+  }
+  return sharedAudioCtx;
+}
+document.addEventListener('click', () => { getAudioCtx(); }, { once: true });
+document.addEventListener('touchstart', () => { getAudioCtx(); }, { once: true });
+
+function markMedItem(id, type) {
+  const medicines = getMedicines();
+  const m = medicines.find(x => x.id === id);
+  if (!m) return;
+
+  // Aajcha dose ajun count zala nasel (ना taken ना missed) tarach counter kami karto — ekach divsat multiple clicks var double count nako
+  const alreadyLoggedToday = m.takenToday || m.missedToday;
+  if (!alreadyLoggedToday && m.durationDays) {
+    m.daysCompleted = (m.daysCompleted || 0) + 1;
+  }
+
+  if (type === 'taken') {
+    m.takenToday = true;
+    m.missedToday = false;
+    saveMedicines(medicines);
+    showToast(langData.toastTaken || 'Thank you! 💊 Medicine marked as taken.', 'green');
+  } else {
+    m.missedToday = true;
+    m.takenToday = false;
+    saveMedicines(medicines);
+    showToast(langData.toastMissed || '⚠️ Medicine missed! Alarm will ring as reminder.', 'red');
+    try {
+      const ac = getAudioCtx();
+      for (let i = 0; i < 3; i++) {
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.frequency.setValueAtTime(880, ac.currentTime + i * 0.7);
+        gain.gain.setValueAtTime(0.3, ac.currentTime + i * 0.7);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + i * 0.7 + 0.5);
+        osc.start(ac.currentTime + i * 0.7);
+        osc.stop(ac.currentTime + i * 0.7 + 0.5);
+      }
+    } catch(e) {}
+  }
+  // Next Medicine card sagळ्यात aadhi update karto, ekhadya render function madhe error aali tari ha block hou nako
+  try { renderNextMedicineStat(); } catch(e) {}
+  try { renderHomeMedicineList(); } catch(e) {}
+  try { if (typeof renderNextApptStat === 'function') renderNextApptStat(); } catch(e) {}
+  try { renderMedicineList(); } catch(e) {}
+}
+
+function openAllMedicines() {
+  renderMedicineList();
+  document.getElementById('allMedModal').classList.add('open');
+}
+
+function getMedicines() {
+  try { return JSON.parse(localStorage.getItem('medicines') || '[]'); } catch(e) { return []; }
+}
+
+function saveMedicines(list) {
+  localStorage.setItem('medicines', JSON.stringify(list));
+}
+
+function getNextUpcomingMedicine() {
+  const medicines = getMedicines();
+  if (!medicines.length) return null;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  let best = null, bestDiff = Infinity;
+  medicines.forEach(m => {
+    if (!isMedicineCourseActive(m)) return; // course sampla, next madhe dakhaycha nahi
+    const parts = (m.time || '').split(':').map(Number);
+    if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+    const mins = parts[0] * 60 + parts[1];
+    let diff = mins - nowMinutes;
+    if (diff < 0) diff += 24 * 60;
+    // Aaj taken/missed mark zalay tar udyacha dose count karto (24 tas pudhe ढकलतो), blank dakhavaycha nahi
+    if (m.takenToday || m.missedToday) diff += 24 * 60;
+    if (diff < bestDiff) { bestDiff = diff; best = m; }
+  });
+  return best;
+}
+
+function toggleNextMedicineDropdown(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById('nextMedicineDropdown');
+  if (!dd) return;
+  dd.style.display = (dd.style.display === 'block') ? 'none' : 'block';
+}
+
+document.addEventListener('click', function() {
+  const dd = document.getElementById('nextMedicineDropdown');
+  if (dd) dd.style.display = 'none';
+});
+
+function renderNextMedicineStat() {
+  const valEl = document.getElementById('nextMedTimeVal');
+  const subEl = document.getElementById('paracetamolLabel');
+  const cardEl = document.getElementById('nextMedicineStatCard');
+  const ddEl = document.getElementById('nextMedicineDropdown');
+  if (!valEl || !subEl || !cardEl || !ddEl) return;
+
+  const medicines = getMedicines();
+  const next = getNextUpcomingMedicine();
+
+  if (next) {
+    valEl.textContent = formatTime12(next.time);
+    subEl.textContent = next.name;
+  } else {
+    valEl.textContent = '--';
+    subEl.textContent = '';
+  }
+
+  if (medicines.length > 1) {
+    cardEl.style.cursor = 'pointer';
+    cardEl.onclick = toggleNextMedicineDropdown;
+    const sorted = [...medicines].sort((a, b) => {
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const diff = m => {
+        const [h, mi] = (m.time || '0:0').split(':').map(Number);
+        let d = (h * 60 + mi) - nowMinutes;
+        if (d < 0) d += 24 * 60;
+        if (m.takenToday || m.missedToday) d += 24 * 60;
+        return d;
+      };
+      return diff(a) - diff(b);
+    });
+    ddEl.innerHTML = sorted.map(m => `
+      <div style="display:flex;justify-content:space-between;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);font-size:12px;">
+        <span style="font-weight:700;color:var(--text-dark);">${escapeHtml(m.name)}</span>
+        <span style="color:var(--text-mid);">${formatTime12(m.time)}</span>
+      </div>
+    `).join('');
+  } else {
+    cardEl.style.cursor = 'default';
+    cardEl.onclick = null;
+    ddEl.style.display = 'none';
+    ddEl.innerHTML = '';
+  }
+}
+
+function getNextUpcomingAppointment() {
+  const appointments = getAppointments();
+  if (!appointments.length) return null;
+  const now = new Date();
+  let best = null, bestDiff = Infinity;
+  appointments.forEach(a => {
+    if (!a.date || !a.time) return;
+    const dt = new Date(a.date + 'T' + a.time + ':00');
+    const diff = dt.getTime() - now.getTime();
+    if (diff >= 0 && diff < bestDiff) { bestDiff = diff; best = a; }
+  });
+  if (!best) {
+    // all appointments are in the past — fall back to the earliest one
+    const sorted = [...appointments].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    best = sorted[0];
+  }
+  return best;
+}
+
+function toggleNextApptDropdown(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById('nextApptDropdown');
+  if (!dd) return;
+  dd.style.display = (dd.style.display === 'block') ? 'none' : 'block';
+}
+
+document.addEventListener('click', function() {
+  const dd = document.getElementById('nextApptDropdown');
+  if (dd) dd.style.display = 'none';
+});
+
+function renderNextApptStat() {
+  const valEl = document.getElementById('medsTakenVal');
+  const subEl = document.getElementById('takenLabel');
+  const cardEl = document.getElementById('nextApptStatCard');
+  const ddEl = document.getElementById('nextApptDropdown');
+  if (!valEl || !subEl || !cardEl || !ddEl) return;
+
+  const appointments = getAppointments();
+  const next = getNextUpcomingAppointment();
+
+  if (next) {
+    valEl.textContent = formatApptDate(next.date) + ' • ' + formatTime12(next.time);
+    subEl.textContent = next.doctor || '';
+  } else {
+    valEl.textContent = '--';
+    subEl.textContent = '';
+  }
+
+  if (appointments.length > 1) {
+    cardEl.style.cursor = 'pointer';
+    cardEl.onclick = toggleNextApptDropdown;
+    const sorted = [...appointments].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    ddEl.innerHTML = sorted.map(a => `
+      <div style="display:flex;justify-content:space-between;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);font-size:12px;">
+        <span style="font-weight:700;color:var(--text-dark);">${escapeHtml(a.doctor)}</span>
+        <span style="color:var(--text-mid);">${formatApptDate(a.date)} • ${formatTime12(a.time)}</span>
+      </div>
+    `).join('');
+  } else {
+    cardEl.style.cursor = 'default';
+    cardEl.onclick = null;
+    ddEl.style.display = 'none';
+    ddEl.innerHTML = '';
+  }
+}
+
+function renderHomeMedicineList() {
+  const container = document.getElementById('allMedicinesInlineList');
+  const emptyEl = document.getElementById('noMedicinesInlineMsg');
+  if (!container) return;
+  const medicines = getMedicines();
+
+  if (!medicines.length) {
+    container.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const takenLabel = (langData && langData.takenBtnText) ? langData.takenBtnText : 'Taken';
+  const missedLabel = (langData && langData.missedBtnText) ? langData.missedBtnText : 'Missed';
+
+  container.innerHTML = medicines.map(m => {
+    const active = isMedicineCourseActive(m);
+    let daysInfo = '';
+    if (m.durationDays) {
+      const remaining = m.durationDays - (m.daysCompleted || 0);
+      daysInfo = remaining > 0
+        ? `<div style="font-size:11px;color:var(--text-mid);margin-top:2px;">${remaining} day${remaining === 1 ? '' : 's'} left</div>`
+        : `<div style="font-size:11px;color:var(--text-light);margin-top:2px;">✅ Course completed</div>`;
+    }
+    return `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--border);${active ? '' : 'opacity:0.55;'}">
+      <div style="flex:1;min-width:0;">
+        <div class="medicine-name" style="font-size:14px;">${escapeHtml(m.name)}</div>
+        <div class="medicine-time" style="margin-top:2px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>${formatTime12(m.time)}</span>
+        </div>
+        ${daysInfo}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn-outline taken" onclick="markMedItem('${m.id}','taken')" style="padding:6px 10px;font-size:11px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
+          ${m.takenToday ? '✓' : takenLabel}
+        </button>
+        <button class="btn-outline missed" onclick="markMedItem('${m.id}','missed')" style="padding:6px 10px;font-size:11px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          ${missedLabel}
+        </button>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+
+function toggleMedDeletePanel() {
+  const editP = document.getElementById('medEditPanel');
+  if (editP) editP.style.display = 'none';
+  const p = document.getElementById('medDeletePanel');
+  if (!p) return;
+  const show = p.style.display !== 'flex';
+  p.style.display = show ? 'flex' : 'none';
+  if (show) renderMedDeletePanel();
+}
+
+function renderMedDeletePanel() {
+  const p = document.getElementById('medDeletePanel');
+  if (!p) return;
+  const medicines = getMedicines();
+  if (!medicines.length) {
+    p.innerHTML = '<div style="font-size:12px;color:var(--text-mid);">No medicines to delete.</div>';
+    return;
+  }
+  p.innerHTML = medicines.map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--blue-mid);border-radius:8px;padding:8px 10px;">
+      <span style="font-size:13px;font-weight:700;color:var(--text-dark);">${escapeHtml(m.name)} <span style="font-weight:400;color:var(--text-mid);">(${formatTime12(m.time)})</span></span>
+      <svg onclick="deleteMedicineEntry('${m.id}'); renderMedDeletePanel();" style="width:16px;height:16px;color:#dc2626;cursor:pointer;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </div>
+  `).join('');
+}
+
+function toggleMedEditPanel() {
+  const delP = document.getElementById('medDeletePanel');
+  if (delP) delP.style.display = 'none';
+  const p = document.getElementById('medEditPanel');
+  if (!p) return;
+  const show = p.style.display !== 'flex';
+  p.style.display = show ? 'flex' : 'none';
+  if (show) renderMedEditPickList();
+}
+
+function renderMedEditPickList() {
+  const p = document.getElementById('medEditPanel');
+  if (!p) return;
+  const medicines = getMedicines();
+  if (!medicines.length) {
+    p.innerHTML = '<div style="font-size:12px;color:var(--text-mid);">No medicines to edit.</div>';
+    return;
+  }
+  p.innerHTML = medicines.map(m => `
+    <div onclick="openMedEditForm('${m.id}')" style="cursor:pointer;background:var(--blue-mid);border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;color:var(--text-dark);">
+      ${escapeHtml(m.name)} <span style="font-weight:400;color:var(--text-mid);">(${formatTime12(m.time)})</span>
+    </div>
+  `).join('');
+}
+
+function openMedEditForm(id) {
+  const medicines = getMedicines();
+  const m = medicines.find(x => x.id === id);
+  if (!m) return;
+  const parts = m.time.split(':').map(Number);
+  const h = parts[0], mi = parts[1];
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  const p = document.getElementById('medEditPanel');
+  if (!p) return;
+  p.innerHTML = `
+    <div class="field-group" style="margin-bottom:8px;">
+      <span class="field-label">Medicine Name</span>
+      <input type="text" class="field-input" id="editMedNameInput" value="${escapeHtml(m.name)}" style="width:100%;">
+    </div>
+    <div class="field-group" style="margin-bottom:8px;">
+      <span class="field-label">Reminder Time</span>
+      <div style="display:flex;gap:6px;">
+        <select class="field-input" id="editMedHourInput" style="flex:1;"></select>
+        <select class="field-input" id="editMedMinuteInput" style="flex:1;"></select>
+        <select class="field-input" id="editMedAmPmInput" style="flex:1;">
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-blue" style="width:100%;padding:10px;" onclick="saveMedEdit('${id}')">Save Changes</button>
+  `;
+  populateTimeDropdown('editMedHourInput', 'editMedMinuteInput');
+  document.getElementById('editMedHourInput').value = String(h12);
+  document.getElementById('editMedMinuteInput').value = String(mi);
+  document.getElementById('editMedAmPmInput').value = ampm;
+}
+
+function saveMedEdit(id) {
+  const name = document.getElementById('editMedNameInput').value.trim();
+  const time = get24HourTime('editMedHourInput', 'editMedMinuteInput', 'editMedAmPmInput');
+  if (!name || !time) {
+    showToast('⚠️ Please enter medicine name and time.', 'red');
+    return;
+  }
+  const medicines = getMedicines();
+  const m = medicines.find(x => x.id === id);
+  if (m) {
+    m.name = name;
+    m.time = time;
+    m.lastFiredDate = null;
+    saveMedicines(medicines);
+    renderHomeMedicineList();
+    renderNextMedicineStat();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+    renderMedicineList();
+    showToast('✅ Medicine updated', 'green');
+  }
+  const p = document.getElementById('medEditPanel');
+  if (p) p.style.display = 'none';
+}
+
+function renderMedicineList() {
+  // "Today's Medicines" modal list was removed — the full medicine list now
+  // shows directly in the Medicine & Appointment card on the home screen.
+  const listEl = document.getElementById('allMedList');
+  const emptyEl = document.getElementById('allMedEmpty');
+  if (!listEl || !emptyEl) return;
+
+  const medicines = getMedicines();
+
+  if (!medicines.length) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  listEl.innerHTML = medicines.map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--blue-mid);border-radius:10px;padding:10px 12px;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-dark);">${escapeHtml(m.name)}</div>
+        <div style="font-size:11px;color:var(--text-mid);">${escapeHtml(m.dose || '')}${m.dose ? ' • ' : ''}⏰ ${formatTime12(m.time)}${m.takenToday ? ' • ✅' : ''}</div>
+      </div>
+      <svg onclick="deleteMedicineEntry('${m.id}')" style="width:16px;height:16px;color:var(--text-mid);cursor:pointer;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function populateTimeDropdown(hourId, minuteId) {
+  const hourEl = document.getElementById(hourId);
+  const minEl = document.getElementById(minuteId);
+  if (hourEl && !hourEl.options.length) {
+    for (let h = 1; h <= 12; h++) {
+      hourEl.innerHTML += `<option value="${h}">${h}</option>`;
+    }
+  }
+  if (minEl && !minEl.options.length) {
+    for (let m = 0; m < 60; m++) {
+      minEl.innerHTML += `<option value="${m}">${String(m).padStart(2, '0')}</option>`;
+    }
+  }
+}
+populateTimeDropdown('medHourInput', 'medMinuteInput');
+populateTimeDropdown('apptHourInput', 'apptMinuteInput');
+
+function get24HourTime(hourId, minuteId, ampmId) {
+  const h12 = parseInt(document.getElementById(hourId).value, 10);
+  const m = parseInt(document.getElementById(minuteId).value, 10);
+  const ampm = document.getElementById(ampmId).value;
+  if (isNaN(h12) || isNaN(m)) return '';
+  let h24 = h12 % 12;
+  if (ampm === 'PM') h24 += 12;
+  return `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function formatTime12(t) {
+  if (!t) return '--';
+  const [h, m] = t.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+function addMedicineEntry() {
+  const name = document.getElementById('medNameInput').value.trim();
+  const time = get24HourTime('medHourInput', 'medMinuteInput', 'medAmPmInput');
+  const daysRaw = document.getElementById('medDaysInput').value.trim();
+  const durationDays = daysRaw ? parseInt(daysRaw, 10) : null;
+
+  if (!name || !time) {
+    showToast('⚠️ Please enter medicine name and reminder time.', 'red');
+    return;
+  }
+  if (daysRaw && (isNaN(durationDays) || durationDays < 1)) {
+    showToast('⚠️ Please enter a valid number of days.', 'red');
+    return;
+  }
+
+  const medicines = getMedicines();
+  medicines.push({
+    id: 'med_' + Date.now(),
+    name, time,
+    lastFiredDate: null,
+    takenToday: false,
+    durationDays: durationDays,                          // null = ongoing/no end date
+    daysCompleted: 0,                                     // Taken/Missed click zala ki wadhto
+    startDate: new Date().toISOString().slice(0, 10)      // course kevha suru zala tey
+  });
+  saveMedicines(medicines);
+  const formData = new FormData();
+
+formData.append("medicine_name", name);
+formData.append("reminder_time", time);
+
+fetch("/save_medicine", {
+    method: "POST",
+    body: formData
+})
+.then(res => res.text())
+.then(data => {
+
+    if(data === "success"){
+        console.log("Medicine Saved");
+    }else{
+        console.log(data);
+    }
+
+});
+
+  document.getElementById('medNameInput').value = '';
+  document.getElementById('medHourInput').selectedIndex = 0;
+  document.getElementById('medMinuteInput').selectedIndex = 0;
+  document.getElementById('medAmPmInput').selectedIndex = 0;
+  document.getElementById('medDaysInput').value = '';
+
+  renderMedicineList();
+  renderHomeMedicineList();
+  renderNextMedicineStat();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+  showToast('💊 Medicine added — reminder set for ' + formatTime12(time), 'green');
+}
+
+// Course active aahe ka tey daysCompleted (Taken/Missed click cha count) var thevun check karto — durationDays null = kayamche/ongoing
+function isMedicineCourseActive(m) {
+  if (!m.durationDays) return true;
+  return (m.daysCompleted || 0) < m.durationDays;
+}
+
+function deleteMedicineEntry(id) {
+  const medicines = getMedicines().filter(m => m.id !== id);
+  saveMedicines(medicines);
+  renderMedicineList();
+  renderHomeMedicineList();
+  renderNextMedicineStat();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+}
+
+function ringMedicineAlarm(med) {
+  renderHomeMedicineList();
+  renderNextMedicineStat();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+
+  showToast('🔔 Your Medicine time is up, ' + med.name + (med.dose ? ' (' + med.dose + ')' : ''), 'green');
+  speakText('Your Medicine time is up, ' + med.name + (med.dose ? ', ' + med.dose : '') + '.');
+  try {
+    const ac = getAudioCtx();
+    const ringCount = 5;
+    const ringGap = 0.75;
+    for (let i = 0; i < ringCount; i++) {
+      const startAt = ac.currentTime + i * ringGap;
+      [880, 660].forEach((freq, j) => {
+        const osc = ac.createOscillator();
+        const g = ac.createGain();
+        osc.connect(g); g.connect(ac.destination);
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        const t = startAt + j * 0.18;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.9, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      });
+    }
+  } catch(e) {}
+
+  // Second reminder — fires right alongside the first one
+  setTimeout(() => {
+    showToast('🔔 You\'re time to take ' + med.name + (med.dose ? ' (' + med.dose + ')' : ''), 'green');
+    speakText('You\'re time to take ' + med.name + (med.dose ? ', ' + med.dose : '') + '.');
+  }, 4000);
+
+  // Follow-up reminder — fires again after 5 minutes if not marked "Taken"
+  setTimeout(() => {
+    const medicines = getMedicines();
+    const current = medicines.find(m => m.id === med.id);
+    if (current && !current.takenToday) {
+      showToast('🔔 You\'re time to take ' + current.name + (current.dose ? ' (' + current.dose + ')' : ''), 'red');
+      speakText('You\'re time to take ' + current.name + (current.dose ? ', ' + current.dose : '') + '.');
+    }
+  }, 5 * 60 * 1000);
+}
+
+function checkScheduleAlarms() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const nowStr = `${hh}:${mm}`;
+  const todayStr = now.toDateString();
+  const todayISO = now.toISOString().slice(0, 10);
+
+  const medicines = getMedicines();
+  let changed = false;
+  medicines.forEach(m => {
+    if (m.time === nowStr && m.lastFiredDate !== todayStr && isMedicineCourseActive(m)) {
+      m.takenToday = false;
+      m.missedToday = false;
+      ringMedicineAlarm(m);
+      m.lastFiredDate = todayStr;
+      changed = true;
+    }
+  });
+  if (changed) {
+    saveMedicines(medicines);
+    try { renderNextMedicineStat(); } catch(e) {}
+    try { renderHomeMedicineList(); } catch(e) {}
+  }
+
+  const appointments = getAppointments();
+  let apptChanged = false;
+
+  function shiftDateStr(dateStr, days) {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  appointments.forEach(a => {
+    if (!a.remindersFired) {
+      a.remindersFired = { twoDay: false, oneDay: false, hour1: false, min30: false, min15: false };
+      apptChanged = true;
+    }
+
+    // 2 days before, at 9:00 AM
+    if (todayISO === shiftDateStr(a.date, -2) && nowStr === '09:00' && !a.remindersFired.twoDay) {
+      ringApptUpcomingAlarm(a, 2);
+      a.remindersFired.twoDay = true;
+      apptChanged = true;
+    }
+
+    // 1 day before, at 9:00 AM
+    if (todayISO === shiftDateStr(a.date, -1) && nowStr === '09:00' && !a.remindersFired.oneDay) {
+      ringApptUpcomingAlarm(a, 1);
+      a.remindersFired.oneDay = true;
+      apptChanged = true;
+    }
+
+    // Same day countdown: 1 hour / 30 min / 15 min before
+    if (todayISO === a.date && a.time) {
+      const apptDateTime = new Date(a.date + 'T' + a.time + ':00');
+      const minutesUntil = Math.floor((apptDateTime.getTime() - now.getTime()) / 60000);
+
+      if (minutesUntil === 60 && !a.remindersFired.hour1) {
+        ringApptCountdownAlarm(a, '1 hour');
+        a.remindersFired.hour1 = true;
+        apptChanged = true;
+      }
+      if (minutesUntil === 30 && !a.remindersFired.min30) {
+        ringApptCountdownAlarm(a, '30 minutes');
+        a.remindersFired.min30 = true;
+        apptChanged = true;
+      }
+      if (minutesUntil === 15 && !a.remindersFired.min15) {
+        ringApptCountdownAlarm(a, '15 minutes');
+        a.remindersFired.min15 = true;
+        apptChanged = true;
+      }
+    }
+
+    if (a.date === todayISO && a.time === nowStr && !a.fired) {
+      ringAppointmentAlarm(a);
+      a.fired = true;
+      apptChanged = true;
+    }
+  });
+  if (apptChanged) saveAppointments(appointments);
+}
+setInterval(checkScheduleAlarms, 10000);
+setInterval(function() { try { renderNextMedicineStat(); } catch(e) {} }, 10000);
+checkScheduleAlarms();
+
+// ── TODAY'S APPOINTMENTS ──
+function openAllAppointments() {
+  renderAppointmentList();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+  document.getElementById('allApptModal').classList.add('open');
+}
+
+function getAppointments() {
+  try { return JSON.parse(localStorage.getItem('appointments') || '[]'); } catch(e) { return []; }
+}
+
+function saveAppointments(list) {
+  localStorage.setItem('appointments', JSON.stringify(list));
+}
+
+function formatApptDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function renderAppointmentList() {
+  const listEl = document.getElementById('allApptList');
+  const emptyEl = document.getElementById('allApptEmpty');
+  const appointments = getAppointments().slice().sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+
+  if (!appointments.length) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  listEl.innerHTML = appointments.map(a => `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--blue-mid);border-radius:10px;padding:10px 12px;">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--text-dark);">${escapeHtml(a.doctor)}</div>
+        <div style="font-size:11px;color:var(--text-mid);">📅 ${formatApptDate(a.date)} • ⏰ ${formatTime12(a.time)}</div>
+      </div>
+      <svg onclick="deleteAppointmentEntry('${a.id}')" style="width:16px;height:16px;color:var(--text-mid);cursor:pointer;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    </div>
+  `).join('');
+}
+
+function addAppointmentEntry() {
+  const doctor = document.getElementById('apptDoctorInput').value.trim();
+  const date = document.getElementById('apptDateInput').value;
+  const time = get24HourTime('apptHourInput', 'apptMinuteInput', 'apptAmPmInput');
+
+  if (!doctor || !date || !time) {
+    showToast('⚠️ Please enter doctor/reason, date and time.', 'red');
+    return;
+  }
+
+  const appointments = getAppointments();
+  appointments.push({
+    id: 'appt_' + Date.now(),
+    doctor, date, time,
+    fired: false,
+    remindersFired: { twoDay: false, oneDay: false, hour1: false, min30: false, min15: false }
+  });
+  saveAppointments(appointments);
+  const formData = new FormData();
+
+  formData.append("doctor_name", doctor);
+  formData.append("appointment_date", date); 
+  formData.append("appointment_time", time);
+
+  fetch("/save_appointment", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => res.text())
+  .then(data => {
+    console.log(data);
+  });
+
+  document.getElementById('apptDoctorInput').value = '';
+  document.getElementById('apptDateInput').value = '';
+  document.getElementById('apptHourInput').selectedIndex = 0;
+  document.getElementById('apptMinuteInput').selectedIndex = 0;
+  document.getElementById('apptAmPmInput').selectedIndex = 0;
+
+  renderAppointmentList();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+  showToast('📅 Appointment added — reminder set for ' + formatApptDate(date) + ' ' + formatTime12(time), 'green');
+}
+
+function deleteAppointmentEntry(id) {
+  const appointments = getAppointments().filter(a => a.id !== id);
+  saveAppointments(appointments);
+  renderAppointmentList();
+  if (typeof renderNextApptStat === 'function') renderNextApptStat();
+}
+
+function ringApptUpcomingAlarm(appt, daysLeft) {
+  const dayText = daysLeft === 1 ? '1 day' : (daysLeft + ' days');
+  showToast('📅 You have an appointment with ' + appt.doctor + ' in ' + dayText, 'green');
+  speakText('Reminder. You have an appointment with ' + appt.doctor + ' in ' + dayText + ', on ' + formatApptDate(appt.date) + ' at ' + formatTime12(appt.time) + '.');
+  try {
+    const ac = getAudioCtx();
+    for (let i = 0; i < 3; i++) {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.frequency.setValueAtTime(660, ac.currentTime + i * 0.6);
+      gain.gain.setValueAtTime(0.25, ac.currentTime + i * 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + i * 0.6 + 0.4);
+      osc.start(ac.currentTime + i * 0.6);
+      osc.stop(ac.currentTime + i * 0.6 + 0.4);
+    }
+  } catch(e) {}
+}
+
+function ringApptCountdownAlarm(appt, timeLeftText) {
+  showToast('📅 Your appointment with ' + appt.doctor + ' is in ' + timeLeftText, 'green');
+  speakText('Reminder. Your appointment with ' + appt.doctor + ' is in ' + timeLeftText + '.');
+  try {
+    const ac = getAudioCtx();
+    for (let i = 0; i < 4; i++) {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.frequency.setValueAtTime(770, ac.currentTime + i * 0.5);
+      gain.gain.setValueAtTime(0.28, ac.currentTime + i * 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + i * 0.5 + 0.35);
+      osc.start(ac.currentTime + i * 0.5);
+      osc.stop(ac.currentTime + i * 0.5 + 0.35);
+    }
+  } catch(e) {}
+}
+
+function ringAppointmentAlarm(appt) {
+  showToast('📅 Appointment now: ' + appt.doctor, 'green');
+  speakText('Reminder. You have an appointment now with ' + appt.doctor + '.');
+  try {
+    const ac = getAudioCtx();
+    const ringCount = 5;
+    const ringGap = 0.75;
+    for (let i = 0; i < ringCount; i++) {
+      const startAt = ac.currentTime + i * ringGap;
+      [880, 660].forEach((freq, j) => {
+        const osc = ac.createOscillator();
+        const g = ac.createGain();
+        osc.connect(g); g.connect(ac.destination);
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        const t = startAt + j * 0.18;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.9, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      });
+    }
+  } catch(e) {}
+}
+
+async function sendDietChat() {
+  const input = document.getElementById('dietChatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const win = document.getElementById('dietChatWindow');
+  win.innerHTML += `<div class="chat-msg user">${msg}</div>`;
+  win.scrollTop = win.scrollHeight;
+  const thinking = document.createElement('div');
+  thinking.className = 'chat-msg ai'; thinking.textContent = '…';
+  win.appendChild(thinking); win.scrollTop = win.scrollHeight;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `You are a friendly Diet AI assistant. The user's own saved data (use only what is present, ignore blanks): BP ${document.getElementById('bpVal').textContent}, Blood Sugar ${document.getElementById('sugarVal').textContent}, Weight ${document.getElementById('weightVal').textContent}, Blood Group ${document.getElementById('bgVal').textContent}, Breakfast ${document.getElementById('breakfastText').textContent}, Lunch ${document.getElementById('lunchText').textContent}, Dinner ${document.getElementById('dinnerText').textContent}. Answer the user's diet/nutrition question based only on their question and their own data above. Query: ${msg}`
+        }]
+      })
+    });
+    const data = await resp.json();
+    thinking.textContent = data.content?.[0]?.text || 'Sorry, I could not respond.';
+  } catch(e) {
+    thinking.textContent = '⚠️ Connection error. Please try again.';
+  }
+  win.scrollTop = win.scrollHeight;
+}
+
+function startDietVoiceInput() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast(langData.toastVoiceNotSupported || 'Voice not supported in this browser.', 'red'); return; }
+  const r = new SR();
+  r.lang = 'en-IN'; r.interimResults = false; r.maxAlternatives = 1;
+  const status = document.getElementById('dietVoiceStatus');
+  status.style.display = 'block'; status.textContent = '🎙 Listening… speak now';
+  r.start();
+  r.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('dietChatInput').value = transcript;
+    status.style.display = 'none';
+    sendDietChat();
+  };
+  r.onerror = () => { status.style.display = 'none'; showToast(langData.toastCouldNotHear || 'Could not hear you. Try again.', 'red'); };
+  r.onend = () => { status.style.display = 'none'; };
+}
+
+function startVoiceInput() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast(langData.toastVoiceNotSupported || 'Voice not supported in this browser.', 'red'); return; }
+  const r = new SR();
+  r.lang = 'en-IN'; r.interimResults = false; r.maxAlternatives = 1;
+  const status = document.getElementById('voiceStatus');
+  status.style.display = 'block'; status.textContent = '🎙 Listening… speak now';
+  r.start();
+  r.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('chatInput').value = transcript;
+    status.style.display = 'none';
+    sendChat();
+  };
+  r.onerror = () => { status.style.display = 'none'; showToast(langData.toastCouldNotHear || 'Could not hear you. Try again.', 'red'); };
+  r.onend = () => { status.style.display = 'none'; };
+}
+
+function speakText(text) {
+  try {
+    if (!window.speechSynthesis || !text) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'en-IN';
+    utter.rate = 1;
+    window.speechSynthesis.speak(utter);
+  } catch(e) {}
+}
+
+function startVoiceInputGuardian() {
+  document.getElementById('chatPageModal').classList.add('open');
+  setTimeout(() => startVoiceInput(), 300);
+}
+
+function openChatPage() {
+  document.getElementById('chatPageModal').classList.add('open');
+}
+
+function openDietChatPage() {
+  document.getElementById('dietChatModal').classList.add('open');
+}
+
+function openPrivacyModal() {
+  document.getElementById('privacyModal').classList.add('open');
+}
+
+function toggleProfileDropdown(e) {
+  e.stopPropagation();
+  document.getElementById('profileDropdown').classList.toggle('open');
+  const notifEl = document.getElementById('notifDropdown');
+  if (notifEl) notifEl.classList.remove('open');
+}
+
+async function openContactListModal(type) {
+
+  const titleEl = document.getElementById("contactListModalTitle");
+  const bodyEl = document.getElementById("contactListBody");
+
+  const response = await fetch("/get_contacts");
+  const data = await response.json();
+  console.log(data);
+
+  let items = [];
+
+  if (type === "emergency") {
+
+    titleEl.textContent =
+      langData.emergencyContactText || "Emergency Contact";
+
+    items = [
+      {
+        label: langData.ambulanceLabel || "Ambulance",
+        value: data.ambulance_contact || "108"
+      },
+      {
+        label: langData.fireBrigadeLabel || "Fire Brigade",
+        value: data.fire_brigade_contact || "101"
+      },
+      {
+        label: langData.doctorLabel || "Doctor",
+        value: data.doctor_contact || "--"
+      }
+    ];
+
+  } else {
+
+    titleEl.textContent =
+      langData.familyContactText || "Family Contact";
+
+    const contactLabel =
+      langData.contactLabel || "Contact";
+
+    items = [
+      {
+        label: contactLabel + " 1",
+        value: data.family_contact1 || "--"
+      },
+      {
+        label: contactLabel + " 2",
+        value: data.family_contact2 || "--"
+      },
+      {
+        label: contactLabel + " 3",
+        value: data.family_contact3 || "--"
+      }
+    ];
+  }
+
+  bodyEl.innerHTML = items.map((item, i) => `
+      <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:12px 16px;
+          margin-bottom:12px;
+          border:1px solid #fecaca;
+          border-radius:10px;
+          background:#fff5f5;
+      ">
+          <div style="display:flex;gap:10px;align-items:center;">
+              <span style="font-weight:700;color:#94a3b8;">
+                  ${i+1}.
+              </span>
+
+              <span style="font-weight:600;">
+                  ${item.label}
+              </span>
+          </div>
+
+          <span style="
+              font-weight:700;
+              color:#ef4444;
+          ">
+              ${item.value}
+          </span>
+      </div>
+  `).join("");
+
+  document
+      .getElementById("contactListModal")
+      .classList.add("open");
+}
+
+function closeProfileDropdown() {
+  document.getElementById('profileDropdown').classList.remove('open');
+}
+
+function openProfileGallery(e) {
+  e.stopPropagation();
+  document.getElementById('avatarFileInput').click();
+}
+
+function handleAvatarUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const avatarEl = document.getElementById('profileAvatar');
+    avatarEl.innerHTML = `<img src="${ev.target.result}" alt="Profile photo">`;
+    const topbarAvatar = document.getElementById('topbarAvatar');
+    if (topbarAvatar) topbarAvatar.innerHTML = `<img src="${ev.target.result}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    try {
+      const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      profile.avatar = ev.target.result;
+      localStorage.setItem('userProfile', JSON.stringify(profile));
+    } catch(err) {}
+    showToast('Profile photo updated', 'green');
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadProfileInfo() {
+    console.log("loadProfileInfo called");
+
+    // फक्त avatar localStorage मधून load करायचा
+    try {
+        const profile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+
+        if (profile.avatar) {
+
+            const avatarEl = document.getElementById("profileAvatar");
+            if (avatarEl) {
+                avatarEl.innerHTML = `<img src="${profile.avatar}" alt="Profile photo">`;
+            }
+
+            const topbarAvatar = document.getElementById("topbarAvatar");
+            if (topbarAvatar) {
+                topbarAvatar.innerHTML =
+                `<img src="${profile.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            }
+        }
+
+    } catch(err) {
+        console.log(err);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", loadProfileInfo);
+
+document.addEventListener("click", () => {
+    document.getElementById("profileDropdown").classList.remove("open");
+});
+
+function openProfilePage() {
+
+    localStorage.setItem("fromSwitchAccount","true");
+
+    window.location.href = "lang.html#profileCard";
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const win = document.getElementById('chatWindow');
+  win.innerHTML += `<div class="chat-msg user">${msg}</div>`;
+  win.scrollTop = win.scrollHeight;
+  const thinking = document.createElement('div');
+  thinking.className = 'chat-msg ai'; thinking.textContent = '…';
+  win.appendChild(thinking); win.scrollTop = win.scrollHeight;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `You are HealthGuardian AI assistant. Answer the user's question in a friendly, concise way based only on what they ask. Patient query: ${msg}`
+        }]
+      })
+    });
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text || 'Sorry, I could not respond.';
+
+  const formData = new FormData();
+
+  formData.append("question", msg);
+  formData.append("response", reply);
+
+  fetch("/save_chat", {
+  method: "POST",
+  body: formData
+  })
+  .then(res => res.text())
+  .then(data => console.log(data))
+  .catch(err => console.error(err));
+    thinking.textContent = reply;
+    speakText(reply);
+  } catch(e) {
+    thinking.textContent = '⚠️ Connection error. Please try again.';
+  }
+  win.scrollTop = win.scrollHeight;
+}
+
+function sendEmergency() {
+  document.getElementById('emergencyPopup').classList.add('open');
+  try {
+    const ac = getAudioCtx();
+    for (let i = 0; i < 3; i++) {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.connect(g); g.connect(ac.destination);
+      osc.frequency.value = 1000;
+      g.gain.setValueAtTime(0.4, ac.currentTime + i * 0.5);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.5 + 0.4);
+      osc.start(ac.currentTime + i * 0.5);
+      osc.stop(ac.currentTime + i * 0.5 + 0.4);
+    }
+  } catch(e) {}
+}
+
+function openMedModal() { document.getElementById('medModal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function handleMedUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  document.getElementById('medPreview').textContent = `✅ "${file.name}" scanned. Medicine details extracted.`;
+  showToast(langData.toastMedicineAdded || 'Medicine added from prescription!', 'green');
+  closeModal('medModal');
+}
+
+function logoutUser() {
+
+    setTimeout(() => {
+
+        fetch("/logout")
+        .then(() => {
+            window.location.href = "/";
+        });
+
+    }, 100);
+
+}
+
+function toggleNotifDropdown(e) {
+  e.stopPropagation();
+  document.getElementById('notifDropdown').classList.toggle('open');
+}
+document.addEventListener('click', () => {
+  const el = document.getElementById('notifDropdown');
+  if (el) el.classList.remove('open');
+});
+
+function showToast(msg, type) {
+    const t = document.getElementById("toast");
+    if (!t) return;
+
+    t.textContent = msg;
+    t.className = `toast show ${type}`;
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+        t.classList.remove("show");
+    }, 3500);
+}
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+</script>
+</body>
+</html>
