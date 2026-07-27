@@ -291,7 +291,9 @@ def save_profile():
     ambulance_contact = "108"
     fire_brigade_contact = "101"
     doctor_contact = request.form["doctor_contact"]
-     
+    family_email_1 = request.form.get("family_email_1")
+    family_email_2 = request.form.get("family_email_2") 
+    family_email_3 = request.form.get("family_email_3")
     conn = get_connection()
     cur = conn.cursor()
 
@@ -310,7 +312,10 @@ def save_profile():
         family_contact3=%s,
         ambulance_contact=%s,
         fire_brigade_contact=%s,
-        doctor_contact=%s
+        doctor_contact=%s,
+        family_email_1=%s,
+        family_email_2=%s,
+        family_email_3=%s
     WHERE user_id=%s
 """, (
     email,
@@ -326,6 +331,9 @@ def save_profile():
     ambulance_contact,
     fire_brigade_contact,
     doctor_contact,
+    family_email_1,
+    family_email_2,
+    family_email_3,
     user_id
 ))
 
@@ -447,6 +455,7 @@ def save_appointment():
     user_id = session["user_id"]
 
     doctor_name = request.form["doctor_name"]
+    hospital_name = request.form["hospital_name"]
     appointment_date = request.form["appointment_date"]
     appointment_time = request.form["appointment_time"]
 
@@ -468,7 +477,7 @@ def save_appointment():
     """, (
         user_id,
         doctor_name,
-        "",          # hospital_name
+        hospital_name,
         appointment_date,
         appointment_time,
         "Upcoming",
@@ -508,44 +517,6 @@ def save_chat():
         user_id,
         question,
         response
-    ))
-
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    return "success"
-
-@app.route("/save_diet", methods=["POST"])
-def save_diet():
-
-    if "user_id" not in session:
-        return "Login Required", 401
-
-    user_id = session["user_id"]
-
-    breakfast = request.form["breakfast"]
-    lunch = request.form["lunch"]
-    water_intake = request.form["water_intake"]
-
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        INSERT INTO diet_log
-        (
-            user_id,
-            breakfast,
-            lunch,
-            water_intake
-        )
-        VALUES (%s,%s,%s,%s)
-    """, (
-        user_id,
-        breakfast,
-        lunch,
-        water_intake
     ))
 
     conn.commit()
