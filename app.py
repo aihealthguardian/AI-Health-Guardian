@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from db import get_connection
+from email_service import send_email
 
 app = Flask(__name__)
 app.secret_key = "health_guardian"
@@ -565,6 +566,62 @@ def save_diet():
     conn.close()
 
     return "success"
+
+@app.route("/emergency", methods=["POST"])
+def emergency():
+    print("******** EMERGENCY ROUTE CALLED ********")
+    if "user_id" not in session:
+        return jsonify({"message": "Login Required"}), 401
+
+    data = request.get_json()
+    print(data)
+
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            username,
+            family_email_1,
+            family_email_2,
+            family_email_3
+        FROM users
+        WHERE user_id=%s
+    """, (session["user_id"],))
+
+    user = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not user:
+        return jsonify({"message": "User Not Found"})
+
+    username = user[0]
+
+    subject = "🚨 Health Guardian Emergency Alert"
+
+    body = f"""
+Emergency Alert!
+
+{username} has pressed the Emergency Button.
+
+Current Location:
+https://www.google.com/maps?q={latitude},{longitude}
+
+Please contact immediately.
+"""
+
+    emails = [user[1], user[2], user[3]]
+
+    for email in emails:
+        if email:
+            send_email(email, subject, body)
+
+    return jsonify({"message": "Emergency Alert Sent Successfully"})
     
 
 @app.route("/logout")

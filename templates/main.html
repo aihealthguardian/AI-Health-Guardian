@@ -902,7 +902,8 @@
   <div class="modal chat-page-modal">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;">
       <div class="modal-title" id="chatModalTitle" style="margin-bottom:0;">🛡️ Health Guardian AI</div>
-      <button class="btn-blue" onclick="openChatHistory()" id="savedHistoryBtn" style="flex-shrink:0;width:auto;padding:8px 14px;font-size:12px;">Saved History</button>
+      <button class="btn-blue" onclick="openChatHistory()" id="savedHistoryBtn" style="flex-shrink:0;width:auto;padding:8px 14px;font-size:12px;margin-right:40px;"> Saved History
+      </button>
     </div>
     <button class="modal-close" onclick="closeModal('chatPageModal')">✕</button>
     <div class="chat-window" id="chatWindow" style="min-height:380px;max-height:480px;">
@@ -3340,20 +3341,99 @@ async function sendChat() {
 }
 
 function sendEmergency() {
-  document.getElementById('emergencyPopup').classList.add('open');
-  try {
-    const ac = getAudioCtx();
-    for (let i = 0; i < 3; i++) {
-      const osc = ac.createOscillator();
-      const g = ac.createGain();
-      osc.connect(g); g.connect(ac.destination);
-      osc.frequency.value = 1000;
-      g.gain.setValueAtTime(0.4, ac.currentTime + i * 0.5);
-      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + i * 0.5 + 0.4);
-      osc.start(ac.currentTime + i * 0.5);
-      osc.stop(ac.currentTime + i * 0.5 + 0.4);
+
+    document.getElementById('emergencyPopup').classList.add('open');
+
+    // 🔊 Emergency Siren
+    try {
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+
+        for (let i = 0; i < 3; i++) {
+
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+
+            osc.connect(gain);
+            gain.connect(ac.destination);
+
+            osc.type = "sine";
+            osc.frequency.value = 1000;
+
+            gain.gain.setValueAtTime(0.4, ac.currentTime + i * 0.5);
+            gain.gain.exponentialRampToValueAtTime(
+                0.001,
+                ac.currentTime + i * 0.5 + 0.4
+            );
+
+            osc.start(ac.currentTime + i * 0.5);
+            osc.stop(ac.currentTime + i * 0.5 + 0.4);
+        }
+
+    } catch (e) {
+        console.log("Audio Error:", e);
     }
-  } catch(e) {}
+
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by this browser.");
+        return;
+    }
+
+    navigator.geolocation.watchPosition(
+
+        function(position) {
+
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            fetch("/emergency", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    latitude: latitude,
+                    longitude: longitude
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
+        },
+
+        function(error) {
+
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Location permission denied.");
+                    break;
+
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location unavailable.");
+                    break;
+
+                case error.TIMEOUT:
+                    alert("Location request timed out.");
+                    break;
+
+                default:
+                    alert("Unknown location error.");
+            }
+
+        },
+
+        {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+        }
+
+    );
+
 }
 
 function openMedModal() { document.getElementById('medModal').classList.add('open'); }
@@ -3401,7 +3481,6 @@ document.querySelectorAll('.checkbox-item').forEach(item => {
     this.closest('.checkbox-item').classList.toggle('checked', this.checked);
   });
 });
-
 </script>
 </body>
 </html>
