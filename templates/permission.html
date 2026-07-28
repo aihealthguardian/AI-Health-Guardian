@@ -211,6 +211,12 @@ const translations = {
 // ============================================
 let current = 0;
 let isProcessing = false;
+let permissions = {
+    location: false,
+    microphone: false,
+    notification: false,
+    speaker: false
+};
 let lang = localStorage.getItem("selectedLanguage") || "en";
 
 function getTranslations() {
@@ -252,38 +258,83 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function allowPermission() {
+
     if (isProcessing) return;
     isProcessing = true;
-    
-    const t = getTranslations();
-    const perm = t.permissions[current];
-    
-    // Request permission based on index
-    requestPermission(current, function() {
-        isProcessing = false;
+
+    requestPermission(current, function () {
+
+        if (current === 0) permissions.location = true;
+        if (current === 1) permissions.microphone = true;
+        if (current === 2) permissions.notification = true;
+        if (current === 3) permissions.speaker = true;
+
         current++;
+
+        const t = getTranslations();
+
         if (current < t.permissions.length) {
+
             updateUI();
+            isProcessing = false;
+
         } else {
-            alert(t.completedMsg);
-            window.location.href = "/main";
+
+            fetch("/save_permissions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(permissions)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(t.completedMsg);
+                window.location.href = "/main";
+            });
+
         }
+
     });
+
 }
 
 function denyPermission() {
+
     if (isProcessing) return;
     isProcessing = true;
-    
-    const t = getTranslations();
+
+    if (current === 0) permissions.location = false;
+    if (current === 1) permissions.microphone = false;
+    if (current === 2) permissions.notification = false;
+    if (current === 3) permissions.speaker = false;
+
     current++;
+
+    const t = getTranslations();
+
     if (current < t.permissions.length) {
+
         updateUI();
         isProcessing = false;
+
     } else {
-        alert(t.completedMsg);
-        window.location.href = "/main";
+
+        fetch("/save_permissions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(permissions)
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(t.completedMsg);
+            window.location.href = "/main";
+        });
+
     }
+
 }
 
 function requestPermission(index, callback) {
@@ -341,6 +392,7 @@ function requestPermission(index, callback) {
             callback();
     }
 }
+
 </script>
 </body>
 </html>

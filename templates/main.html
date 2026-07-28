@@ -2975,9 +2975,9 @@ function deleteAppointmentEntry(id) {
 // ── APPOINTMENT REMINDER FUNCTIONS WITH MULTIPLE REMINDERS ──
 function checkAppointmentReminders() {
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  
+  const todayStr = now.toISOString().slice(0, 10);
+
   const appointments = getAppointments();
   let changed = false;
 
@@ -2993,16 +2993,20 @@ function checkAppointmentReminders() {
       changed = true;
     }
 
-    // Before day reminders (at 9:00 AM on each reminder day)
+    // Full appointment date+time (actual appointment time)
+    const apptDateTime = new Date(a.date + 'T' + a.time + ':00');
+
+    // Before-day reminders — fire at the SAME time as the appointment, X days earlier.
+    // e.g. appointment 5:00 PM + "3 days before" -> reminder fires at 5:00 PM, 3 days prior.
+    // Catch-up: if that exact moment was missed (app closed), it fires on the very next
+    // check, as long as the appointment itself hasn't happened yet.
     if (a.reminderBeforeDays && a.reminderBeforeDays.length) {
       a.reminderBeforeDays.forEach(days => {
         const key = 'before_' + days;
         if (!a.remindersFired[key]) {
-          const reminderDate = new Date(a.date + 'T00:00:00');
-          reminderDate.setDate(reminderDate.getDate() - days);
-          const reminderDateStr = reminderDate.toISOString().slice(0, 10);
-          
-          if (todayStr === reminderDateStr && now.getHours() === 9 && now.getMinutes() === 0) {
+          const reminderDateTime = new Date(apptDateTime.getTime() - days * 24 * 60 * 60 * 1000);
+
+          if (now >= reminderDateTime && now < apptDateTime) {
             ringApptBeforeReminder(a, days);
             a.remindersFired[key] = true;
             changed = true;
@@ -3011,17 +3015,17 @@ function checkAppointmentReminders() {
       });
     }
 
-    // On-day reminders
+    // On-day reminders (minutes before appointment time) — already based on actual time.
     if (todayStr === a.date && a.reminderOnDayMin && a.reminderOnDayMin.length) {
       const apptTime = a.time.split(':').map(Number);
       const apptMinutes = apptTime[0] * 60 + apptTime[1];
-      
+
       a.reminderOnDayMin.forEach(minutes => {
         const key = 'onDay_' + minutes;
         if (!a.remindersFired[key]) {
           const reminderMinutes = apptMinutes - minutes;
-          
-          if (nowMinutes === reminderMinutes) {
+
+          if (nowMinutes >= reminderMinutes && now < apptDateTime) {
             ringApptOnDayReminder(a, minutes);
             a.remindersFired[key] = true;
             changed = true;
@@ -3267,31 +3271,48 @@ function openProfilePage() {
 }
 
 function openChatHistory() {
-  const listEl = document.getElementById('chatHistoryList');
-  const emptyEl = document.getElementById('chatHistoryEmpty');
-  document.getElementById('chatHistoryModal').classList.add('open');
-  listEl.innerHTML = '';
-  emptyEl.style.display = 'none';
 
-  fetch('/get_chat_history')
-    .then(res => res.json())
-    .then(data => {
-      const history = Array.isArray(data) ? data : (data.history || []);
-      if (!history.length) {
-        emptyEl.style.display = 'block';
-        return;
-      }
-      listEl.innerHTML = history.map(item => `
-        <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
-          <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px;">🙋 ${item.question || ''}</div>
-          <div style="font-size:12px;color:var(--text-dark);">🤖 ${item.response || ''}</div>
-        </div>
-      `).join('');
-    })
-    .catch(() => {
-      emptyEl.textContent = 'Could not load history.';
-      emptyEl.style.display = 'block';
+    const listEl = document.getElementById("chatHistoryList");
+    const emptyEl = document.getElementById("chatHistoryEmpty");
+
+    document.getElementById("chatHistoryModal").classList.add("open");
+
+    listEl.innerHTML = "";
+    emptyEl.style.display = "none";
+
+    fetch("/get_chat_history")
+    .then(res=>res.json())
+    .then(history=>{
+
+        if(history.length===0){
+
+            emptyEl.style.display="block";
+            return;
+
+        }
+
+        listEl.innerHTML = history.map(chat=>`
+
+            <div
+                onclick="openSavedChat(${chat.chat_id})"
+                style="
+                    cursor:pointer;
+                    padding:12px;
+                    border:1px solid #ddd;
+                    border-radius:10px;
+                    margin-bottom:10px;
+                    background:#f8f9ff;
+                    font-weight:600;
+                ">
+
+                📝 ${chat.question}
+
+            </div>
+
+        `).join("");
+
     });
+
 }
 
 async function sendChat() {
@@ -3338,6 +3359,38 @@ async function sendChat() {
     thinking.textContent = '⚠️ Connection error. Please try again.';
   }
   win.scrollTop = win.scrollHeight;
+}
+
+function openSavedChat(chatId){
+
+    fetch("/get_chat/"+chatId)
+
+    .then(res=>res.json())
+
+    .then(chat=>{
+
+        closeModal("chatHistoryModal");
+
+        openModal("chatPageModal");
+
+        const win = document.getElementById("chatWindow");
+
+        win.innerHTML = `
+
+            <div class="chat-msg user">
+                ${chat.question}
+            </div>
+
+            <div class="chat-msg ai">
+                ${chat.response}
+            </div>
+
+        `;
+
+        win.scrollTop = win.scrollHeight;
+
+    });
+
 }
 
 function sendEmergency() {

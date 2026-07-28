@@ -271,6 +271,65 @@ def get_contacts():
         "fire_brigade_contact": row[5]
     })
 
+@app.route("/save_permissions", methods=["POST"])
+def save_permissions():
+
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Login Required"}), 401
+
+    data = request.get_json()
+
+    location = data.get("location", False)
+    microphone = data.get("microphone", False)
+    notification = data.get("notification", False)
+    speaker = data.get("speaker", False)
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # आधी record आहे का ते check करा
+    cur.execute(
+        "SELECT id FROM permissions WHERE user_id=%s",
+        (session["user_id"],)
+    )
+
+    record = cur.fetchone()
+
+    if record:
+        cur.execute("""
+            UPDATE permissions
+            SET
+                location=%s,
+                microphone=%s,
+                notification=%s,
+                speaker=%s
+            WHERE user_id=%s
+        """, (
+            location,
+            microphone,
+            notification,
+            speaker,
+            session["user_id"]
+        ))
+    else:
+        cur.execute("""
+            INSERT INTO permissions
+            (user_id, location, microphone, notification, speaker)
+            VALUES (%s,%s,%s,%s,%s)
+        """, (
+            session["user_id"],
+            location,
+            microphone,
+            notification,
+            speaker
+        ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"success": True})
+
 @app.route("/save_profile", methods=["POST"])
 def save_profile():
 
@@ -622,7 +681,75 @@ Please contact immediately.
             send_email(email, subject, body)
 
     return jsonify({"message": "Emergency Alert Sent Successfully"})
-    
+
+@app.route("/get_chat_history")
+def get_chat_history():
+
+    if "user_id" not in session:
+        return jsonify([])
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            chat_id,
+            question
+        FROM ai_chat
+        WHERE user_id=%s
+        ORDER BY created_at DESC
+    """, (session["user_id"],))
+
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    history = []
+
+    for row in rows:
+        history.append({
+            "chat_id": row[0],
+            "question": row[1]
+        })
+
+    return jsonify(history)
+
+@app.route("/get_chat/<int:chat_id>")
+def get_chat(chat_id):
+
+    if "user_id" not in session:
+        return jsonify({})
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            question,
+            response
+        FROM ai_chat
+        WHERE
+            chat_id=%s
+            AND user_id=%s
+    """, (
+        chat_id,
+        session["user_id"]
+    ))
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not row:
+        return jsonify({})
+
+    return jsonify({
+        "question": row[0],
+        "response": row[1]
+    })
+
 
 @app.route("/logout")
 def logout():
