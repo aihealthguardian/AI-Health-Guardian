@@ -1,9 +1,591 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from db import get_connection
 from email_service import send_email
+import requests
+import os
+import uuid
+import re
 
 app = Flask(__name__)
 app.secret_key = "health_guardian"
+
+# ============================================================
+# REPORT UPLOAD CONFIG
+# ============================================================
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads", "reports")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "pdf"}
+MAX_FILE_SIZE_MB = 10
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+def is_allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# System-style instruction used ONLY for report analysis calls (kept
+# separate from the normal chat flow so it doesn't interfere with the
+# emergency/off-topic guards or the ongoing chat_history context).
+REPORT_ANALYSIS_INSTRUCTION = (
+    "You are analyzing a medical/health report for a patient. "
+    "The following is text extracted from their report. "
+    "Summarize it in simple, calm language a non-medical elderly person "
+    "can understand. Point out anything that looks abnormal or worth "
+    "discussing with a doctor, but NEVER name a specific medicine or "
+    "dosage -- always say 'consult a doctor or pharmacist' for that. "
+    "Keep it short (4-6 sentences).\n\n"
+    "Report text:\n"
+)
+
+# ============================================================
+# AI CHAT CONFIG
+# ============================================================
+
+# Keywords that must NEVER be answered by the model directly.
+# If any of these appear, we short-circuit and tell the user to
+# activate SOS / seek emergency help immediately, per the model's
+# own SYSTEM rule #2 -- but enforced here in code so it can never
+# be skipped or answered incorrectly by the (small) model.
+EMERGENCY_KEYWORDS = [
+    "chest pain", "cant breathe", "can't breathe", "difficulty breathing",
+    "breathing trouble", "shortness of breath",
+    "heavy bleeding", "severe bleeding", "bleeding a lot",
+    "unconscious", "unresponsive", "fainted", "passed out",
+    "stroke", "face drooping", "slurred speech",
+    "severe bite", "snake bite", "dog bite deep",
+    "seizure", "convulsion",
+    "heart attack", "cardiac arrest",
+    "suicide", "self harm", "overdose"
+]
+
+EMERGENCY_REPLY = (
+    "This sounds like it could be a medical emergency. "
+    "Please activate SOS now and seek immediate emergency medical help. "
+    "If someone is with you, ask them to call for help right away."
+)
+
+# Very small keyword guard to stop the 1B model wandering into
+# completely unrelated topics (movies, general chit-chat trivia, etc).
+# This is intentionally loose -- greetings and short messages are
+# always allowed through so normal conversation still works.
+HEALTH_TOPIC_KEYWORDS = [
+    "pain", "fever", "cold", "cough", "flu", "headache", "vomit", "nausea",
+    "diet", "food", "nutrition", "veg", "nonveg", "non-veg", "meal", "water",
+    "medicine", "doctor", "hospital", "symptom", "sick", "ill", "health",
+    "bp", "blood pressure", "sugar", "diabetes", "weight", "appointment",
+    "injury", "wound", "cut", "burn", "allergy", "infection", "rash",
+    "sleep", "stress", "exercise", "tired", "fatigue"
+]
+
+GREETING_WORDS = ["hi", "hii", "hello", "hey", "good morning", "good evening",
+                   "good afternoon", "who are you", "what can you do"]
+
+# Short stand-alone replies that only make sense as an answer to a
+# question the bot just asked (e.g. "veg or non-veg?" -> "veg").
+# Deliberately a fixed list, NOT "any short message", so random
+# off-topic phrases like "Rajasthani picture" don't slip through.
+SHORT_REPLY_WORDS = [
+    "ok", "okay", "yes", "no", "sure", "fine", "thanks", "thank you",
+    "veg", "nonveg", "non-veg", "non veg", "vegetarian", "non vegetarian"
+]
+
+OFF_TOPIC_REPLY = (
+    "I can only help with health symptoms, emergencies, and diet/nutrition "
+    "guidance. Could you ask something related to those?"
+)
+
+MAX_HISTORY_MESSAGES = 12  # keep session small: ~6 user/assistant turns
+
+
+def is_emergency(message):
+    lower = message.lower()
+    return any(k in lower for k in EMERGENCY_KEYWORDS)
+
+
+def is_on_topic(message):
+    lower = message.lower().strip()
+    if any(g in lower for g in GREETING_WORDS):
+        # greetings are handled naturally by the model itself
+        # (see SYSTEM prompt rule 7), not hardcoded here
+        return True
+    if lower in SHORT_REPLY_WORDS:
+        # exact short reply (e.g. "veg", "ok") -- treat as continuing
+        # an on-topic conversation, not a fresh off-topic question
+        return True
+    return any(k in lower for k in HEALTH_TOPIC_KEYWORDS)
+
+
+def ask_ollama(messages):
+    """
+    messages: list of {"role": "user"|"assistant", "content": "..."}
+    Uses Ollama's /api/chat endpoint so the model gets full conversation
+    context instead of just the latest message.
+    """
+    response = requests.post(
+        "http://localhost:11434/api/chat",
+        json={
+            "model": "health-guardian",
+            "messages": messages,
+            "stream": False
+        },
+        timeout=120
+    )
+
+    if response.status_code == 200:
+        return response.json().get("message", {}).get("content", "").strip()
+
+    print("Ollama Error:", response.text)
+
+    return "Sorry, I could not connect to the AI model."
+
+
+# ============================================================
+# DIET PLAN FLOW
+# ============================================================
+# Design goals (per requirement):
+#  1. Every diet question must ask veg/nonveg first if not already
+#     stated -- enforced in backend, not left to the model.
+#  2. Any number of days (1, 30, 120, 135...) must work reliably.
+#     Instead of asking the small model to hallucinate a huge unique
+#     plan in one go (unreliable / truncates), we ask it for ONE
+#     7-day pattern, then deterministically repeat/cycle that
+#     pattern in Python to cover however many days were requested.
+
+DIET_KEYWORDS = ["diet", "meal plan", "food plan", "nutrition",
+                  "breakfast", "lunch", "dinner", "meal"]
+
+NON_VEG_WORDS = [
+    "chicken", "mutton", "fish", "egg", "eggs", "meat", "prawn",
+    "beef", "pork", "non veg", "nonveg", "non-veg", "keema", "kebab",
+    "tuna", "salmon", "shrimp", "crab", "lobster", "bacon", "sausage",
+    "ham", "turkey", "duck", "anchovy", "sardine", "squid", "octopus"
+]
+
+MAX_DIET_DAYS = 180
+DEFAULT_DIET_DAYS = 7
+
+
+def is_diet_question(message):
+    lower = message.lower()
+    return any(k in lower for k in DIET_KEYWORDS)
+
+
+def extract_diet_type(message):
+    lower = message.lower()
+    if re.search(r'\bnon[\s-]?veg(etarian)?\b', lower):
+        return "nonveg"
+    if re.search(r'\bveg(etarian)?\b', lower):
+        return "veg"
+    return None
+
+
+def extract_day_count(message):
+    lower = message.lower()
+
+    m = re.search(r'(\d+)\s*day', lower)
+    if m:
+        return int(m.group(1))
+
+    m = re.search(r'(\d+)?\s*week', lower)
+    if m:
+        n = int(m.group(1)) if m.group(1) else 1
+        return n * 7
+
+    m = re.search(r'(\d+)?\s*month', lower)
+    if m:
+        n = int(m.group(1)) if m.group(1) else 1
+        return n * 30
+
+    return None
+
+
+def week_diet_prompt(diet_type):
+    diet_label = "vegetarian (veg)" if diet_type == "veg" else "non-vegetarian (includes meat/fish/eggs)"
+    return (
+        f"Create a 10-day {diet_label} Indian diet plan for a general adult, with a DIFFERENT main dish each day (no repeats). "
+        "Strictly follow this exact format, with nothing else before or after it:\n\n"
+        "Day 1:\nBreakfast: ...\nLunch: ...\nDinner: ...\n\n"
+        "Day 2:\nBreakfast: ...\nLunch: ...\nDinner: ...\n\n"
+        "(continue through Day 7 in the exact same format)\n\n"
+        "Keep each meal on one short line. Vary the meals across the 7 days. "
+        "Do not add any introduction, notes, or explanation outside this format."
+    )
+
+def is_valid_day_block(block, diet_type):
+    lower = block.lower()
+    if "breakfast" not in lower or "lunch" not in lower or "dinner" not in lower:
+        return False
+    if "consult a doctor" in lower or "medical consultation" in lower:
+        return False
+    if diet_type == "veg" and any(w in lower for w in NON_VEG_WORDS):
+        return False
+    return True
+
+
+def parse_week_plan(raw_text, diet_type):
+    parts = re.split(r'Day\s*\d+\s*:?', raw_text, flags=re.IGNORECASE)
+    blocks = [p.strip() for p in parts if p.strip()]
+    valid_blocks = [b for b in blocks if is_valid_day_block(b, diet_type)]
+    return valid_blocks[:10]
+
+
+def build_full_diet_plan(diet_type, total_days):
+    """
+    Returns (plan_text, error_message). Exactly one of the two is None.
+    """
+    if total_days > MAX_DIET_DAYS:
+        return None, f"Please request {MAX_DIET_DAYS} days or fewer for a diet plan."
+
+    raw = ask_ollama([
+        {"role": "user", "content": week_diet_prompt(diet_type)}
+    ])
+
+    day_blocks = parse_week_plan(raw, diet_type)
+
+    if not day_blocks:
+        return None, "Sorry, I could not generate a diet plan right now. Please try again."
+
+    pattern_len = len(day_blocks)
+
+    def format_block(block):
+        block = re.sub(r'breakfast\s*:', '🍳 Breakfast:', block, flags=re.IGNORECASE)
+        block = re.sub(r'lunch\s*:', '🍛 Lunch:', block, flags=re.IGNORECASE)
+        block = re.sub(r'dinner\s*:', '🌙 Dinner:', block, flags=re.IGNORECASE)
+        return block
+
+    lines = []
+    for day_num in range(1, total_days + 1):
+        block = day_blocks[(day_num - 1) % pattern_len]
+        lines.append(f"📅 Day {day_num}\n{format_block(block)}")
+
+    plan_text = "\n\n".join(lines)
+
+    if total_days > pattern_len:
+        plan_text += (
+            f"\n\n(Note: This is a {pattern_len}-day meal pattern repeated to "
+            f"cover all {total_days} days, so the plan stays consistent.)"
+        )
+
+    return plan_text, None
+
+
+@app.route("/chat", methods=["POST"])
+def chat():
+
+    try:
+        data = request.get_json(force=True)
+
+        user_message = (data or {}).get("message", "").strip()
+
+        if not user_message:
+            return jsonify({
+                "reply": "Please type a message."
+            }), 400
+
+        print("========== AI CHAT ==========")
+        print("User Message:", user_message)
+
+        # ---- 1. Emergency guard (checked BEFORE calling the model) ----
+        if is_emergency(user_message):
+            reply = EMERGENCY_REPLY
+            print("EMERGENCY KEYWORD MATCHED -- skipping model call")
+
+        # ---- 2. Off-topic guard (checked BEFORE calling the model) ----
+        # Greetings pass this check (see is_on_topic) and go to the
+        # model, which now has explicit greeting-handling instructions
+        # in its SYSTEM prompt.
+        elif not is_on_topic(user_message):
+            reply = OFF_TOPIC_REPLY
+            print("OFF-TOPIC -- skipping model call")
+
+        # ---- 3. Diet flow (checked BEFORE the general model call) ----
+        # Always asks veg/nonveg in the backend if not already stated,
+        # and builds any requested number of days deterministically
+        # from a single 7-day pattern (see build_full_diet_plan).
+        elif is_diet_question(user_message) or session.get("awaiting_diet_type"):
+
+            diet_type = extract_diet_type(user_message)
+            days_in_message = extract_day_count(user_message)
+            total_days = days_in_message or session.get("pending_diet_days")
+
+            if not diet_type:
+                # don't know veg/nonveg yet -- ask, and remember any
+                # day count they already mentioned for next turn
+                session["awaiting_diet_type"] = True
+                if total_days:
+                    session["pending_diet_days"] = total_days
+                session.modified = True
+
+                reply = "Veg (vegetarian) or Non-veg diet plan? Please reply 'veg' or 'nonveg'."
+                print("DIET FLOW -- asking veg/nonveg")
+
+            else:
+                # we now know veg/nonveg -- clear pending state and build the plan
+                session.pop("awaiting_diet_type", None)
+                session.pop("pending_diet_days", None)
+                session.modified = True
+
+                plan_text, error = build_full_diet_plan(diet_type, total_days or DEFAULT_DIET_DAYS)
+                reply = error if error else plan_text
+                print("DIET FLOW -- generated plan:", diet_type, total_days or DEFAULT_DIET_DAYS, "days")
+
+        # ---- 4. Normal case: call the model with conversation history ----
+        else:
+            if "chat_history" not in session:
+                session["chat_history"] = []
+
+            session["chat_history"].append({
+                "role": "user",
+                "content": user_message
+            })
+            # keep only the most recent N messages so the session
+            # cookie / context doesn't grow without bound
+            session["chat_history"] = session["chat_history"][-MAX_HISTORY_MESSAGES:]
+
+            reply = ask_ollama(session["chat_history"])
+
+            session["chat_history"].append({
+                "role": "assistant",
+                "content": reply
+            })
+            session["chat_history"] = session["chat_history"][-MAX_HISTORY_MESSAGES:]
+            session.modified = True
+
+        print("AI Reply:", reply)
+
+        # Save chat to PostgreSQL
+        if "user_id" in session:
+
+            conn = get_connection()
+            cur = conn.cursor()
+
+            cur.execute("""
+                INSERT INTO ai_chat
+                (
+                    user_id,
+                    question,
+                    response
+                )
+                VALUES (%s, %s, %s)
+            """, (
+                session["user_id"],
+                user_message,
+                reply
+            ))
+
+            conn.commit()
+
+            cur.close()
+            conn.close()
+
+            print("Chat saved to PostgreSQL")
+
+        return jsonify({
+            "success": True,
+            "reply": reply
+        })
+
+    except Exception as e:
+
+        print("AI CHAT ERROR:", e)
+
+        return jsonify({
+            "success": False,
+            "reply": "Sorry, I could not process your request.",
+            "error": str(e)
+        }), 500
+
+@app.route("/upload_report", methods=["POST"])
+def upload_report():
+
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Login Required"}), 401
+
+    if "file" not in request.files:
+        return jsonify({"success": False, "message": "No file part in request"}), 400
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"success": False, "message": "No file selected"}), 400
+
+    if not is_allowed_file(file.filename):
+        return jsonify({
+            "success": False,
+            "message": "Only png, jpg, jpeg, pdf files are allowed"
+        }), 400
+
+    # basic size check (in addition to any Flask MAX_CONTENT_LENGTH config)
+    file.seek(0, os.SEEK_END)
+    size_mb = file.tell() / (1024 * 1024)
+    file.seek(0)
+    if size_mb > MAX_FILE_SIZE_MB:
+        return jsonify({
+            "success": False,
+            "message": f"File too large. Max {MAX_FILE_SIZE_MB} MB allowed"
+        }), 400
+
+    user_id = session["user_id"]
+
+    # unique, safe filename -- never trust the original filename directly
+    ext = file.filename.rsplit(".", 1)[1].lower()
+    safe_filename = f"{uuid.uuid4().hex}.{ext}"
+
+    user_folder = os.path.join(UPLOAD_FOLDER, str(user_id))
+    os.makedirs(user_folder, exist_ok=True)
+
+    filepath = os.path.join(user_folder, safe_filename)
+    file.save(filepath)
+
+    original_name = file.filename
+    report_type = ext  # e.g. "png", "jpg", "pdf" -- simple category for now
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO reports
+            (
+                user_id,
+                report_name,
+                report_type,
+                file_path,
+                uploaded_at
+            )
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            RETURNING report_id
+        """, (
+            user_id,
+            original_name,
+            report_type,
+            filepath
+        ))
+
+        report_id = cur.fetchone()[0]
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    except Exception as e:
+        print("REPORT DB SAVE ERROR:", e)
+        return jsonify({
+            "success": False,
+            "message": "File saved but could not record it in the database",
+            "error": str(e)
+        }), 500
+
+    return jsonify({
+        "success": True,
+        "message": "Report uploaded successfully",
+        "report_id": report_id,
+        "filename": original_name
+    })
+
+
+@app.route("/get_reports")
+def get_reports():
+
+    if "user_id" not in session:
+        return jsonify([])
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            report_id,
+            report_name,
+            uploaded_at
+        FROM reports
+        WHERE user_id=%s
+        ORDER BY uploaded_at DESC
+    """, (session["user_id"],))
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    reports = []
+    for row in rows:
+        reports.append({
+            "report_id": row[0],
+            "filename": row[1],
+            "uploaded_at": str(row[2])
+        })
+
+    return jsonify(reports)
+
+
+@app.route("/analyze_report/<int:report_id>", methods=["POST"])
+def analyze_report(report_id):
+    """
+    Runs AI analysis on a report's extracted text and saves the result.
+
+    TEMPORARY: for now this expects the extracted text to be sent in
+    the request body as {"text": "..."}. Once OCR is wired in, OCR
+    will extract this text automatically from the uploaded file and
+    this same function can be called internally instead of needing
+    the text passed in manually.
+    """
+
+    if "user_id" not in session:
+        return jsonify({"success": False, "message": "Login Required"}), 401
+
+    data = request.get_json(force=True)
+    report_text = (data or {}).get("text", "").strip()
+
+    if not report_text:
+        return jsonify({
+            "success": False,
+            "message": "No report text provided"
+        }), 400
+
+    user_id = session["user_id"]
+
+    # confirm this report belongs to the logged-in user before touching it
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT report_id FROM reports
+        WHERE report_id=%s AND user_id=%s
+    """, (report_id, user_id))
+
+    row = cur.fetchone()
+
+    if not row:
+        cur.close()
+        conn.close()
+        return jsonify({"success": False, "message": "Report not found"}), 404
+
+    # ask the model to analyze the report text (separate one-off prompt,
+    # not part of the ongoing chat_history conversation)
+    analysis_prompt = REPORT_ANALYSIS_INSTRUCTION + report_text
+
+    analysis = ask_ollama([
+        {"role": "user", "content": analysis_prompt}
+    ])
+
+    print("REPORT ANALYSIS:", analysis)
+
+    cur.execute("""
+        UPDATE reports
+        SET ai_analysis=%s
+        WHERE report_id=%s
+    """, (analysis, report_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "report_id": report_id,
+        "ai_analysis": analysis
+    })
+
 
 # Language Selection Page
 @app.route("/")
@@ -80,6 +662,38 @@ def login():
 
     return "success"
 
+@app.route("/update_password", methods=["POST"])
+def update_password():
+
+    data = request.get_json()
+
+    username = data["username"]
+    new_password = data["new_password"]
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE users
+        SET password=%s
+        WHERE username=%s
+    """, (new_password, username))
+
+    conn.commit()
+
+    if cur.rowcount == 0:
+        return jsonify({
+            "success": False,
+            "message": "Username not found"
+        })
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        "success": True
+    })
+
 @app.route("/admin_login", methods=["POST"])
 def admin_login():
 
@@ -138,7 +752,7 @@ def get_users():
     FROM users
     ORDER BY user_id
     """)
-     
+
 
     rows = cur.fetchall()
 
@@ -180,6 +794,46 @@ def permission():
     return render_template("permission.html", user=user)
 
 
+@app.route("/edit_profile")
+def edit_profile():
+
+    if "user_id" not in session:
+        return redirect(url_for("home"))
+
+    user_id = session["user_id"]
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            username,
+            email,
+            age,
+            gender,
+            dob,
+            state,
+            city,
+            address,
+            family_contact1,
+            family_contact2,
+            family_contact3,
+            doctor_contact,
+            family_email_1,
+            family_email_2,
+            family_email_3
+        FROM users
+        WHERE user_id=%s
+    """, (user_id,))
+
+    user = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return render_template("edit_profile.html", user=user)
+
+
 @app.route("/get_logged_user")
 def get_logged_user():
 
@@ -193,16 +847,19 @@ def get_logged_user():
 @app.route("/main")
 def main():
 
+    if "user_id" not in session:
+        return redirect(url_for("home"))
+
     print("========== MAIN PAGE ==========")
     print("Session User ID =", session.get("user_id"))
     print("Session Username =", session.get("username"))
 
-    user_id = session.get("user_id")
+    user_id = session["user_id"]
 
     conn = get_connection()
     cur = conn.cursor()
 
-    
+
     cur.execute("""
   SELECT
     username,
@@ -222,7 +879,7 @@ def main():
    FROM users
   WHERE user_id=%s
   """, (user_id,))
-    
+
 
     user = cur.fetchone()
 
@@ -237,38 +894,53 @@ def main():
 def get_contacts():
 
     if "user_id" not in session:
-        return jsonify({"error": "Login Required"}), 401
+        return jsonify({
+            "success": False,
+            "message": "Login Required"
+        }), 401
 
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
         SELECT
+            email,
             family_contact1,
             family_contact2,
             family_contact3,
             doctor_contact,
             ambulance_contact,
-            fire_brigade_contact
+            fire_brigade_contact,
+            family_email_1,
+            family_email_2,
+            family_email_3
         FROM users
         WHERE user_id=%s
     """, (session["user_id"],))
 
-    row = cur.fetchone()
+    user = cur.fetchone()
 
     cur.close()
     conn.close()
 
-    if not row:
-        return jsonify({"error": "User Not Found"}), 404
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "User Not Found"
+        }), 404
 
     return jsonify({
-        "family_contact1": row[0],
-        "family_contact2": row[1],
-        "family_contact3": row[2],
-        "doctor_contact": row[3],
-        "ambulance_contact": row[4],
-        "fire_brigade_contact": row[5]
+        "success": True,
+        "email": user[0] or "",
+        "family_contact1": user[1] or "",
+        "family_contact2": user[2] or "",
+        "family_contact3": user[3] or "",
+        "doctor_contact": user[4] or "",
+        "ambulance_contact": user[5] or "",
+        "fire_brigade_contact": user[6] or "",
+        "family_email1": user[7] or "",
+        "family_email2": user[8] or "",
+        "family_email3": user[9] or ""
     })
 
 @app.route("/save_permissions", methods=["POST"])
@@ -352,7 +1024,7 @@ def save_profile():
     fire_brigade_contact = "101"
     doctor_contact = request.form["doctor_contact"]
     family_email_1 = request.form.get("family_email_1")
-    family_email_2 = request.form.get("family_email_2") 
+    family_email_2 = request.form.get("family_email_2")
     family_email_3 = request.form.get("family_email_3")
     conn = get_connection()
     cur = conn.cursor()
@@ -438,12 +1110,83 @@ def save_health():
         blood_group
     ))
 
+    # Keep only this user's most recent 6 CALENDAR MONTHS of health
+    # records (based on created_at). As soon as a 7th distinct month
+    # shows up, the oldest month's records are deleted automatically.
+    cur.execute("""
+        DELETE FROM health_records
+        WHERE user_id = %s
+        AND to_char(created_at, 'YYYY-MM') NOT IN (
+            SELECT month FROM (
+                SELECT DISTINCT to_char(created_at, 'YYYY-MM') AS month
+                FROM health_records
+                WHERE user_id = %s
+                ORDER BY month DESC
+                LIMIT 6
+            ) AS recent_months
+        )
+    """, (user_id, user_id))
+
     conn.commit()
 
     cur.close()
     conn.close()
 
-    return redirect(url_for("main"))
+    return "success"
+
+@app.route("/get_health_history", methods=["GET"])
+def get_health_history():
+
+    if "user_id" not in session:
+        return jsonify({"months": [], "bp": [], "sugar": [], "weight": []})
+
+    user_id = session["user_id"]
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # One row per calendar month (the latest reading in that month),
+    # for this user's most recent 6 distinct months.
+    cur.execute("""
+        SELECT DISTINCT ON (to_char(created_at, 'YYYY-MM'))
+            to_char(created_at, 'YYYY-MM') AS month,
+            bp,
+            sugar,
+            weight
+        FROM health_records
+        WHERE user_id = %s
+        ORDER BY to_char(created_at, 'YYYY-MM'), created_at DESC
+    """, (user_id,))
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    # rows come back sorted by month ascending already because of the
+    # DISTINCT ON + ORDER BY above; keep only the most recent 6 months.
+    rows = rows[-6:]
+
+    months = [r[0] for r in rows]
+    bp_vals = []
+    for r in rows:
+        bp_str = r[1]
+        systolic = None
+        if bp_str and "/" in bp_str:
+            try:
+                systolic = float(bp_str.split("/")[0])
+            except ValueError:
+                systolic = None
+        bp_vals.append(systolic)
+
+    sugar_vals = [float(r[2]) if r[2] is not None else None for r in rows]
+    weight_vals = [float(r[3]) if r[3] is not None else None for r in rows]
+
+    return jsonify({
+        "months": months,
+        "bp": bp_vals,
+        "sugar": sugar_vals,
+        "weight": weight_vals
+    })
 
 
 @app.route("/save_medicine", methods=["POST"])
@@ -770,6 +1513,9 @@ def logout():
         conn.close()
 
     session.clear()
+
+    # clear AI conversation context on logout too
+    session.pop("chat_history", None)
 
     return "success"
 

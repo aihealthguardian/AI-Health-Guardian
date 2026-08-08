@@ -319,7 +319,13 @@
     <h2 id="resetTitle">Reset Password</h2>
     <p id="resetSub">Create a new password and confirm it</p>
   </div>
-
+  <div class="field">
+  <label>Username</label>
+  <input
+      id="usernameInput"
+      type="text"
+      placeholder="Enter Username">
+</div>
   <div class="field">
   <label id="newPasswordLabel" for="newPasswordInput">New Password</label>
   <div class="password-wrap">
@@ -845,14 +851,33 @@ setText('backToLoginBtn', d.backToLoginBtn);
     }
 
 }
-   function handleSignIn() {
+    function handleSignIn() {
+
+    const username = document.getElementById("usernameInput").value.trim();
+    const password = document.getElementById("passwordInput").value.trim();
+
+    // Validation फक्त User Login साठी
+    if (selectedUserType === "user") {
+
+        if (username === "") {
+            alert("Please enter username.");
+            return;
+        }
+
+        const passwordRegex = /^(?=.*[A-Za-z]).{8,}$/;
+
+        if (!passwordRegex.test(password)) {
+            alert("Password must be at least 8 characters long and contain at least one alphabet.");
+            return;
+        }
+    }
 
     const formData = new FormData();
 
     if (selectedUserType === "user") {
 
-        formData.append("username", document.getElementById("usernameInput").value);
-        formData.append("password", document.getElementById("passwordInput").value);
+        formData.append("username", username);
+        formData.append("password", password);
 
         fetch("/login", {
             method: "POST",
@@ -862,20 +887,15 @@ setText('backToLoginBtn', d.backToLoginBtn);
         .then(data => {
 
             if (data === "success") {
-                 localStorage.removeItem("userProfile");
+                localStorage.removeItem("userProfile");
                 goToProfilePage();
-                loadLoggedUser(); 
+                loadLoggedUser();
             } else {
                 alert(data);
             }
         });
 
     } else {
-
-        console.log(document.getElementById("adminName"));
-        console.log(document.getElementById("adminEmail"));
-        console.log(document.getElementById("adminMobile"));
-        console.log(document.getElementById("passwordInput"));
 
         formData.append("username", document.getElementById("adminName").value);
         formData.append("email", document.getElementById("adminEmail").value);
@@ -898,25 +918,8 @@ setText('backToLoginBtn', d.backToLoginBtn);
         });
 
     }
-
 }
-    function renderAdminTable(users) {
-
-    const tbody = document.getElementById("adminUserTableBody");
-    tbody.innerHTML = "";
-
-    users.forEach(user => {
-
-        tbody.innerHTML += `
-        <tr>
-            <td>${user.username}</td>
-            <td>${user.email}</td>
-            <td>${user.status}</td>
-            <td>${user.last_login}</td>
-        </tr>`;
-    });
-
-}
+  
     function goToAdminPage() {
 
     document.getElementById("loginCard").classList.remove("active");
@@ -948,6 +951,27 @@ setText('backToLoginBtn', d.backToLoginBtn);
         document.getElementById("statInactiveUsers").innerText = inactiveUsers;
 
         renderAdminTable(users);
+
+    });
+
+}
+
+  function renderAdminTable(users) {
+
+    const tbody = document.getElementById("adminUserTableBody");
+
+    tbody.innerHTML = "";
+
+    users.forEach(user => {
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${user.username}</td>
+                <td>${user.email}</td>
+                <td>${user.status}</td>
+                <td>${user.last_login}</td>
+            </tr>
+        `;
 
     });
 
@@ -1105,11 +1129,13 @@ setText('backToLoginBtn', d.backToLoginBtn);
   document.getElementById('loginCard').classList.add('active');
 }
 
-function resetPassword() {
-  const newPass = document.getElementById('newPasswordInput').value;
-  const confirmPass = document.getElementById('confirmPasswordInput').value;
+async function resetPassword() {
 
-  if (newPass === "" || confirmPass === "") {
+  const username = document.getElementById("usernameInput").value.trim();
+  const newPass = document.getElementById("newPasswordInput").value;
+  const confirmPass = document.getElementById("confirmPasswordInput").value;
+
+  if (!username || !newPass || !confirmPass) {
     alert("Please fill all fields");
     return;
   }
@@ -1119,12 +1145,28 @@ function resetPassword() {
     return;
   }
 
-  alert("Password Updated Successfully!");
+  const response = await fetch("/update_password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      username: username,
+      new_password: newPass
+    })
+  });
 
-  document.getElementById('forgotCard').classList.remove('active');
-  document.getElementById('loginCard').classList.add('active');
+  const data = await response.json();
+
+  if (data.success) {
+    alert("Password Updated Successfully!");
+
+    document.getElementById("forgotCard").classList.remove("active");
+    document.getElementById("loginCard").classList.add("active");
+  } else {
+    alert(data.message);
+  }
 }
-
     function updateDobYear(age) {
       if (age === "" || isNaN(age)) return;
       const dobInput = document.getElementById('dob');
