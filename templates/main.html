@@ -227,7 +227,7 @@
   .ai-desc { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
   .start-chat-btn { width: 100%; padding: 12px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .chat-window { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 220px; max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-  .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; white-space: pre-wrap; }
+  .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; }
   .chat-msg.user { background: var(--blue); color: #fff; align-self: flex-end; border-bottom-right-radius: 3px; }
   .chat-msg.ai { background: #fff; border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 3px; }
   .chat-input-row { display: flex; gap: 8px; margin-top: 8px; }
@@ -1951,18 +1951,14 @@ function handleGalleryUpload(event) {
   event.target.value = '';
 }
 
-// Replace processReportFile() in your HTML <script> with this.
-// Hits the existing /upload_report endpoint (now upgraded server-side to
-// run OCR -> Ollama analysis -> auto-save vitals in one call).
-
 function processReportFile(file) {
-  document.getElementById('uploadPreview').textContent =
-    `✅ "${file.name}" uploaded & sent to AI for analysis.`;
+  document.getElementById('uploadPreview').textContent = `✅ "${file.name}" uploaded & sent to AI for analysis.`;
   closeUploadModal();
   openChatPage();
 
   const win = document.getElementById('chatWindow');
-  win.innerHTML += `<div class="chat-msg user">📷 I've uploaded a report: "${file.name}"</div>`;
+  const imageUrl = URL.createObjectURL(file);
+  win.innerHTML += `<div class="chat-msg user" style="background:transparent;padding:0;border:none;"><img src="${imageUrl}" alt="Uploaded report" style="width:140px;height:auto;border-radius:10px;display:block;box-shadow:0 2px 8px rgba(0,0,0,0.15);"></div>`;
   win.scrollTop = win.scrollHeight;
 
   const thinking = document.createElement('div');
@@ -1979,40 +1975,30 @@ function processReportFile(file) {
     method: 'POST',
     body: formData
   })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.success) {
-        thinking.textContent = '⚠️ ' + (data.message || 'Could not analyse this report.');
-        return;
+  .then(resp => resp.json())
+  .then(data => {
+    if (data.success) {
+      const reply = data.reply || 'Report saved. No readable text found for analysis.';
+      thinking.textContent = reply;
+      // Voice फक्त तेव्हाच बोलेल जेव्हा user ने voice input वापरलं असेल
+      if (isVoiceInput && typeof speakText === 'function') {
+        speakText(reply);
       }
-      thinking.textContent = data.reply;
-      speakText(data.reply);
-
-      const v = data.vitals || {};
-      if (v.blood_pressure && !v.blood_pressure.includes('NOT DETECTED')) {
-        document.getElementById('bpVal').textContent = v.blood_pressure;
-      }
-      if (v.sugar && !v.sugar.includes('NOT DETECTED')) {
-        document.getElementById('sugarVal').textContent = v.sugar;
-      }
-      if (v.weight && !v.weight.includes('NOT DETECTED')) {
-        document.getElementById('weightVal').textContent = v.weight;
-      }
-      if (typeof updateHealthScoreDisplay === 'function') updateHealthScoreDisplay();
-      if (data.vitals_saved && typeof loadHealthHistory === 'function') loadHealthHistory();
-
-      showToast(langData.toastReportAnalysed
-        ? langData.toastReportAnalysed
-        : '📋 Report analysed by AI', 'green');
-    })
-    .catch(err => {
-      console.error(err);
-      thinking.textContent = '⚠️ Connection error. Please try again.';
-    })
-    .finally(() => {
-      win.scrollTop = win.scrollHeight;
-    });
+      isVoiceInput = false;
+    } else {
+      thinking.textContent = '⚠️ ' + (data.message || 'Could not analyse this report.');
+    }
+    win.scrollTop = win.scrollHeight;
+  })
+  .catch(e => {
+    console.error(e);
+    thinking.textContent = '⚠️ Connection error. Please try again.';
+    win.scrollTop = win.scrollHeight;
+  });
 }
+
+// ── ADD MEDICINE CAMERA FUNCTIONS ──
+let medCameraStream = null;
 
 function openMedModal() {
   document.getElementById('medModal').classList.add('open');
@@ -2341,6 +2327,13 @@ function markMedItem(id, type) {
       }
     } catch(e) {}
   }
+  const courseFinished = m.durationDays && (m.daysCompleted || 0) >= m.durationDays;
+  if (courseFinished) {
+    deleteMedicineEntry(id);
+    try { if (typeof renderNextApptStat === 'function') renderNextApptStat(); } catch(e) {}
+    return;
+  }
+
   try { renderNextMedicineStat(); } catch(e) {}
   try { renderHomeMedicineList(); } catch(e) {}
   try { if (typeof renderNextApptStat === 'function') renderNextApptStat(); } catch(e) {}
@@ -2539,19 +2532,35 @@ function renderHomeMedicineList() {
         </div>
         ${daysInfo}
       </div>
+      ${isMedActionWindowOpen(m) ? `
       <div style="display:flex;gap:6px;flex-shrink:0;">
         <button class="btn-outline taken" onclick="markMedItem('${m.id}','taken')" style="padding:6px 10px;font-size:11px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>
-          ${m.takenToday ? '✓' : takenLabel}
+          ${takenLabel}
         </button>
         <button class="btn-outline missed" onclick="markMedItem('${m.id}','missed')" style="padding:6px 10px;font-size:11px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           ${missedLabel}
         </button>
       </div>
+      ` : ''}
     </div>
   `;
   }).join('');
+}
+
+function isMedActionWindowOpen(m) {
+  if (m.takenToday || m.missedToday) return false;
+  if (!isMedicineCourseActive(m)) return false;
+  const parts = (m.time || '').split(':').map(Number);
+  if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return false;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const targetMinutes = parts[0] * 60 + parts[1];
+  let diff = targetMinutes - nowMinutes;
+  if (diff > 12 * 60) diff -= 24 * 60;
+  if (diff < -12 * 60) diff += 24 * 60;
+  return diff <= 5;
 }
 
 function toggleMedDeletePanel() {
@@ -2748,6 +2757,7 @@ function addMedicineEntry() {
     id: 'med_' + Date.now(),
     name, time,
     lastFiredDate: null,
+    lastResetDate: null,
     takenToday: false,
     durationDays: durationDays,
     daysCompleted: 0,
@@ -2844,15 +2854,27 @@ function checkScheduleAlarms() {
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
   const nowStr = `${hh}:${mm}`;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const todayStr = now.toDateString();
   const todayISO = now.toISOString().slice(0, 10);
 
   const medicines = getMedicines();
   let changed = false;
   medicines.forEach(m => {
-    if (m.time === nowStr && m.lastFiredDate !== todayStr && isMedicineCourseActive(m)) {
-      m.takenToday = false;
-      m.missedToday = false;
+    if (!isMedicineCourseActive(m)) return;
+    const parts = (m.time || '').split(':').map(Number);
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      const targetMinutes = parts[0] * 60 + parts[1];
+      const resetMinute = (targetMinutes - 5 + 1440) % 1440;
+      if (nowMinutes === resetMinute && m.lastResetDate !== todayStr) {
+        m.takenToday = false;
+        m.missedToday = false;
+        m.lastResetDate = todayStr;
+        changed = true;
+      }
+    }
+
+    if (m.time === nowStr && m.lastFiredDate !== todayStr) {
       ringMedicineAlarm(m);
       m.lastFiredDate = todayStr;
       changed = true;
@@ -3648,8 +3670,7 @@ document.querySelectorAll('.checkbox-item').forEach(item => {
   // Also handle checkbox change event
   const checkbox = item.querySelector('input[type="checkbox"]');
   checkbox.addEventListener('change', function() {
-  this.closest('.checkbox-item').classList.togfunction 
-  gle('checked', this.checked);
+    this.closest('.checkbox-item').classList.toggle('checked', this.checked);
   });
 });
 </script>

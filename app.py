@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from db import get_connection
 from email_service import send_email
+from safety_rules import handle_chat_message, REPORT_ANALYSIS_INSTRUCTION
+from ocr_module import extract_text_and_vitals
 import requests
 import os
 import uuid
@@ -21,98 +23,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def is_allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-# System-style instruction used ONLY for report analysis calls (kept
-# separate from the normal chat flow so it doesn't interfere with the
-# emergency/off-topic guards or the ongoing chat_history context).
-REPORT_ANALYSIS_INSTRUCTION = (
-    "You are analyzing a medical/health report for a patient. "
-    "The following is text extracted from their report. "
-    "Summarize it in simple, calm language a non-medical elderly person "
-    "can understand. Point out anything that looks abnormal or worth "
-    "discussing with a doctor, but NEVER name a specific medicine or "
-    "dosage -- always say 'consult a doctor or pharmacist' for that. "
-    "Keep it short (4-6 sentences).\n\n"
-    "Report text:\n"
-)
-
-# ============================================================
-# AI CHAT CONFIG
-# ============================================================
-
-# Keywords that must NEVER be answered by the model directly.
-# If any of these appear, we short-circuit and tell the user to
-# activate SOS / seek emergency help immediately, per the model's
-# own SYSTEM rule #2 -- but enforced here in code so it can never
-# be skipped or answered incorrectly by the (small) model.
-EMERGENCY_KEYWORDS = [
-    "chest pain", "cant breathe", "can't breathe", "difficulty breathing",
-    "breathing trouble", "shortness of breath",
-    "heavy bleeding", "severe bleeding", "bleeding a lot",
-    "unconscious", "unresponsive", "fainted", "passed out",
-    "stroke", "face drooping", "slurred speech",
-    "severe bite", "snake bite", "dog bite deep",
-    "seizure", "convulsion",
-    "heart attack", "cardiac arrest",
-    "suicide", "self harm", "overdose"
-]
-
-EMERGENCY_REPLY = (
-    "This sounds like it could be a medical emergency. "
-    "Please activate SOS now and seek immediate emergency medical help. "
-    "If someone is with you, ask them to call for help right away."
-)
-
-# Very small keyword guard to stop the 1B model wandering into
-# completely unrelated topics (movies, general chit-chat trivia, etc).
-# This is intentionally loose -- greetings and short messages are
-# always allowed through so normal conversation still works.
-HEALTH_TOPIC_KEYWORDS = [
-    "pain", "fever", "cold", "cough", "flu", "headache", "vomit", "nausea",
-    "diet", "food", "nutrition", "veg", "nonveg", "non-veg", "meal", "water",
-    "medicine", "doctor", "hospital", "symptom", "sick", "ill", "health",
-    "bp", "blood pressure", "sugar", "diabetes", "weight", "appointment",
-    "injury", "wound", "cut", "burn", "allergy", "infection", "rash",
-    "sleep", "stress", "exercise", "tired", "fatigue"
-]
-
-GREETING_WORDS = ["hi", "hii", "hello", "hey", "good morning", "good evening",
-                   "good afternoon", "who are you", "what can you do"]
-
-# Short stand-alone replies that only make sense as an answer to a
-# question the bot just asked (e.g. "veg or non-veg?" -> "veg").
-# Deliberately a fixed list, NOT "any short message", so random
-# off-topic phrases like "Rajasthani picture" don't slip through.
-SHORT_REPLY_WORDS = [
-    "ok", "okay", "yes", "no", "sure", "fine", "thanks", "thank you",
-    "veg", "nonveg", "non-veg", "non veg", "vegetarian", "non vegetarian"
-]
-
-OFF_TOPIC_REPLY = (
-    "I can only help with health symptoms, emergencies, and diet/nutrition "
-    "guidance. Could you ask something related to those?"
-)
-
-MAX_HISTORY_MESSAGES = 12  # keep session small: ~6 user/assistant turns
-
-
-def is_emergency(message):
-    lower = message.lower()
-    return any(k in lower for k in EMERGENCY_KEYWORDS)
-
-
-def is_on_topic(message):
-    lower = message.lower().strip()
-    if any(g in lower for g in GREETING_WORDS):
-        # greetings are handled naturally by the model itself
-        # (see SYSTEM prompt rule 7), not hardcoded here
-        return True
-    if lower in SHORT_REPLY_WORDS:
-        # exact short reply (e.g. "veg", "ok") -- treat as continuing
-        # an on-topic conversation, not a fresh off-topic question
-        return True
-    return any(k in lower for k in HEALTH_TOPIC_KEYWORDS)
 
 
 def ask_ollama(messages):
@@ -139,136 +49,6 @@ def ask_ollama(messages):
     return "Sorry, I could not connect to the AI model."
 
 
-# ============================================================
-# DIET PLAN FLOW
-# ============================================================
-# Design goals (per requirement):
-#  1. Every diet question must ask veg/nonveg first if not already
-#     stated -- enforced in backend, not left to the model.
-#  2. Any number of days (1, 30, 120, 135...) must work reliably.
-#     Instead of asking the small model to hallucinate a huge unique
-#     plan in one go (unreliable / truncates), we ask it for ONE
-#     7-day pattern, then deterministically repeat/cycle that
-#     pattern in Python to cover however many days were requested.
-
-DIET_KEYWORDS = ["diet", "meal plan", "food plan", "nutrition",
-                  "breakfast", "lunch", "dinner", "meal"]
-
-NON_VEG_WORDS = [
-    "chicken", "mutton", "fish", "egg", "eggs", "meat", "prawn",
-    "beef", "pork", "non veg", "nonveg", "non-veg", "keema", "kebab",
-    "tuna", "salmon", "shrimp", "crab", "lobster", "bacon", "sausage",
-    "ham", "turkey", "duck", "anchovy", "sardine", "squid", "octopus"
-]
-
-MAX_DIET_DAYS = 180
-DEFAULT_DIET_DAYS = 7
-
-
-def is_diet_question(message):
-    lower = message.lower()
-    return any(k in lower for k in DIET_KEYWORDS)
-
-
-def extract_diet_type(message):
-    lower = message.lower()
-    if re.search(r'\bnon[\s-]?veg(etarian)?\b', lower):
-        return "nonveg"
-    if re.search(r'\bveg(etarian)?\b', lower):
-        return "veg"
-    return None
-
-
-def extract_day_count(message):
-    lower = message.lower()
-
-    m = re.search(r'(\d+)\s*day', lower)
-    if m:
-        return int(m.group(1))
-
-    m = re.search(r'(\d+)?\s*week', lower)
-    if m:
-        n = int(m.group(1)) if m.group(1) else 1
-        return n * 7
-
-    m = re.search(r'(\d+)?\s*month', lower)
-    if m:
-        n = int(m.group(1)) if m.group(1) else 1
-        return n * 30
-
-    return None
-
-
-def week_diet_prompt(diet_type):
-    diet_label = "vegetarian (veg)" if diet_type == "veg" else "non-vegetarian (includes meat/fish/eggs)"
-    return (
-        f"Create a 10-day {diet_label} Indian diet plan for a general adult, with a DIFFERENT main dish each day (no repeats). "
-        "Strictly follow this exact format, with nothing else before or after it:\n\n"
-        "Day 1:\nBreakfast: ...\nLunch: ...\nDinner: ...\n\n"
-        "Day 2:\nBreakfast: ...\nLunch: ...\nDinner: ...\n\n"
-        "(continue through Day 7 in the exact same format)\n\n"
-        "Keep each meal on one short line. Vary the meals across the 7 days. "
-        "Do not add any introduction, notes, or explanation outside this format."
-    )
-
-def is_valid_day_block(block, diet_type):
-    lower = block.lower()
-    if "breakfast" not in lower or "lunch" not in lower or "dinner" not in lower:
-        return False
-    if "consult a doctor" in lower or "medical consultation" in lower:
-        return False
-    if diet_type == "veg" and any(w in lower for w in NON_VEG_WORDS):
-        return False
-    return True
-
-
-def parse_week_plan(raw_text, diet_type):
-    parts = re.split(r'Day\s*\d+\s*:?', raw_text, flags=re.IGNORECASE)
-    blocks = [p.strip() for p in parts if p.strip()]
-    valid_blocks = [b for b in blocks if is_valid_day_block(b, diet_type)]
-    return valid_blocks[:10]
-
-
-def build_full_diet_plan(diet_type, total_days):
-    """
-    Returns (plan_text, error_message). Exactly one of the two is None.
-    """
-    if total_days > MAX_DIET_DAYS:
-        return None, f"Please request {MAX_DIET_DAYS} days or fewer for a diet plan."
-
-    raw = ask_ollama([
-        {"role": "user", "content": week_diet_prompt(diet_type)}
-    ])
-
-    day_blocks = parse_week_plan(raw, diet_type)
-
-    if not day_blocks:
-        return None, "Sorry, I could not generate a diet plan right now. Please try again."
-
-    pattern_len = len(day_blocks)
-
-    def format_block(block):
-        block = re.sub(r'breakfast\s*:', '🍳 Breakfast:', block, flags=re.IGNORECASE)
-        block = re.sub(r'lunch\s*:', '🍛 Lunch:', block, flags=re.IGNORECASE)
-        block = re.sub(r'dinner\s*:', '🌙 Dinner:', block, flags=re.IGNORECASE)
-        return block
-
-    lines = []
-    for day_num in range(1, total_days + 1):
-        block = day_blocks[(day_num - 1) % pattern_len]
-        lines.append(f"📅 Day {day_num}\n{format_block(block)}")
-
-    plan_text = "\n\n".join(lines)
-
-    if total_days > pattern_len:
-        plan_text += (
-            f"\n\n(Note: This is a {pattern_len}-day meal pattern repeated to "
-            f"cover all {total_days} days, so the plan stays consistent.)"
-        )
-
-    return plan_text, None
-
-
 @app.route("/chat", methods=["POST"])
 def chat():
 
@@ -285,71 +65,7 @@ def chat():
         print("========== AI CHAT ==========")
         print("User Message:", user_message)
 
-        # ---- 1. Emergency guard (checked BEFORE calling the model) ----
-        if is_emergency(user_message):
-            reply = EMERGENCY_REPLY
-            print("EMERGENCY KEYWORD MATCHED -- skipping model call")
-
-        # ---- 2. Off-topic guard (checked BEFORE calling the model) ----
-        # Greetings pass this check (see is_on_topic) and go to the
-        # model, which now has explicit greeting-handling instructions
-        # in its SYSTEM prompt.
-        elif not is_on_topic(user_message):
-            reply = OFF_TOPIC_REPLY
-            print("OFF-TOPIC -- skipping model call")
-
-        # ---- 3. Diet flow (checked BEFORE the general model call) ----
-        # Always asks veg/nonveg in the backend if not already stated,
-        # and builds any requested number of days deterministically
-        # from a single 7-day pattern (see build_full_diet_plan).
-        elif is_diet_question(user_message) or session.get("awaiting_diet_type"):
-
-            diet_type = extract_diet_type(user_message)
-            days_in_message = extract_day_count(user_message)
-            total_days = days_in_message or session.get("pending_diet_days")
-
-            if not diet_type:
-                # don't know veg/nonveg yet -- ask, and remember any
-                # day count they already mentioned for next turn
-                session["awaiting_diet_type"] = True
-                if total_days:
-                    session["pending_diet_days"] = total_days
-                session.modified = True
-
-                reply = "Veg (vegetarian) or Non-veg diet plan? Please reply 'veg' or 'nonveg'."
-                print("DIET FLOW -- asking veg/nonveg")
-
-            else:
-                # we now know veg/nonveg -- clear pending state and build the plan
-                session.pop("awaiting_diet_type", None)
-                session.pop("pending_diet_days", None)
-                session.modified = True
-
-                plan_text, error = build_full_diet_plan(diet_type, total_days or DEFAULT_DIET_DAYS)
-                reply = error if error else plan_text
-                print("DIET FLOW -- generated plan:", diet_type, total_days or DEFAULT_DIET_DAYS, "days")
-
-        # ---- 4. Normal case: call the model with conversation history ----
-        else:
-            if "chat_history" not in session:
-                session["chat_history"] = []
-
-            session["chat_history"].append({
-                "role": "user",
-                "content": user_message
-            })
-            # keep only the most recent N messages so the session
-            # cookie / context doesn't grow without bound
-            session["chat_history"] = session["chat_history"][-MAX_HISTORY_MESSAGES:]
-
-            reply = ask_ollama(session["chat_history"])
-
-            session["chat_history"].append({
-                "role": "assistant",
-                "content": reply
-            })
-            session["chat_history"] = session["chat_history"][-MAX_HISTORY_MESSAGES:]
-            session.modified = True
+        reply = handle_chat_message(user_message, session, ask_ollama)
 
         print("AI Reply:", reply)
 
@@ -415,7 +131,6 @@ def upload_report():
             "message": "Only png, jpg, jpeg, pdf files are allowed"
         }), 400
 
-    # basic size check (in addition to any Flask MAX_CONTENT_LENGTH config)
     file.seek(0, os.SEEK_END)
     size_mb = file.tell() / (1024 * 1024)
     file.seek(0)
@@ -427,7 +142,6 @@ def upload_report():
 
     user_id = session["user_id"]
 
-    # unique, safe filename -- never trust the original filename directly
     ext = file.filename.rsplit(".", 1)[1].lower()
     safe_filename = f"{uuid.uuid4().hex}.{ext}"
 
@@ -437,8 +151,34 @@ def upload_report():
     filepath = os.path.join(user_folder, safe_filename)
     file.save(filepath)
 
+    file.seek(0)
+    file_bytes = file.read()
+
     original_name = file.filename
-    report_type = ext  # e.g. "png", "jpg", "pdf" -- simple category for now
+    report_type = ext
+
+    # ---- OCR (skip for PDFs -- OCR module expects images) ----
+    ocr_text = ""
+    vitals = {}
+    if ext in ("png", "jpg", "jpeg"):
+        try:
+            ocr_text, vitals = extract_text_and_vitals(file_bytes)
+            print("OCR TEXT LENGTH:", len(ocr_text))
+            print("OCR TEXT PREVIEW:", repr(ocr_text[:200]))
+        except Exception as e:
+            print("OCR ERROR:", e)
+
+    # ---- AI analysis via Ollama ----
+    ai_analysis = None
+    if ocr_text.strip():
+        try:
+            ai_analysis = ask_ollama([
+                {"role": "user", "content": REPORT_ANALYSIS_INSTRUCTION + ocr_text}
+            ])
+            print("REPORT ANALYSIS:", ai_analysis)
+        except Exception as e:
+            print("REPORT ANALYSIS ERROR:", e)
+            ai_analysis = "Sorry, I could not analyse this report right now."
 
     try:
         conn = get_connection()
@@ -446,21 +186,10 @@ def upload_report():
 
         cur.execute("""
             INSERT INTO reports
-            (
-                user_id,
-                report_name,
-                report_type,
-                file_path,
-                uploaded_at
-            )
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            (user_id, report_name, report_type, file_path, uploaded_at, ai_analysis)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
             RETURNING report_id
-        """, (
-            user_id,
-            original_name,
-            report_type,
-            filepath
-        ))
+        """, (user_id, original_name, report_type, filepath, ai_analysis))
 
         report_id = cur.fetchone()[0]
 
@@ -480,7 +209,8 @@ def upload_report():
         "success": True,
         "message": "Report uploaded successfully",
         "report_id": report_id,
-        "filename": original_name
+        "filename": original_name,
+        "reply": ai_analysis or "Report saved. No readable text found for analysis."
     })
 
 
