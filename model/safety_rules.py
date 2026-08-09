@@ -1,37 +1,119 @@
 """
-AI Health Guardian - Safety Rule Engine (v2)
-Adds: (1) accurate multi-day diet plan generation without asking the AI to do math,
-      (2) a guard against medicine-name hallucination for "what is X" queries.
-Use these BEFORE / AFTER calling the AI model in your Flask backend.
+AI Health Guardian - Safety & Rule Engine (v3)
+All keyword lists, guards, diet-flow logic, and the full /chat decision
+pipeline now live here. app.py just calls handle_chat_message() and
+passes it ask_ollama (or any other model-calling function).
 """
 
 import re
 
 # ============================================================
-# 1. EMERGENCY KEYWORD DETECTION (check FIRST, before calling AI)
+# 1. EMERGENCY KEYWORD DETECTION
 # ============================================================
 EMERGENCY_KEYWORDS = [
-    "chest pain", "difficulty breathing", "can't breathe", "cannot breathe",
-    "unconscious", "not responding", "severe bleeding", "bleeding heavily",
-    "slurred speech", "one side weak", "one side of my body",
-    "snake bite", "snake bit", "scorpion", "seizure", "convulsion",
-    "suicidal", "want to die", "faint", "fainting", "anaphylaxis",
-    "severe allergic reaction", "face swelling", "choking",
+    "chest pain", "cant breathe", "can't breathe", "cannot breathe",
+    "difficulty breathing", "breathing trouble", "shortness of breath",
+    "heavy bleeding", "severe bleeding", "bleeding a lot", "bleeding heavily",
+    "unconscious", "unresponsive", "not responding", "fainted", "passed out",
+    "faint", "fainting",
+    "stroke", "face drooping", "slurred speech", "one side weak", "one side of my body",
+    "severe bite", "snake bite", "snake bit", "dog bite deep", "scorpion",
+    "seizure", "convulsion",
+    "heart attack", "cardiac arrest",
+    "suicide", "suicidal", "want to die", "self harm", "overdose",
+    "anaphylaxis", "severe allergic reaction", "face swelling", "choking",
     "baby not moving", "baby is not moving",
 ]
 
-EMERGENCY_RESPONSE = (
-    "This may be a medical emergency. Please activate SOS / emergency alert now "
-    "and seek immediate medical help. If you are with the person, do not leave them alone."
+EMERGENCY_REPLY = (
+    "This sounds like it could be a medical emergency. "
+    "Please activate SOS now and seek immediate emergency medical help. "
+    "If someone is with you, ask them to call for help right away."
 )
 
 def is_emergency(text: str) -> bool:
-    text = text.lower()
-    return any(k in text for k in EMERGENCY_KEYWORDS)
+    lower = text.lower()
+    return any(k in lower for k in EMERGENCY_KEYWORDS)
 
 
 # ============================================================
-# 2. BLOOD PRESSURE / HbA1c CLASSIFICATION (hardcoded)
+# 2. OFF-TOPIC GUARD
+# ============================================================
+HEALTH_TOPIC_KEYWORDS = [
+    "pain", "fever", "cold", "cough", "flu", "headache", "vomit", "nausea",
+    "diet", "food", "nutrition", "veg", "nonveg", "non-veg", "meal", "water",
+    "medicine", "doctor", "hospital", "symptom", "sick", "ill", "health",
+    "bp", "blood pressure", "sugar", "diabetes", "weight", "appointment",
+    "injury", "wound", "cut", "burn", "allergy", "infection", "rash",
+    "sleep", "stress", "exercise", "tired", "fatigue"
+]
+
+GREETING_WORDS = [
+    "hi", "hii", "hello", "hey", "good morning", "good evening",
+    "good afternoon", "who are you", "what can you do"
+]
+
+SHORT_REPLY_WORDS = [
+    "ok", "okay", "yes", "no", "sure", "fine", "thanks", "thank you",
+    "veg", "nonveg", "non-veg", "non veg", "vegetarian", "non vegetarian"
+]
+
+OFF_TOPIC_REPLY = (
+    "I can only help with health symptoms, emergencies, and diet/nutrition "
+    "guidance. Could you ask something related to those?"
+)
+
+def is_on_topic(message: str) -> bool:
+    lower = message.lower().strip()
+    if any(g in lower for g in GREETING_WORDS):
+        return True
+    if lower in SHORT_REPLY_WORDS:
+        return True
+    return any(k in lower for k in HEALTH_TOPIC_KEYWORDS)
+
+
+# ============================================================
+# 3. MEDICINE NAME FILTER (AI OUTPUT side)
+# ============================================================
+BLOCKED_MEDS = [
+    "paracetamol", "aspirin", "ibuprofen", "crocin", "dolo", "combiflam",
+    "amoxicillin", "azithromycin", "metformin", "insulin", "disprin",
+]
+
+SAFE_MED_REPLY = (
+    "I can't provide information on specific medicines. Please consult a doctor "
+    "or pharmacist for accurate information about this medication."
+)
+
+def filter_medicine_names(ai_response: str) -> str:
+    lower = ai_response.lower()
+    if any(med in lower for med in BLOCKED_MEDS):
+        return SAFE_MED_REPLY
+    return ai_response
+
+
+# ============================================================
+# 4. MEDICINE-LOOKUP QUERY GUARD (USER INPUT side)
+# ============================================================
+MED_LOOKUP_PATTERNS = [
+    r"^what is\s+\w+\??$",
+    r"^what('s| is) \w+ (used for|for)\??$",
+    r"^tell me about\s+\w+\s*(medicine|tablet|drug)?\??$",
+    r"\b(medicine|tablet|drug|pill|syrup|capsule)\b.*\b(is|called)\b\s+\w+",
+]
+
+def looks_like_medicine_lookup(text: str) -> bool:
+    t = text.strip().lower()
+    return any(re.search(p, t) for p in MED_LOOKUP_PATTERNS)
+
+MED_LOOKUP_SAFE_REPLY = (
+    "I'm not able to provide reliable information about specific medicines or drugs — "
+    "please check with a doctor, pharmacist, or a verified source (like a medicine strip/leaflet) instead."
+)
+
+
+# ============================================================
+# 5. BP / HbA1c CLASSIFICATION (hardcoded, no AI)
 # ============================================================
 def classify_bp(systolic: int, diastolic: int):
     if systolic >= 180 or diastolic >= 120:
@@ -55,125 +137,191 @@ def classify_hba1c(hba1c: float):
 
 
 # ============================================================
-# 3. MEDICINE NAME FILTER — for AI OUTPUT (known drug names)
+# 6. DIET FLOW
 # ============================================================
-BLOCKED_MEDS = [
-    "paracetamol", "aspirin", "ibuprofen", "crocin", "dolo", "combiflam",
-    "amoxicillin", "azithromycin", "metformin", "insulin", "disprin",
+DIET_KEYWORDS = ["diet", "meal plan", "food plan", "nutrition",
+                  "breakfast", "lunch", "dinner", "meal"]
+
+NON_VEG_WORDS = [
+    "chicken", "mutton", "fish", "egg", "eggs", "meat", "prawn",
+    "beef", "pork", "non veg", "nonveg", "non-veg", "keema", "kebab",
+    "tuna", "salmon", "shrimp", "crab", "lobster", "bacon", "sausage",
+    "ham", "turkey", "duck", "anchovy", "sardine", "squid", "octopus"
 ]
 
-SAFE_MED_REPLY = (
-    "I can't provide information on specific medicines. Please consult a doctor "
-    "or pharmacist for accurate information about this medication."
-)
+MAX_DIET_DAYS = 180
+DEFAULT_DIET_DAYS = 7
 
-def filter_medicine_names(ai_response: str) -> str:
-    lower = ai_response.lower()
-    if any(med in lower for med in BLOCKED_MEDS):
-        return SAFE_MED_REPLY
-    return ai_response
+def is_diet_question(message: str) -> bool:
+    lower = message.lower()
+    return any(k in lower for k in DIET_KEYWORDS)
 
-
-# ============================================================
-# 4. MEDICINE-LOOKUP QUERY GUARD — for USER INPUT (prevents hallucination)
-# Catches "what is X" style questions BEFORE calling the AI. A small model
-# will confidently invent wrong facts (e.g. calling Dolo "anti-nausea", or
-# "painkiller" a cocktail) instead of admitting it doesn't know — so these
-# lookup-style questions are never sent to the AI at all.
-# ============================================================
-MED_LOOKUP_PATTERNS = [
-    r"^what is\s+\w+\??$",
-    r"^what('s| is) \w+ (used for|for)\??$",
-    r"^tell me about\s+\w+\s*(medicine|tablet|drug)?\??$",
-    r"\b(medicine|tablet|drug|pill|syrup|capsule)\b.*\b(is|called)\b\s+\w+",
-]
-
-def looks_like_medicine_lookup(text: str) -> bool:
-    t = text.strip().lower()
-    return any(re.search(p, t) for p in MED_LOOKUP_PATTERNS)
-
-MED_LOOKUP_SAFE_REPLY = (
-    "I'm not able to provide reliable information about specific medicines or drugs — "
-    "please check with a doctor, pharmacist, or a verified source (like a medicine strip/leaflet) instead."
-)
-
-
-# ============================================================
-# 5. MULTI-DAY DIET PLAN GENERATOR — accurate day/week math, no AI needed
-# The AI should NEVER be asked to compute "120 days = how many weeks" or write
-# out dozens of unique days — it gets the math wrong and trails off (seen:
-# 120 days incorrectly became 40 weeks, with lunch/dinner missing for most
-# weeks). Instead: build one solid 7-day template and repeat it in code.
-# ============================================================
-def diet_plan_duration_summary(num_days: int) -> str:
-    weeks = num_days // 7
-    remaining_days = num_days % 7
-    if remaining_days:
-        return f"{num_days} days = {weeks} weeks and {remaining_days} day(s)"
-    return f"{num_days} days = {weeks} weeks"
-
-def generate_multi_day_plan(num_days: int, seven_day_template: list):
-    """
-    seven_day_template: list of 7 dicts, each like
-        {"breakfast": "...", "lunch": "...", "dinner": "...", "snack": "..."}
-    Returns a list of length num_days, cycling through the 7-day template,
-    with correct day numbering — no AI math involved.
-    """
-    plan = []
-    for day_index in range(num_days):
-        template_day = seven_day_template[day_index % 7]
-        plan.append({"day": day_index + 1, **template_day})
-    return plan
-
-def extract_requested_days(text: str):
-    """Pull a requested number of days out of user text, e.g. '120 days diet plan' -> 120."""
-    match = re.search(r"(\d+)\s*day", text.lower())
-    if match:
-        return int(match.group(1))
+def extract_diet_type(message: str):
+    lower = message.lower()
+    if re.search(r'\bnon[\s-]?veg(etarian)?\b', lower):
+        return "nonveg"
+    if re.search(r'\bveg(etarian)?\b', lower):
+        return "veg"
     return None
 
+def extract_day_count(message: str):
+    lower = message.lower()
+    m = re.search(r'(\d+)\s*day', lower)
+    if m:
+        return int(m.group(1))
+    m = re.search(r'(\d+)?\s*week', lower)
+    if m:
+        n = int(m.group(1)) if m.group(1) else 1
+        return n * 7
+    m = re.search(r'(\d+)?\s*month', lower)
+    if m:
+        n = int(m.group(1)) if m.group(1) else 1
+        return n * 30
+    return None
+
+def week_diet_prompt(diet_type: str) -> str:
+    diet_label = "vegetarian (veg)" if diet_type == "veg" else "non-vegetarian (includes meat/fish/eggs)"
+    return (
+        f"Create a 10-day {diet_label} Indian diet plan for a general adult, with a DIFFERENT main dish each day (no repeats). "
+        "Strictly follow this exact format, with nothing else before or after it:\n\n"
+        "Day 1:\nBreakfast: ...\nLunch: ...\nDinner: ...\n\n"
+        "Day 2:\nBreakfast: ...\nLunch: ...\nDinner: ...\n\n"
+        "(continue through Day 7 in the exact same format)\n\n"
+        "Keep each meal on one short line. Vary the meals across the 7 days. "
+        "Do not add any introduction, notes, or explanation outside this format."
+    )
+
+def is_valid_day_block(block: str, diet_type: str) -> bool:
+    lower = block.lower()
+    if "breakfast" not in lower or "lunch" not in lower or "dinner" not in lower:
+        return False
+    if "consult a doctor" in lower or "medical consultation" in lower:
+        return False
+    if diet_type == "veg" and any(w in lower for w in NON_VEG_WORDS):
+        return False
+    return True
+
+def parse_week_plan(raw_text: str, diet_type: str):
+    parts = re.split(r'Day\s*\d+\s*:?', raw_text, flags=re.IGNORECASE)
+    blocks = [p.strip() for p in parts if p.strip()]
+    valid_blocks = [b for b in blocks if is_valid_day_block(b, diet_type)]
+    return valid_blocks[:10]
+
+def build_full_diet_plan(diet_type: str, total_days: int, call_ai_model_fn):
+    """
+    call_ai_model_fn: function(messages_list) -> raw AI response string
+                       (pass app.py's ask_ollama here).
+    Returns (plan_text, error_message). Exactly one of the two is None.
+    """
+    if total_days > MAX_DIET_DAYS:
+        return None, f"Please request {MAX_DIET_DAYS} days or fewer for a diet plan."
+
+    raw = call_ai_model_fn([
+        {"role": "user", "content": week_diet_prompt(diet_type)}
+    ])
+
+    day_blocks = parse_week_plan(raw, diet_type)
+
+    if not day_blocks:
+        return None, "Sorry, I could not generate a diet plan right now. Please try again."
+
+    pattern_len = len(day_blocks)
+
+    def format_block(block):
+        block = re.sub(r'breakfast\s*:', '🍳 Breakfast:', block, flags=re.IGNORECASE)
+        block = re.sub(r'lunch\s*:', '🍛 Lunch:', block, flags=re.IGNORECASE)
+        block = re.sub(r'dinner\s*:', '🌙 Dinner:', block, flags=re.IGNORECASE)
+        return block
+
+    lines = []
+    for day_num in range(1, total_days + 1):
+        block = day_blocks[(day_num - 1) % pattern_len]
+        lines.append(f"📅 Day {day_num}\n{format_block(block)}")
+
+    plan_text = "\n\n".join(lines)
+
+    if total_days > pattern_len:
+        plan_text += (
+            f"\n\n(Note: This is a {pattern_len}-day meal pattern repeated to "
+            f"cover all {total_days} days, so the plan stays consistent.)"
+        )
+
+    return plan_text, None
+
 
 # ============================================================
-# 6. MAIN PIPELINE — call this from your Flask route
+# 7. REPORT ANALYSIS INSTRUCTION (used by /upload_report for OCR'd text)
 # ============================================================
-def get_safe_response(user_text: str, call_ai_model_fn, seven_day_template=None):
-    """
-    call_ai_model_fn: function(user_text) -> raw AI response string.
-    seven_day_template: optional 7-day diet template (list of 7 dicts) used
-                         when the user asks for a multi-day plan longer than 7 days.
-    """
-    if is_emergency(user_text):
-        return EMERGENCY_RESPONSE
+REPORT_ANALYSIS_INSTRUCTION = (
+    "You are analyzing a medical/health report for a patient. "
+    "The following is text extracted from their report. "
+    "Summarize it in simple, calm language a non-medical elderly person "
+    "can understand. Point out anything that looks abnormal or worth "
+    "discussing with a doctor, but NEVER name a specific medicine or "
+    "dosage -- always say 'consult a doctor or pharmacist' for that. "
+    "Keep it short (4-6 sentences).\n\n"
+    "Report text:\n"
+)
 
-    if looks_like_medicine_lookup(user_text):
+
+# ============================================================
+# 8. FULL /chat PIPELINE — app.py just calls this
+# ============================================================
+MAX_HISTORY_MESSAGES = 12
+
+def handle_chat_message(user_message: str, session, call_ai_model_fn):
+    """
+    session: Flask session dict (get/pop/__setitem__ + session.modified = True).
+    call_ai_model_fn: function(messages_list) -> raw AI response string
+                       (pass app.py's ask_ollama here).
+    Returns the final reply string. Mutates `session` for chat_history /
+    diet-flow state, same as the original app.py logic did.
+    """
+
+    # 1. Emergency guard
+    if is_emergency(user_message):
+        return EMERGENCY_REPLY
+
+    # 2. Off-topic guard
+    if not is_on_topic(user_message):
+        return OFF_TOPIC_REPLY
+
+    # 3. Medicine-lookup guard (never hand these to the AI)
+    if looks_like_medicine_lookup(user_message):
         return MED_LOOKUP_SAFE_REPLY
 
-    requested_days = extract_requested_days(user_text)
-    if requested_days and requested_days > 7 and seven_day_template:
-        plan = generate_multi_day_plan(requested_days, seven_day_template)
-        summary = diet_plan_duration_summary(requested_days)
-        lines = [f"{summary}. Showing a repeating 7-day cycle:\n"]
-        for d in plan[:7]:  # first cycle shown; full 'plan' list can be sent to frontend/DB
-            lines.append(f"Day {d['day']}: Breakfast - {d['breakfast']}, Lunch - {d['lunch']}, "
-                          f"Dinner - {d['dinner']}, Snack - {d['snack']}")
-        lines.append(f"\n(This 7-day cycle repeats for all {requested_days} days.)")
-        return "\n".join(lines)
+    # 4. Diet flow
+    if is_diet_question(user_message) or session.get("awaiting_diet_type"):
+        diet_type = extract_diet_type(user_message)
+        days_in_message = extract_day_count(user_message)
+        total_days = days_in_message or session.get("pending_diet_days")
 
-    ai_response = call_ai_model_fn(user_text)
-    return filter_medicine_names(ai_response)
+        if not diet_type:
+            session["awaiting_diet_type"] = True
+            if total_days:
+                session["pending_diet_days"] = total_days
+            session.modified = True
+            return "Veg (vegetarian) or Non-veg diet plan? Please reply 'veg' or 'nonveg'."
 
+        session.pop("awaiting_diet_type", None)
+        session.pop("pending_diet_days", None)
+        session.modified = True
 
-# Example Flask usage:
-#
-# from safety_rules import get_safe_response
-#
-# SEVEN_DAY_VEG_TEMPLATE = [
-#     {"breakfast": "Poha", "lunch": "Dal-rice with veg curry", "dinner": "Roti with paneer sabzi", "snack": "Fruit"},
-#     ... (6 more days)
-# ]
-#
-# @app.route("/chat", methods=["POST"])
-# def chat():
-#     user_text = request.json["message"]
-#     reply = get_safe_response(user_text, call_ollama_model, seven_day_template=SEVEN_DAY_VEG_TEMPLATE)
-#     return jsonify({"reply": reply})
+        plan_text, error = build_full_diet_plan(diet_type, total_days or DEFAULT_DIET_DAYS, call_ai_model_fn)
+        return error if error else plan_text
+
+    # 5. Normal case: call the model with conversation history
+    if "chat_history" not in session:
+        session["chat_history"] = []
+
+    session["chat_history"].append({"role": "user", "content": user_message})
+    session["chat_history"] = session["chat_history"][-MAX_HISTORY_MESSAGES:]
+
+    raw_reply = call_ai_model_fn(session["chat_history"])
+    reply = filter_medicine_names(raw_reply)
+
+    session["chat_history"].append({"role": "assistant", "content": reply})
+    session["chat_history"] = session["chat_history"][-MAX_HISTORY_MESSAGES:]
+    session.modified = True
+
+    return reply

@@ -1951,8 +1951,13 @@ function handleGalleryUpload(event) {
   event.target.value = '';
 }
 
+// Replace processReportFile() in your HTML <script> with this.
+// Hits the existing /upload_report endpoint (now upgraded server-side to
+// run OCR -> Ollama analysis -> auto-save vitals in one call).
+
 function processReportFile(file) {
-  document.getElementById('uploadPreview').textContent = `✅ "${file.name}" uploaded & sent to AI for analysis.`;
+  document.getElementById('uploadPreview').textContent =
+    `✅ "${file.name}" uploaded & sent to AI for analysis.`;
   closeUploadModal();
   openChatPage();
 
@@ -1967,39 +1972,47 @@ function processReportFile(file) {
   win.scrollTop = win.scrollHeight;
   showToast(langData.toastReportUploaded || 'Report uploaded! AI is analysing…', 'green');
 
-  const reader = new FileReader();
-  reader.onload = async function() {
-    const base64 = String(reader.result).split(',')[1];
-    const mediaType = file.type || 'image/jpeg';
-    try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6', max_tokens: 1000,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: 'You are HealthGuardian AI. Analyse ONLY this uploaded medical report/image and explain the findings to the patient in a friendly, concise way. Base your answer strictly on what is actually visible in this image — do not assume any previous health data.' }
-            ]
-          }]
-        })
-      });
-      const data = await resp.json();
-      const reply = data.content?.[0]?.text || 'Sorry, I could not analyse this report.';
-      thinking.textContent = reply;
-      speakText(reply);
-    } catch(e) {
-      thinking.textContent = '⚠️ Connection error. Please try again.';
-    }
-    win.scrollTop = win.scrollHeight;
-  };
-  reader.readAsDataURL(file);
-}
+  const formData = new FormData();
+  formData.append('file', file);
 
-// ── ADD MEDICINE CAMERA FUNCTIONS ──
-let medCameraStream = null;
+  fetch('/upload_report', {
+    method: 'POST',
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        thinking.textContent = '⚠️ ' + (data.message || 'Could not analyse this report.');
+        return;
+      }
+      thinking.textContent = data.reply;
+      speakText(data.reply);
+
+      const v = data.vitals || {};
+      if (v.blood_pressure && !v.blood_pressure.includes('NOT DETECTED')) {
+        document.getElementById('bpVal').textContent = v.blood_pressure;
+      }
+      if (v.sugar && !v.sugar.includes('NOT DETECTED')) {
+        document.getElementById('sugarVal').textContent = v.sugar;
+      }
+      if (v.weight && !v.weight.includes('NOT DETECTED')) {
+        document.getElementById('weightVal').textContent = v.weight;
+      }
+      if (typeof updateHealthScoreDisplay === 'function') updateHealthScoreDisplay();
+      if (data.vitals_saved && typeof loadHealthHistory === 'function') loadHealthHistory();
+
+      showToast(langData.toastReportAnalysed
+        ? langData.toastReportAnalysed
+        : '📋 Report analysed by AI', 'green');
+    })
+    .catch(err => {
+      console.error(err);
+      thinking.textContent = '⚠️ Connection error. Please try again.';
+    })
+    .finally(() => {
+      win.scrollTop = win.scrollHeight;
+    });
+}
 
 function openMedModal() {
   document.getElementById('medModal').classList.add('open');
