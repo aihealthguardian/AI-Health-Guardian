@@ -6,6 +6,7 @@ passes it ask_ollama (or any other model-calling function).
 """
 
 import re
+import random
 
 # ============================================================
 # 1. EMERGENCY KEYWORD DETECTION
@@ -179,8 +180,14 @@ def extract_day_count(message: str):
         return n * 30
     return None
 
-def week_diet_prompt(diet_type: str) -> str:
+def week_diet_prompt(diet_type: str, avoid_list=None) -> str:
     diet_label = "vegetarian (veg)" if diet_type == "veg" else "non-vegetarian (includes meat/fish/eggs)"
+    avoid_text = ""
+    if avoid_list:
+        avoid_text = (
+            "\n\nDo NOT reuse any of these meals (already used):\n"
+            + ", ".join(sorted(set(avoid_list)))
+        )
     return (
         f"Create a 10-day {diet_label} Indian diet plan for a general adult, with a DIFFERENT main dish each day (no repeats). "
         "Strictly follow this exact format, with nothing else before or after it:\n\n"
@@ -189,6 +196,7 @@ def week_diet_prompt(diet_type: str) -> str:
         "(continue through Day 7 in the exact same format)\n\n"
         "Keep each meal on one short line. Vary the meals across the 7 days. "
         "Do not add any introduction, notes, or explanation outside this format."
+        + avoid_text
     )
 
 def is_valid_day_block(block: str, diet_type: str) -> bool:
@@ -207,7 +215,21 @@ def parse_week_plan(raw_text: str, diet_type: str):
     valid_blocks = [b for b in blocks if is_valid_day_block(b, diet_type)]
     return valid_blocks[:10]
 
-def build_full_diet_plan(diet_type: str, total_days: int, call_ai_model_fn):
+def extract_meal_names(block: str):
+    """
+    Pulls out the breakfast/lunch/dinner text lines from a single day
+    block, e.g. ["Poha with peanuts", "Dal rice with salad", "Roti sabzi"].
+    Used to build the avoid-list so the model doesn't repeat meals
+    across regeneration attempts.
+    """
+    names = []
+    for label in ("breakfast", "lunch", "dinner"):
+        m = re.search(rf'{label}\s*:\s*(.+)', block, re.IGNORECASE)
+        if m:
+            names.append(m.group(1).strip().split('\n')[0])
+    return names
+
+def build_full_diet_plan(diet_type: str, total_days: int, call_ai_model_fn, min_pattern_days=10, max_attempts=8):
     """
     call_ai_model_fn: function(messages_list) -> raw AI response string
                        (pass app.py's ask_ollama here).
@@ -216,34 +238,77 @@ def build_full_diet_plan(diet_type: str, total_days: int, call_ai_model_fn):
     if total_days > MAX_DIET_DAYS:
         return None, f"Please request {MAX_DIET_DAYS} days or fewer for a diet plan."
 
-    raw = call_ai_model_fn([
-        {"role": "user", "content": week_diet_prompt(diet_type)}
-    ])
+    all_blocks = []
+    seen_keys = set()
+    used_meal_names = []
 
-    day_blocks = parse_week_plan(raw, diet_type)
+    for attempt in range(max_attempts):
+        raw = call_ai_model_fn([
+            {"role": "user", "content": week_diet_prompt(diet_type, avoid_list=used_meal_names)}
+        ])
+        day_blocks = parse_week_plan(raw, diet_type)
 
-    if not day_blocks:
+        for block in day_blocks:
+            key = re.sub(r'\s+', ' ', block.lower())[:80]
+            if key in seen_keys:
+                continue
+
+            block_meals = extract_meal_names(block)
+            if any(m.strip().lower() in [u.strip().lower() for u in used_meal_names] for m in block_meals):
+                continue
+
+            seen_keys.add(key)
+            all_blocks.append(block)
+            used_meal_names.extend(block_meals)
+
+        if len(all_blocks) >= min_pattern_days:
+            break
+
+    if not all_blocks:
         return None, "Sorry, I could not generate a diet plan right now. Please try again."
 
-    pattern_len = len(day_blocks)
+    pattern_len = len(all_blocks)
 
-    def format_block(block):
-        block = re.sub(r'breakfast\s*:', '🍳 Breakfast:', block, flags=re.IGNORECASE)
-        block = re.sub(r'lunch\s*:', '🍛 Lunch:', block, flags=re.IGNORECASE)
-        block = re.sub(r'dinner\s*:', '🌙 Dinner:', block, flags=re.IGNORECASE)
-        return block
+    # pull breakfast / lunch / dinner out separately, aligned to block order
+    breakfasts, lunches, dinners = [], [], []
+    for block in all_blocks:
+        b = re.search(r'breakfast\s*:\s*(.+)', block, re.IGNORECASE)
+        l = re.search(r'lunch\s*:\s*(.+)', block, re.IGNORECASE)
+        d = re.search(r'dinner\s*:\s*(.+)', block, re.IGNORECASE)
+        breakfasts.append(b.group(1).strip().split('\n')[0] if b else "N/A")
+        lunches.append(l.group(1).strip().split('\n')[0] if l else "N/A")
+        dinners.append(d.group(1).strip().split('\n')[0] if d else "N/A")
+
+    # independent shuffled index orders for lunch & dinner, so meals mix
+    # across days instead of repeating in lockstep with breakfast
+    rng = random.Random(42)  # fixed seed = consistent but still shuffled
+    lunch_order = list(range(pattern_len))
+    dinner_order = list(range(pattern_len))
+    rng.shuffle(lunch_order)
+    rng.shuffle(dinner_order)
 
     lines = []
     for day_num in range(1, total_days + 1):
-        block = day_blocks[(day_num - 1) % pattern_len]
-        lines.append(f"📅 Day {day_num}\n{format_block(block)}")
+        i = day_num - 1
+        b_idx = i % pattern_len
+        l_idx = lunch_order[i % pattern_len]
+        d_idx = dinner_order[i % pattern_len]
+
+        day_text = (
+            f"📅 Day {day_num}\n"
+            f"🍳 Breakfast: {breakfasts[b_idx]}\n"
+            f"🍛 Lunch: {lunches[l_idx]}\n"
+            f"🌙 Dinner: {dinners[d_idx]}"
+        )
+        lines.append(day_text)
 
     plan_text = "\n\n".join(lines)
 
     if total_days > pattern_len:
         plan_text += (
-            f"\n\n(Note: This is a {pattern_len}-day meal pattern repeated to "
-            f"cover all {total_days} days, so the plan stays consistent.)"
+            f"\n\n(Note: {pattern_len} genuinely different days were generated. "
+            f"Beyond that, breakfast/lunch/dinner are mixed independently across "
+            f"days so the same full-day combination never repeats in a row.)"
         )
 
     return plan_text, None

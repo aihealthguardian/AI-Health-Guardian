@@ -488,14 +488,33 @@ value="{{ user[6] if user else '' }}"/>
   </div>
 </div>
         <div class="field">
-          <label id="lblState">State</label>
-          <select id="state">
+  <label id="lblState">State</label>
+
+  <select id="state">
     <option value="">Select your State</option>
-    <option value="Maharashtra" {{ 'selected' if user and user[9]=='Maharashtra' else '' }}>Maharashtra</option>
-            <option id="lblSelectState" value="">Select your State</option>
-            <option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option><option>Tamil Nadu</option><option>Kerala</option><option>Punjab</option><option>West Bengal</option><option>Delhi</option><option>Uttar Pradesh</option><option>Rajasthan</option><option>Madhya Pradesh</option><option>Bihar</option><option>Telangana</option><option>Andhra Pradesh</option><option>Odisha</option><option>Assam</option><option>Haryana</option><option>Jharkhand</option><option>Chhattisgarh</option><option>Goa</option>
-          </select>
-        </div>
+
+    <option value="Maharashtra" {{ 'selected' if user and user[9] == 'Maharashtra' else '' }}>Maharashtra</option>
+    <option value="Gujarat">Gujarat</option>
+    <option value="Karnataka">Karnataka</option>
+    <option value="Tamil Nadu">Tamil Nadu</option>
+    <option value="Kerala">Kerala</option>
+    <option value="Punjab">Punjab</option>
+    <option value="West Bengal">West Bengal</option>
+    <option value="Delhi">Delhi</option>
+    <option value="Uttar Pradesh">Uttar Pradesh</option>
+    <option value="Rajasthan">Rajasthan</option>
+    <option value="Madhya Pradesh">Madhya Pradesh</option>
+    <option value="Bihar">Bihar</option>
+    <option value="Telangana">Telangana</option>
+    <option value="Andhra Pradesh">Andhra Pradesh</option>
+    <option value="Odisha">Odisha</option>
+    <option value="Assam">Assam</option>
+    <option value="Haryana">Haryana</option>
+    <option value="Jharkhand">Jharkhand</option>
+    <option value="Chhattisgarh">Chhattisgarh</option>
+    <option value="Goa">Goa</option>
+  </select>
+</div>
         <div class="field">
           <label id="lblCity">City</label>
           <input id="city" type="text"
