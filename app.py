@@ -1126,6 +1126,15 @@ def emergency():
 
     user = cur.fetchone()
 
+    cur.execute("""
+        UPDATE users
+            SET latitude = %s,
+            longitude = %s
+        WHERE user_id = %s
+    """, (latitude, longitude, session["user_id"]))
+
+    conn.commit()
+
     cur.close()
     conn.close()
 
