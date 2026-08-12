@@ -1,9 +1,15 @@
 """
-AI Health Guardian - OCR Module (v4, DUAL-ENGINE)
+AI Health Guardian - OCR Module (v5, DUAL-ENGINE + FAST PATH)
 ====================================================
 Uses BOTH Tesseract and EasyOCR, then picks the better result -- since the
 two engines make different kinds of mistakes, running both and comparing
 catches more errors than either alone.
+
+v5 adds a FAST PATH: Tesseract alone is tried first on the raw image. If its
+confidence clears FAST_PATH_CONFIDENCE_THRESHOLD, we skip EasyOCR and the
+line-by-line pass entirely -- EasyOCR is by far the slowest step, so this
+saves real time on clean, well-lit photos while still falling back to the
+full dual-engine sweep for harder images.
 
 REQUIREMENTS:
     pip install easyocr opencv-python-headless pillow numpy pytesseract
@@ -53,6 +59,9 @@ if shutil.which("tesseract") is None:
         )
 
 reader = easyocr.Reader(['en'], gpu=False)
+
+# Confidence above this on the fast path means we skip the slow engines
+FAST_PATH_CONFIDENCE_THRESHOLD = 0.6
 
 
 def to_cv_image(image_bytes_or_path):
@@ -114,10 +123,6 @@ def run_tesseract_best_psm(image):
     return best
 
 
-# ============================================================
-# COMBINE: run both engines on both original + preprocessed image,
-# pick whichever of the 4 attempts has the highest average confidence.
-# ============================================================
 def run_tesseract_line_by_line(img):
     """
     Splits the image into individual text lines (using a horizontal
@@ -181,24 +186,45 @@ def run_tesseract_line_by_line(img):
     return text, avg_conf
 
 
+# ============================================================
+# COMBINE: fast path first (Tesseract only on the raw image). If that's
+# confident enough, return immediately. Otherwise fall back to the full
+# dual-engine sweep -- both engines, on both original + preprocessed
+# image, plus the line-by-line pass -- and keep whichever attempt has
+# the highest average confidence.
+# ============================================================
 def extract_text_from_image(image_bytes_or_path, return_debug=False):
     original = to_cv_image(image_bytes_or_path)
-    processed = light_preprocess(original)
 
     attempts = []
+
+    # ---- FAST PATH: try Tesseract on the original image first ----
+    fast_text, fast_conf = run_tesseract_best_psm(original)
+    attempts.append(("tesseract_original", fast_text, fast_conf))
+
+    if fast_conf >= FAST_PATH_CONFIDENCE_THRESHOLD:
+        combined_text = fast_text
+        if return_debug:
+            return fast_text, attempts, combined_text
+        return fast_text
+
+    # ---- SLOW PATH: fast path wasn't confident enough, try everything else ----
+    processed = light_preprocess(original)
+
+    text, conf = run_tesseract_best_psm(processed)
+    attempts.append(("tesseract_processed", text, conf))
+
     for label, img in [("easyocr_original", original), ("easyocr_processed", processed)]:
         text, conf = run_easyocr(img)
         attempts.append((label, text, conf))
-    for label, img in [("tesseract_original", original), ("tesseract_processed", processed)]:
-        text, conf = run_tesseract_best_psm(img)
-        attempts.append((label, text, conf))
 
-    # New: line-by-line segmented OCR (often best for small numbers next to labels)
     line_text, line_conf = run_tesseract_line_by_line(original)
     attempts.append(("tesseract_line_by_line", line_text, line_conf))
 
     best_label, best_text, best_conf = max(attempts, key=lambda a: a[2])
-    combined_text = "\n".join(t for _, t, c in attempts)  # for vitals search across all attempts
+    # for vitals search: combine every attempt that actually ran (fast path
+    # only ever contributes one attempt, slow path contributes all of them)
+    combined_text = "\n".join(t for _, t, c in attempts)
 
     if return_debug:
         return best_text, attempts, combined_text
@@ -255,8 +281,10 @@ def extract_vitals(raw_text):
 
 def extract_text_and_vitals(image_bytes_or_path):
     """Convenience function for Flask: returns (best_text, vitals_dict),
-    where vitals are searched across ALL OCR attempts (not just the best
-    one) since different attempts sometimes catch different fields."""
+    where vitals are searched across every OCR attempt that actually ran
+    (just the fast-path Tesseract pass on easy images, or all engines on
+    harder ones) since different attempts sometimes catch different
+    fields."""
     best_text, attempts, combined_text = extract_text_from_image(image_bytes_or_path, return_debug=True)
     vitals = extract_vitals(combined_text)
     return best_text, vitals
