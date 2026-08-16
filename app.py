@@ -36,7 +36,12 @@ def ask_ollama(messages):
         json={
             "model": "health-guardian",
             "messages": messages,
-            "stream": False
+            "stream": False,
+            "keep_alive": "30m",
+            "options": {
+                "num_predict": 200,
+                "num_ctx": 1024
+            }
         },
         timeout=120
     )
@@ -157,16 +162,19 @@ def upload_report():
     original_name = file.filename
     report_type = ext
 
-    # ---- OCR (skip for PDFs -- OCR module expects images) ----
+    # ---- OCR (images go through the normal pipeline, PDFs get rasterized
+    # page-by-page first -- both paths land in the same OCR sweep) ----
     ocr_text = ""
     vitals = {}
-    if ext in ("png", "jpg", "jpeg"):
-        try:
+    try:
+        if ext in ("png", "jpg", "jpeg"):
             ocr_text, vitals = extract_text_and_vitals(file_bytes)
-            print("OCR TEXT LENGTH:", len(ocr_text))
-            print("OCR TEXT PREVIEW:", repr(ocr_text[:200]))
-        except Exception as e:
-            print("OCR ERROR:", e)
+        elif ext == "pdf":
+            ocr_text, vitals = extract_text_and_vitals(file_bytes, is_pdf=True)
+        print("OCR TEXT LENGTH:", len(ocr_text))
+        print("OCR TEXT PREVIEW:", repr(ocr_text[:200]))
+    except Exception as e:
+        print("OCR ERROR:", e)
 
     # ---- AI analysis via Ollama ----
     ai_analysis = None
@@ -251,35 +259,22 @@ def get_reports():
 @app.route("/analyze_report/<int:report_id>", methods=["POST"])
 def analyze_report(report_id):
     """
-    Runs AI analysis on a report's extracted text and saves the result.
-
-    TEMPORARY: for now this expects the extracted text to be sent in
-    the request body as {"text": "..."}. Once OCR is wired in, OCR
-    will extract this text automatically from the uploaded file and
-    this same function can be called internally instead of needing
-    the text passed in manually.
+    Re-runs AI analysis for an already-uploaded report and saves the
+    result. This re-reads the file straight from disk (report_type +
+    file_path from the DB) and OCRs it again itself -- callers don't need
+    to pass any extracted text in the request body anymore.
     """
 
     if "user_id" not in session:
         return jsonify({"success": False, "message": "Login Required"}), 401
 
-    data = request.get_json(force=True)
-    report_text = (data or {}).get("text", "").strip()
-
-    if not report_text:
-        return jsonify({
-            "success": False,
-            "message": "No report text provided"
-        }), 400
-
     user_id = session["user_id"]
 
-    # confirm this report belongs to the logged-in user before touching it
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT report_id FROM reports
+        SELECT report_id, report_type, file_path FROM reports
         WHERE report_id=%s AND user_id=%s
     """, (report_id, user_id))
 
@@ -290,9 +285,52 @@ def analyze_report(report_id):
         conn.close()
         return jsonify({"success": False, "message": "Report not found"}), 404
 
-    # ask the model to analyze the report text (separate one-off prompt,
-    # not part of the ongoing chat_history conversation)
-    analysis_prompt = REPORT_ANALYSIS_INSTRUCTION + report_text
+    _, report_type, file_path = row
+
+    if not file_path or not os.path.exists(file_path):
+        cur.close()
+        conn.close()
+        return jsonify({
+            "success": False,
+            "message": "Original report file could not be found on disk"
+        }), 404
+
+    ocr_text = ""
+    try:
+        with open(file_path, "rb") as f:
+            file_bytes = f.read()
+
+        if report_type in ("png", "jpg", "jpeg"):
+            ocr_text, _vitals = extract_text_and_vitals(file_bytes)
+        elif report_type == "pdf":
+            ocr_text, _vitals = extract_text_and_vitals(file_bytes, is_pdf=True)
+        else:
+            cur.close()
+            conn.close()
+            return jsonify({
+                "success": False,
+                "message": f"Unsupported report type: {report_type}"
+            }), 400
+
+    except Exception as e:
+        print("ANALYZE_REPORT OCR ERROR:", e)
+        cur.close()
+        conn.close()
+        return jsonify({
+            "success": False,
+            "message": "Could not read/OCR the report file",
+            "error": str(e)
+        }), 500
+
+    if not ocr_text.strip():
+        cur.close()
+        conn.close()
+        return jsonify({
+            "success": False,
+            "message": "No readable text found in this report"
+        }), 422
+
+    analysis_prompt = REPORT_ANALYSIS_INSTRUCTION + ocr_text
 
     analysis = ask_ollama([
         {"role": "user", "content": analysis_prompt}
@@ -828,9 +866,10 @@ def save_health():
             bp,
             sugar,
             weight,
-            blood_group
+            blood_group,
+            created_at
         )
-        VALUES (%s,%s,%s,%s,%s)
+        VALUES (%s,%s,%s,%s,%s, CURRENT_TIMESTAMP)
     """,
     (
         user_id,
@@ -894,7 +933,7 @@ def get_health_history():
 
     # rows come back sorted by month ascending already because of the
     # DISTINCT ON + ORDER BY above; keep only the most recent 6 months.
-    rows = rows[-6:]
+    rows = rows[-12:]
 
     months = [r[0] for r in rows]
     bp_vals = []
@@ -1125,15 +1164,6 @@ def emergency():
     """, (session["user_id"],))
 
     user = cur.fetchone()
-
-    cur.execute("""
-        UPDATE users
-            SET latitude = %s,
-            longitude = %s
-        WHERE user_id = %s
-    """, (latitude, longitude, session["user_id"]))
-
-    conn.commit()
 
     cur.close()
     conn.close()

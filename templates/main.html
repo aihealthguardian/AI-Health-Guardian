@@ -6,7 +6,7 @@
 <title>HealthGuardian</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
-<body>
+<body data-username="{{ user[0] if user else '' }}">
 
 <div class="main">
 
@@ -58,7 +58,7 @@
                 </span>
               </div>
               <div class="profile-info-row profile-info-row-block">
-              <span class="profile-info-label">Family Contact No.</span>
+              <span class="profile-info-label" id="profileContactFieldLabel">Family Contact No.</span>
               <div class="profile-contact-sublist">
               <div class="profile-contact-item">
               <span class="profile-info-value">
@@ -201,7 +201,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="chartCard">
       <div class="card-title" id="healthTrackerTitle">Health Tracker — Monthly Graph</div>
       <div class="graph-tabs">
         <div class="graph-tab active" onclick="switchGraph(this,'bp')" id="bpTab">BP</div>
@@ -279,7 +279,7 @@
       <div class="lang-btn" data-lang="ta" onclick="selectLanguage('ta')">Tamil <span class="native">(தமிழ்)</span></div>
       <div class="lang-btn" data-lang="te" onclick="selectLanguage('te')">Telugu <span class="native">(తెలుగు)</span></div>
       <div class="lang-btn" data-lang="kn" onclick="selectLanguage('kn')">Kannada <span class="native">(ಕನ್ನಡ)</span></div>
-      <div class="lang-btn" data-lang="bn" onclick="selectLanguage('bn')">Bangali <span class="native">(বাংলা)</span></div>
+      <div class="lang-btn" data-lang="bn" onclick="selectLanguage('bn')">Bengali <span class="native">(বাংলা)</span></div>
       <div class="lang-btn" data-lang="pa" onclick="selectLanguage('pa')">Punjabi <span class="native">(ਪੰਜਾਬੀ)</span></div>
     </div>
     <p style="font-size:12px;color:var(--text-mid);margin-top:14px;text-align:center;" id="langSelectHint">Select a language to change the interface</p>
@@ -591,5 +591,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </body>
 </html>

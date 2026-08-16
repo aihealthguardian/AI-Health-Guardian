@@ -33,10 +33,10 @@
 
     <form method="POST" action="/save_profile">
 
-      <div class="section-title">Personal Information</div>
+      <div class="section-title" id="personalInfoTitle">Personal Information</div>
 
 <div class="field-group">
-  <span class="field-label">Email</span>
+  <span class="field-label" id="emailFieldLabel">Email</span>
   <input
     type="email"
     class="field-input"
@@ -48,7 +48,7 @@
 </div>
 
 <div class="field-group">
-  <span class="field-label">Age</span>
+  <span class="field-label" id="ageFieldLabel">Age</span>
   <input
     type="number"
     class="field-input"
@@ -58,17 +58,17 @@
 </div>
 
 <div class="field-group">
-  <span class="field-label">Gender</span>
+  <span class="field-label" id="genderFieldLabel">Gender</span>
   <select class="field-input" name="gender">
-    <option value="">Select Gender</option>
-    <option value="Male" {% if user[3] == 'Male' %}selected{% endif %}>Male</option>
-    <option value="Female" {% if user[3] == 'Female' %}selected{% endif %}>Female</option>
-    <option value="Other" {% if user[3] == 'Other' %}selected{% endif %}>Other</option>
+    <option value="" id="selectGenderOpt">Select Gender</option>
+    <option value="Male" id="maleOpt" {% if user[3] == 'Male' %}selected{% endif %}>Male</option>
+    <option value="Female" id="femaleOpt" {% if user[3] == 'Female' %}selected{% endif %}>Female</option>
+    <option value="Other" id="otherOpt" {% if user[3] == 'Other' %}selected{% endif %}>Other</option>
   </select>
 </div>
 
 <div class="field-group">
-  <span class="field-label">Date of Birth</span>
+  <span class="field-label" id="dobFieldLabel">Date of Birth</span>
   <input
     type="date"
     class="field-input"
@@ -78,7 +78,7 @@
 </div>
 
 <div class="field-group">
-  <span class="field-label">State</span>
+  <span class="field-label" id="stateFieldLabel">State</span>
   <input
     type="text"
     class="field-input"
@@ -88,7 +88,7 @@
 </div>
 
 <div class="field-group">
-  <span class="field-label">City</span>
+  <span class="field-label" id="cityFieldLabel">City</span>
   <input
     type="text"
     class="field-input"
@@ -98,7 +98,7 @@
 </div>
 
 <div class="field-group">
-  <span class="field-label">Address</span>
+  <span class="field-label" id="addressFieldLabel">Address</span>
   <input
     type="text"
     class="field-input"

@@ -1,4 +1,4 @@
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -211,7 +211,13 @@
     cursor: pointer; border: 1.5px solid var(--border); color: var(--text-mid); transition: all .15s;
   }
   .graph-tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
-  .graph-wrap { position: relative; height: 280px; }
+ .graph-wrap {
+  position: relative;
+  height: 350px;
+}
+#chartCard {
+  align-self: start;
+}
   canvas#healthChart { width: 100% !important; }
 
   .ai-left { display: flex; flex-direction: column; gap: 12px; height: 100%; }

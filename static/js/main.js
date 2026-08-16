@@ -1,4 +1,3 @@
-
 let isVoiceInput = false;  
  
 let toastTimer = null;
@@ -672,23 +671,675 @@ const homeTranslations = {
     toastMedicineSaved: "💊 દવા પ્રિસ્ક્રિપ્શન ડેટાબેઝમાં સેવ થઈ!",
     noRemindersSelected: "⚠️ કૃપા કરીને ઓછામાં ઓછો એક સમય પસંદ કરો.",
   },
-  // ... Continue for other languages (ta, te, kn, bn, pa) with similar translations
-  // For brevity, I've included only en, mr, hi, gu here. 
-  // You can add the remaining languages (ta, te, kn, bn, pa) with similar translated strings.
+
+  ta: {
+    healthGuardianTitle: "ஹெல்த் கார்டியன்",
+    greetingPrefix: "காலை வணக்கம்",
+    goodAfternoon: "மதிய வணக்கம்",
+    goodEvening: "மாலை வணக்கம்",
+    goodNight: "இரவு வணக்கம்",
+    healthScoreLabel: "ஆரோக்கிய மதிப்பெண்",
+    goodLabel: "நன்று",
+    nextMedicineLabel: "அடுத்த மருந்து",
+    paracetamolLabel: "பாராசிட்டமால்",
+    todaysMedicinesLabel: "சந்திப்பு",
+    takenLabel: "/ 5 எடுத்தது",
+    healthMonitoringTitle: "ஆரோக்கிய கண்காணிப்பு",
+    bpLabel: "இரத்த அழுத்தம்",
+    bloodSugarLabel: "இரத்த சர்க்கரை",
+    weightLabel: "எடை",
+    bloodGroupLabel: "இரத்த வகை",
+    updateHealthDataLabel: "ஆரோக்கியத் தரவைப் புதுப்பிக்கவும்",
+    bpFieldLabel: "இரத்த அழுத்தம் (mmHg)",
+    sugarFieldLabel: "இரத்த சர்க்கரை (mg/dL)",
+    weightFieldLabel: "எடை (kg)",
+    bgFieldLabel: "இரத்த வகை",
+    selectOption: "தேர்ந்தெடுக்கவும்",
+    saveHealthBtn: "ஆரோக்கியத் தரவைச் சேமிக்கவும்",
+    uploadReportText: "அறிக்கையைப் பதிவேற்றவும் (கேமரா / கேலரி)",
+    medicineAppointmentTitle: "மருந்து மற்றும் சந்திப்பு",
+    healthTrackerTitle: "ஆரோக்கிய கண்காணிப்பு — மாதாந்திர வரைபடம்",
+    bpTab: "இரத்த அழுத்தம்",
+    sugarTab: "சர்க்கரை",
+    weightTab: "எடை",
+    healthGuardianAITitle: "ஹெல்த் கார்டியன் AI",
+    aiDescText: "உங்கள் ஆரோக்கியம், மருந்துகள், அறிகுறிகள் அல்லது அறிக்கைகள் பற்றி எதையும் கேளுங்கள். 24/7 கிடைக்கும்.",
+    startChatText: "AI உடன் உரையாடலைத் தொடங்கவும்",
+    emergencyTitle: "அவசரநிலை",
+    emergencyDesc: "அவசர உதவி வேண்டுமா? கீழே தட்டி உங்கள் அவசர மற்றும் குடும்பத் தொடர்புகளுக்கு உடனடியாகத் தெரிவிக்கவும்.",
+    emergencyBtn: "⚠ அவசர எச்சரிக்கையை அனுப்பவும்",
+    emergencyContactText: "அவசர தொடர்பு",
+    familyContactText: "குடும்ப தொடர்பு",
+    uploadReportModalTitle: "அறிக்கையைப் பதிவேற்றவும்",
+    cameraText: "கேமரா",
+    galleryText: "கேலரி",
+    addMedModalTitle: "புதிய மருந்தைச் சேர்க்கவும்",
+    scanUploadText: "உங்கள் மருந்துச் சீட்டை ஸ்கேன் செய்யவும் அல்லது பதிவேற்றவும்",
+    medCameraText: "கேமரா",
+    medGalleryText: "கேலரி",
+    todaysMedicinesModalTitle: "இன்றைய மருந்துகள்",
+    takenStatus: "✓ எடுத்தது",
+    upcomingStatus: "⏰ வரவிருக்கும்",
+    chatModalTitle: "🛡️ ஹெல்த் கார்டியன் AI",
+    savedHistoryBtn: "சேமித்த வரலாறு",
+    chatHistoryModalTitle: "சேமித்த வரலாறு",
+    noChatHistoryMsg: "சேமித்த வரலாறு எதுவும் இல்லை.",
+    chatWelcomeMsg: "வணக்கம்! இன்று நான் உங்களுக்கு எவ்வாறு உதவலாம்? 😊",
+    chatSendBtn: "அனுப்பவும்",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 உணவு உதவியாளர் AI",
+    dietChatWelcome: "வணக்கம்! நான் உங்கள் உணவு AI. உணவு, ஊட்டச்சத்து அல்லது உணவு பழக்கங்கள் பற்றி எதையும் கேளுங்கள்! 🥦",
+    dietSendBtn: "அனுப்பவும்",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "அவசர எச்சரிக்கை அனுப்பப்பட்டது!",
+    emergencyPopupDesc: "உங்கள் அவசர எச்சரிக்கை அவசர தொடர்பு மற்றும் குடும்பத் தொடர்புக்கு அனுப்பப்பட்டது. உதவி வருகிறது!",
+    emergencyContactSent: "அவசர தொடர்பு",
+    familyContactSent: "குடும்ப தொடர்பு",
+    alertSentText: "எச்சரிக்கை அனுப்பப்பட்டது ✓",
+    gotItBtn: "சரி",
+    privacyTitle: "🔒 தனியுரிமை மற்றும் பாதுகாப்பு",
+    termsTitle: "விதிமுறைகள் மற்றும் நிபந்தனைகள்",
+    termsText1: "HealthGuardian-ஐ பயன்படுத்துவதன் மூலம், கீழ்க்கண்ட விதிமுறைகளை ஏற்கிறீர்கள்.",
+    privacyTitle2: "1. தரவு தனியுரிமை",
+    privacyText1: "நீங்கள் உள்ளிட்ட அனைத்து ஆரோக்கியத் தரவும் பாதுகாப்பாக சேமிக்கப்படுகிறது.",
+    aiTitle: "2. AI உருவாக்கிய ஆலோசனை",
+    aiText1: "AI வழங்கும் ஆலோசனைகள் தகவல் நோக்கத்திற்காக மட்டுமே.",
+    emergencyTitle2: "3. அவசர எச்சரிக்கைகள்",
+    emergencyText1: "அவசர எச்சரிக்கைகள் முன்பே அமைக்கப்பட்ட தொடர்புகளுக்கு அனுப்பப்படும்.",
+    voiceTitle: "4. குரல் தரவு",
+    voiceText1: "குரல் உள்ளீடு உங்கள் சாதனத்தின் குரல் அங்கீகாரத்தின் மூலம் செயலாக்கப்படுகிறது.",
+    accountTitle: "5. கணக்கு பாதுகாப்பு",
+    accountText1: "உங்கள் கணக்கின் ரகசியத்தன்மையைப் பாதுகாப்பது உங்கள் பொறுப்பு.",
+    updatesTitle: "6. விதிமுறை புதுப்பிப்புகள்",
+    updatesText1: "HealthGuardian இந்த விதிமுறைகளைப் புதுப்பிக்கும் உரிமையை வைத்துள்ளது.",
+    understandBtn: "நான் புரிந்துகொண்டு ஏற்கிறேன்",
+    editProfile: "சுயவிவரத்தைத் திருத்தவும்",
+    languageChange: "மொழியை மாற்றவும்",
+    privacySecurity: "தனியுரிமை மற்றும் பாதுகாப்பு",
+    logOut: "வெளியேறு",
+    chatPlaceholder: "உங்கள் கேள்வியை உள்ளிடவும்…",
+    dietPlaceholder: "உணவு மற்றும் ஊட்டச்சத்து பற்றி கேளுங்கள்…",
+    langModalTitle: "🌐 மொழியைத் தேர்ந்தெடுக்கவும்",
+    langSelectHint: "இடைமுக மொழியை மாற்ற ஒரு மொழியைத் தேர்ந்தெடுக்கவும்",
+    toastHealthUpdated: "✅ ஆரோக்கியத் தரவு புதுப்பிக்கப்பட்டது!",
+    toastTaken: "நன்றி! 💊 மருந்து எடுத்ததாகக் குறிக்கப்பட்டது.",
+    toastMissed: "⚠️ மருந்து தவறிவிட்டது!",
+    toastReportUploaded: "அறிக்கை பதிவேற்றப்பட்டது! AI ஆய்வு செய்கிறது…",
+    toastMedicineAdded: "மருந்து சேர்க்கப்பட்டது!",
+    toastVoiceNotSupported: "இந்த உலாவியில் குரல் ஆதரிக்கப்படவில்லை.",
+    toastCouldNotHear: "உங்கள் குரல் கேட்கவில்லை. மீண்டும் முயற்சிக்கவும்.",
+    toastLoggedOut: "வெளியேறிவிட்டீர்கள்.",
+    toastLanguageChanged: "✅ மொழி மாற்றப்பட்டது: ",
+    profileUsernameFieldLabel: "பயனர்பெயர்",
+    profileAgeFieldLabel: "வயது",
+    profileGenderFieldLabel: "பாலினம்",
+    profileDobFieldLabel: "பிறந்த தேதி",
+    profileContactFieldLabel: "குடும்ப தொடர்பு எண்",
+    addMedFormTitle: "மருந்தைச் சேர்க்கவும்",
+    medNameFieldLabel: "மருந்தின் பெயர்",
+    medNamePlaceholder: "எ.கா. Metformin",
+    medTimeFieldLabel: "நினைவூட்டல் நேரம்",
+    medDaysFieldLabel: "கால அளவு (நாட்கள்)",
+    saveMedEntryText: "மருந்தைச் சேர்த்து நினைவூட்டலை அமைக்கவும்",
+    noMedicinesAdded: "மருந்துகள் எதுவும் சேர்க்கப்படவில்லை.",
+    scheduleMedTileText: "மருந்து",
+    scheduleApptTileText: "சந்திப்பு",
+    todaysApptModalTitle: "இன்றைய சந்திப்புகள்",
+    addApptFormTitle: "சந்திப்பைச் சேர்க்கவும்",
+    apptDoctorLabel: "மருத்துவரின் பெயர்",
+    apptHospitalLabel: "மருத்துவமனை / கிளினிக் பெயர்",
+    apptDoctorPlaceholder: "எ.கா. டாக்டர் சர்மா",
+    apptDateLabel: "தேதி",
+    apptTimeLabel: "நேரம்",
+    saveApptEntryText: "சந்திப்பைச் சேர்த்து நினைவூட்டல்களை அமைக்கவும்",
+    noAppointmentsAdded: "சந்திப்புகள் எதுவும் சேர்க்கப்படவில்லை.",
+    reminderBeforeLabel: "முன்கூட்டியே நினைவூட்டவும் (நாட்கள்)",
+    reminderOnDayLabel: "சந்திப்பு நாளில் நினைவூட்டவும் (நிமிடங்கள்)",
+    day: "நாள்",
+    days: "நாட்கள்",
+    min: "நிமிடம்",
+    hour: "மணி",
+    hours: "மணிநேரம்",
+    toastMedicineSaved: "💊 மருந்துச் சீட்டு தரவுத்தளத்தில் சேமிக்கப்பட்டது!",
+    noRemindersSelected: "⚠️ குறைந்தது ஒரு நினைவூட்டல் நேரத்தைத் தேர்ந்தெடுக்கவும்."
+  },
+
+  te: {
+    healthGuardianTitle: "హెల్త్ గార్డియన్",
+    greetingPrefix: "శుభోదయం",
+    goodAfternoon: "శుభ మధ్యాహ్నం",
+    goodEvening: "శుభ సాయంత్రం",
+    goodNight: "శుభ రాత్రి",
+    healthScoreLabel: "ఆరోగ్య స్కోర్",
+    goodLabel: "బాగుంది",
+    nextMedicineLabel: "తదుపరి మందు",
+    paracetamolLabel: "పారాసెటమాల్",
+    todaysMedicinesLabel: "అపాయింట్‌మెంట్",
+    takenLabel: "/ 5 తీసుకున్నారు",
+    healthMonitoringTitle: "ఆరోగ్య పర్యవేక్షణ",
+    bpLabel: "రక్తపోటు",
+    bloodSugarLabel: "రక్త చక్కెర",
+    weightLabel: "బరువు",
+    bloodGroupLabel: "రక్త వర్గం",
+    updateHealthDataLabel: "ఆరోగ్య డేటాను నవీకరించండి",
+    bpFieldLabel: "రక్తపోటు (mmHg)",
+    sugarFieldLabel: "రక్త చక్కెర (mg/dL)",
+    weightFieldLabel: "బరువు (kg)",
+    bgFieldLabel: "రక్త వర్గం",
+    selectOption: "ఎంచుకోండి",
+    saveHealthBtn: "ఆరోగ్య డేటాను సేవ్ చేయండి",
+    uploadReportText: "రిపోర్ట్‌ను అప్‌లోడ్ చేయండి (కెమెరా / గ్యాలరీ)",
+    medicineAppointmentTitle: "మందులు మరియు అపాయింట్‌మెంట్",
+    healthTrackerTitle: "ఆరోగ్య ట్రాకర్ — నెలవారీ గ్రాఫ్",
+    bpTab: "బీపీ",
+    sugarTab: "చక్కెర",
+    weightTab: "బరువు",
+    healthGuardianAITitle: "హెల్త్ గార్డియన్ AI",
+    aiDescText: "మీ ఆరోగ్యం, మందులు, లక్షణాలు లేదా రిపోర్టుల గురించి ఏదైనా అడగండి. 24/7 అందుబాటులో ఉంటుంది.",
+    startChatText: "AIతో చాట్ ప్రారంభించండి",
+    emergencyTitle: "అత్యవసరం",
+    emergencyDesc: "తక్షణ సహాయం కావాలా? క్రింద ట్యాప్ చేసి అత్యవసర మరియు కుటుంబ పరిచయాలకు వెంటనే తెలియజేయండి.",
+    emergencyBtn: "⚠ అత్యవసర అలర్ట్ పంపండి",
+    emergencyContactText: "అత్యవసర పరిచయం",
+    familyContactText: "కుటుంబ పరిచయం",
+    uploadReportModalTitle: "రిపోర్ట్ అప్‌లోడ్ చేయండి",
+    cameraText: "కెమెరా",
+    galleryText: "గ్యాలరీ",
+    addMedModalTitle: "కొత్త మందును జోడించండి",
+    scanUploadText: "మీ మందుల ప్రిస్క్రిప్షన్‌ను స్కాన్ లేదా అప్‌లోడ్ చేయండి",
+    medCameraText: "కెమెరా",
+    medGalleryText: "గ్యాలరీ",
+    todaysMedicinesModalTitle: "ఈరోజు మందులు",
+    takenStatus: "✓ తీసుకున్నారు",
+    upcomingStatus: "⏰ రాబోయేవి",
+    chatModalTitle: "🛡️ హెల్త్ గార్డియన్ AI",
+    savedHistoryBtn: "సేవ్ చేసిన చరిత్ర",
+    chatHistoryModalTitle: "సేవ్ చేసిన చరిత్ర",
+    noChatHistoryMsg: "ఇంకా సేవ్ చేసిన చరిత్ర లేదు.",
+    chatWelcomeMsg: "నమస్కారం! ఈరోజు నేను మీకు ఎలా సహాయం చేయగలను? 😊",
+    chatSendBtn: "పంపండి",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 డైట్ అసిస్టెంట్ AI",
+    dietChatWelcome: "నమస్కారం! నేను మీ డైట్ AI. ఆహారం, పోషణ లేదా భోజన ప్రణాళికల గురించి అడగండి! 🥦",
+    dietSendBtn: "పంపండి",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "అత్యవసర అలర్ట్ పంపబడింది!",
+    emergencyPopupDesc: "మీ అత్యవసర అలర్ట్ అత్యవసర మరియు కుటుంబ పరిచయాలకు పంపబడింది. సహాయం వస్తోంది!",
+    emergencyContactSent: "అత్యవసర పరిచయం",
+    familyContactSent: "కుటుంబ పరిచయం",
+    alertSentText: "అలర్ట్ పంపబడింది ✓",
+    gotItBtn: "సరే",
+    privacyTitle: "🔒 గోప్యత మరియు భద్రత",
+    termsTitle: "నిబంధనలు మరియు షరతులు",
+    termsText1: "HealthGuardian ఉపయోగించడం ద్వారా మీరు ఈ నిబంధనలను అంగీకరిస్తున్నారు.",
+    privacyTitle2: "1. డేటా గోప్యత",
+    privacyText1: "మీరు నమోదు చేసిన ఆరోగ్య డేటా సురక్షితంగా నిల్వ చేయబడుతుంది.",
+    aiTitle: "2. AI సలహా",
+    aiText1: "AI అందించే సూచనలు సమాచార ప్రయోజనాల కోసం మాత్రమే.",
+    emergencyTitle2: "3. అత్యవసర అలర్ట్లు",
+    emergencyText1: "అత్యవసర అలర్ట్లు ముందుగా అమర్చిన పరిచయాలకు పంపబడతాయి.",
+    voiceTitle: "4. వాయిస్ డేటా",
+    voiceText1: "వాయిస్ ఇన్‌పుట్ మీ పరికరం ద్వారా రియల్ టైమ్‌లో ప్రాసెస్ చేయబడుతుంది.",
+    accountTitle: "5. ఖాతా భద్రత",
+    accountText1: "మీ ఖాతా గోప్యతను కాపాడటం మీ బాధ్యత.",
+    updatesTitle: "6. నిబంధనల నవీకరణలు",
+    updatesText1: "HealthGuardian ఈ నిబంధనలను నవీకరించే హక్కును కలిగి ఉంది.",
+    understandBtn: "నాకు అర్థమైంది మరియు అంగీకరిస్తున్నాను",
+    editProfile: "ప్రొఫైల్‌ను మార్చండి",
+    languageChange: "భాషను మార్చండి",
+    privacySecurity: "గోప్యత మరియు భద్రత",
+    logOut: "లాగ్ అవుట్",
+    chatPlaceholder: "మీ ప్రశ్నను టైప్ చేయండి…",
+    dietPlaceholder: "డైట్, పోషణ గురించి అడగండి…",
+    langModalTitle: "🌐 భాషను ఎంచుకోండి",
+    langSelectHint: "ఇంటర్‌ఫేస్ మార్చడానికి భాషను ఎంచుకోండి",
+    toastHealthUpdated: "✅ ఆరోగ్య డేటా నవీకరించబడింది!",
+    toastTaken: "ధన్యవాదాలు! 💊 మందు తీసుకున్నట్లు గుర్తించబడింది.",
+    toastMissed: "⚠️ మందు మిస్ అయింది!",
+    toastReportUploaded: "రిపోర్ట్ అప్‌లోడ్ అయింది! AI విశ్లేషిస్తోంది…",
+    toastMedicineAdded: "మందు జోడించబడింది!",
+    toastVoiceNotSupported: "ఈ బ్రౌజర్‌లో వాయిస్‌కు మద్దతు లేదు.",
+    toastCouldNotHear: "మీ మాట వినిపించలేదు. మళ్లీ ప్రయత్నించండి.",
+    toastLoggedOut: "లాగ్ అవుట్ అయ్యారు.",
+    toastLanguageChanged: "✅ భాష మార్చబడింది: ",
+    profileUsernameFieldLabel: "వినియోగదారు పేరు",
+    profileAgeFieldLabel: "వయస్సు",
+    profileGenderFieldLabel: "లింగం",
+    profileDobFieldLabel: "పుట్టిన తేదీ",
+    profileContactFieldLabel: "కుటుంబ పరిచయ నంబర్",
+    addMedFormTitle: "మందును జోడించండి",
+    medNameFieldLabel: "మందు పేరు",
+    medNamePlaceholder: "ఉదా. Metformin",
+    medTimeFieldLabel: "రిమైండర్ సమయం",
+    medDaysFieldLabel: "వ్యవధి (రోజులు)",
+    saveMedEntryText: "మందును జోడించి రిమైండర్ సెట్ చేయండి",
+    noMedicinesAdded: "ఇంకా మందులు జోడించలేదు.",
+    scheduleMedTileText: "మందు",
+    scheduleApptTileText: "అపాయింట్‌మెంట్",
+    todaysApptModalTitle: "ఈరోజు అపాయింట్‌మెంట్లు",
+    addApptFormTitle: "అపాయింట్‌మెంట్ జోడించండి",
+    apptDoctorLabel: "డాక్టర్ పేరు",
+    apptHospitalLabel: "హాస్పిటల్ / క్లినిక్ పేరు",
+    apptDoctorPlaceholder: "ఉదా. డాక్టర్ శర్మ",
+    apptDateLabel: "తేదీ",
+    apptTimeLabel: "సమయం",
+    saveApptEntryText: "అపాయింట్‌మెంట్ జోడించి రిమైండర్లు సెట్ చేయండి",
+    noAppointmentsAdded: "ఇంకా అపాయింట్‌మెంట్లు జోడించలేదు.",
+    reminderBeforeLabel: "ముందుగా గుర్తు చేయండి (రోజులు)",
+    reminderOnDayLabel: "అపాయింట్‌మెంట్ రోజున గుర్తు చేయండి (నిమిషాలు)",
+    day: "రోజు",
+    days: "రోజులు",
+    min: "నిమిషం",
+    hour: "గంట",
+    hours: "గంటలు",
+    toastMedicineSaved: "💊 మందు ప్రిస్క్రిప్షన్ డేటాబేస్‌లో సేవ్ చేయబడింది!",
+    noRemindersSelected: "⚠️ కనీసం ఒక రిమైండర్ సమయాన్ని ఎంచుకోండి."
+  },
+
+  kn: {
+    healthGuardianTitle: "ಹೆಲ್ತ್ ಗಾರ್ಡಿಯನ್",
+    greetingPrefix: "ಶುಭೋದಯ",
+    goodAfternoon: "ಶುಭ ಮಧ್ಯಾಹ್ನ",
+    goodEvening: "ಶುಭ ಸಂಜೆ",
+    goodNight: "ಶುಭ ರಾತ್ರಿ",
+    healthScoreLabel: "ಆರೋಗ್ಯ ಸ್ಕೋರ್",
+    goodLabel: "ಚೆನ್ನಾಗಿದೆ",
+    nextMedicineLabel: "ಮುಂದಿನ ಔಷಧಿ",
+    paracetamolLabel: "ಪ್ಯಾರಾಸಿಟಮಾಲ್",
+    todaysMedicinesLabel: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್",
+    takenLabel: "/ 5 ತೆಗೆದುಕೊಂಡಿದೆ",
+    healthMonitoringTitle: "ಆರೋಗ್ಯ ಮೇಲ್ವಿಚಾರಣೆ",
+    bpLabel: "ರಕ್ತದೊತ್ತಡ",
+    bloodSugarLabel: "ರಕ್ತದ ಸಕ್ಕರೆ",
+    weightLabel: "ತೂಕ",
+    bloodGroupLabel: "ರಕ್ತದ ಗುಂಪು",
+    updateHealthDataLabel: "ಆರೋಗ್ಯ ಡೇಟಾವನ್ನು ನವೀಕರಿಸಿ",
+    bpFieldLabel: "ರಕ್ತದೊತ್ತಡ (mmHg)",
+    sugarFieldLabel: "ರಕ್ತದ ಸಕ್ಕರೆ (mg/dL)",
+    weightFieldLabel: "ತೂಕ (kg)",
+    bgFieldLabel: "ರಕ್ತದ ಗುಂಪು",
+    selectOption: "ಆಯ್ಕೆಮಾಡಿ",
+    saveHealthBtn: "ಆರೋಗ್ಯ ಡೇಟಾವನ್ನು ಉಳಿಸಿ",
+    uploadReportText: "ವರದಿಯನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ (ಕ್ಯಾಮೆರಾ / ಗ್ಯಾಲರಿ)",
+    medicineAppointmentTitle: "ಔಷಧಿ ಮತ್ತು ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್",
+    healthTrackerTitle: "ಆರೋಗ್ಯ ಟ್ರ್ಯಾಕರ್ — ಮಾಸಿಕ ಗ್ರಾಫ್",
+    bpTab: "ಬಿಪಿ",
+    sugarTab: "ಸಕ್ಕರೆ",
+    weightTab: "ತೂಕ",
+    healthGuardianAITitle: "ಹೆಲ್ತ್ ಗಾರ್ಡಿಯನ್ AI",
+    aiDescText: "ನಿಮ್ಮ ಆರೋಗ್ಯ, ಔಷಧಿಗಳು, ಲಕ್ಷಣಗಳು ಅಥವಾ ವರದಿಗಳ ಬಗ್ಗೆ ಏನು ಬೇಕಾದರೂ ಕೇಳಿ. 24/7 ಲಭ್ಯವಿದೆ.",
+    startChatText: "AI ಜೊತೆ ಚಾಟ್ ಪ್ರಾರಂಭಿಸಿ",
+    emergencyTitle: "ತುರ್ತು ಪರಿಸ್ಥಿತಿ",
+    emergencyDesc: "ತುರ್ತು ಸಹಾಯ ಬೇಕೇ? ಕೆಳಗೆ ಟ್ಯಾಪ್ ಮಾಡಿ ನಿಮ್ಮ ತುರ್ತು ಮತ್ತು ಕುಟುಂಬ ಸಂಪರ್ಕಗಳಿಗೆ ತಕ್ಷಣ ತಿಳಿಸಿ.",
+    emergencyBtn: "⚠ ತುರ್ತು ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಿ",
+    emergencyContactText: "ತುರ್ತು ಸಂಪರ್ಕ",
+    familyContactText: "ಕುಟುಂಬ ಸಂಪರ್ಕ",
+    uploadReportModalTitle: "ವರದಿಯನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+    cameraText: "ಕ್ಯಾಮೆರಾ",
+    galleryText: "ಗ್ಯಾಲರಿ",
+    addMedModalTitle: "ಹೊಸ ಔಷಧಿ ಸೇರಿಸಿ",
+    scanUploadText: "ನಿಮ್ಮ ಔಷಧಿ ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ ಸ್ಕ್ಯಾನ್ ಅಥವಾ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+    medCameraText: "ಕ್ಯಾಮೆರಾ",
+    medGalleryText: "ಗ್ಯಾಲರಿ",
+    todaysMedicinesModalTitle: "ಇಂದಿನ ಔಷಧಿಗಳು",
+    takenStatus: "✓ ತೆಗೆದುಕೊಂಡಿದೆ",
+    upcomingStatus: "⏰ ಮುಂದಿನವು",
+    chatModalTitle: "🛡️ ಹೆಲ್ತ್ ಗಾರ್ಡಿಯನ್ AI",
+    savedHistoryBtn: "ಉಳಿಸಿದ ಇತಿಹಾಸ",
+    chatHistoryModalTitle: "ಉಳಿಸಿದ ಇತಿಹಾಸ",
+    noChatHistoryMsg: "ಇನ್ನೂ ಯಾವುದೇ ಉಳಿಸಿದ ಇತಿಹಾಸವಿಲ್ಲ.",
+    chatWelcomeMsg: "ನಮಸ್ಕಾರ! ಇಂದು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು? 😊",
+    chatSendBtn: "ಕಳುಹಿಸಿ",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 ಡಯಟ್ ಅಸಿಸ್ಟೆಂಟ್ AI",
+    dietChatWelcome: "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಡಯಟ್ AI. ಆಹಾರ, ಪೋಷಣೆ ಅಥವಾ ಊಟದ ಯೋಜನೆಗಳ ಬಗ್ಗೆ ಕೇಳಿ! 🥦",
+    dietSendBtn: "ಕಳುಹಿಸಿ",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "ತುರ್ತು ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಲಾಗಿದೆ!",
+    emergencyPopupDesc: "ನಿಮ್ಮ ತುರ್ತು ಎಚ್ಚರಿಕೆಯನ್ನು ತುರ್ತು ಮತ್ತು ಕುಟುಂಬ ಸಂಪರ್ಕಗಳಿಗೆ ಕಳುಹಿಸಲಾಗಿದೆ. ಸಹಾಯ ಬರುತ್ತಿದೆ!",
+    emergencyContactSent: "ತುರ್ತು ಸಂಪರ್ಕ",
+    familyContactSent: "ಕುಟುಂಬ ಸಂಪರ್ಕ",
+    alertSentText: "ಎಚ್ಚರಿಕೆ ಕಳುಹಿಸಲಾಗಿದೆ ✓",
+    gotItBtn: "ಸರಿ",
+    privacyTitle: "🔒 ಗೌಪ್ಯತೆ ಮತ್ತು ಭದ್ರತೆ",
+    termsTitle: "ನಿಯಮಗಳು ಮತ್ತು ಷರತ್ತುಗಳು",
+    termsText1: "HealthGuardian ಬಳಸುವ ಮೂಲಕ ನೀವು ಈ ನಿಯಮಗಳನ್ನು ಒಪ್ಪುತ್ತೀರಿ.",
+    privacyTitle2: "1. ಡೇಟಾ ಗೌಪ್ಯತೆ",
+    privacyText1: "ನೀವು ನಮೂದಿಸಿದ ಆರೋಗ್ಯ ಡೇಟಾವನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ.",
+    aiTitle: "2. AI ಸಲಹೆ",
+    aiText1: "AI ಸಲಹೆಗಳು ಮಾಹಿತಿ ಉದ್ದೇಶಕ್ಕಾಗಿ ಮಾತ್ರ.",
+    emergencyTitle2: "3. ತುರ್ತು ಎಚ್ಚರಿಕೆಗಳು",
+    emergencyText1: "ತುರ್ತು ಎಚ್ಚರಿಕೆಗಳನ್ನು ಮೊದಲೇ ಹೊಂದಿಸಿದ ಸಂಪರ್ಕಗಳಿಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ.",
+    voiceTitle: "4. ಧ್ವನಿ ಡೇಟಾ",
+    voiceText1: "ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಅನ್ನು ನಿಮ್ಮ ಸಾಧನದ ಮೂಲಕ ನೈಜ ಸಮಯದಲ್ಲಿ ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಲಾಗುತ್ತದೆ.",
+    accountTitle: "5. ಖಾತೆ ಭದ್ರತೆ",
+    accountText1: "ನಿಮ್ಮ ಖಾತೆಯ ಗೌಪ್ಯತೆಯನ್ನು ಕಾಪಾಡುವುದು ನಿಮ್ಮ ಜವಾಬ್ದಾರಿ.",
+    updatesTitle: "6. ನಿಯಮಗಳ ನವೀಕರಣಗಳು",
+    updatesText1: "HealthGuardian ಈ ನಿಯಮಗಳನ್ನು ನವೀಕರಿಸುವ ಹಕ್ಕನ್ನು ಹೊಂದಿದೆ.",
+    understandBtn: "ನಾನು ಅರ್ಥಮಾಡಿಕೊಂಡಿದ್ದೇನೆ ಮತ್ತು ಒಪ್ಪುತ್ತೇನೆ",
+    editProfile: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ",
+    languageChange: "ಭಾಷೆ ಬದಲಾಯಿಸಿ",
+    privacySecurity: "ಗೌಪ್ಯತೆ ಮತ್ತು ಭದ್ರತೆ",
+    logOut: "ಲಾಗ್ ಔಟ್",
+    chatPlaceholder: "ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ…",
+    dietPlaceholder: "ಆಹಾರ, ಪೋಷಣೆ ಬಗ್ಗೆ ಕೇಳಿ…",
+    langModalTitle: "🌐 ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    langSelectHint: "ಇಂಟರ್ಫೇಸ್ ಬದಲಾಯಿಸಲು ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    toastHealthUpdated: "✅ ಆರೋಗ್ಯ ಡೇಟಾ ನವೀಕರಿಸಲಾಗಿದೆ!",
+    toastTaken: "ಧನ್ಯವಾದಗಳು! 💊 ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ.",
+    toastMissed: "⚠️ ಔಷಧಿ ತಪ್ಪಿದೆ!",
+    toastReportUploaded: "ವರದಿ ಅಪ್‌ಲೋಡ್ ಆಗಿದೆ! AI ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ…",
+    toastMedicineAdded: "ಔಷಧಿ ಸೇರಿಸಲಾಗಿದೆ!",
+    toastVoiceNotSupported: "ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಬೆಂಬಲಿತವಾಗಿಲ್ಲ.",
+    toastCouldNotHear: "ನಿಮ್ಮ ಧ್ವನಿ ಕೇಳಿಸಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    toastLoggedOut: "ಲಾಗ್ ಔಟ್ ಆಗಿದ್ದೀರಿ.",
+    toastLanguageChanged: "✅ ಭಾಷೆ ಬದಲಾಯಿಸಲಾಗಿದೆ: ",
+    profileUsernameFieldLabel: "ಬಳಕೆದಾರ ಹೆಸರು",
+    profileAgeFieldLabel: "ವಯಸ್ಸು",
+    profileGenderFieldLabel: "ಲಿಂಗ",
+    profileDobFieldLabel: "ಜನ್ಮ ದಿನಾಂಕ",
+    profileContactFieldLabel: "ಕುಟುಂಬ ಸಂಪರ್ಕ ಸಂಖ್ಯೆ",
+    addMedFormTitle: "ಔಷಧಿ ಸೇರಿಸಿ",
+    medNameFieldLabel: "ಔಷಧಿಯ ಹೆಸರು",
+    medNamePlaceholder: "ಉದಾ. Metformin",
+    medTimeFieldLabel: "ರಿಮೈಂಡರ್ ಸಮಯ",
+    medDaysFieldLabel: "ಅವಧಿ (ದಿನಗಳು)",
+    saveMedEntryText: "ಔಷಧಿ ಸೇರಿಸಿ ಮತ್ತು ರಿಮೈಂಡರ್ ಹೊಂದಿಸಿ",
+    noMedicinesAdded: "ಇನ್ನೂ ಯಾವುದೇ ಔಷಧಿ ಸೇರಿಸಲಾಗಿಲ್ಲ.",
+    scheduleMedTileText: "ಔಷಧಿ",
+    scheduleApptTileText: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್",
+    todaysApptModalTitle: "ಇಂದಿನ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್‌ಗಳು",
+    addApptFormTitle: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಸೇರಿಸಿ",
+    apptDoctorLabel: "ವೈದ್ಯರ ಹೆಸರು",
+    apptHospitalLabel: "ಆಸ್ಪತ್ರೆ / ಕ್ಲಿನಿಕ್ ಹೆಸರು",
+    apptDoctorPlaceholder: "ಉದಾ. ಡಾ. ಶರ್ಮಾ",
+    apptDateLabel: "ದಿನಾಂಕ",
+    apptTimeLabel: "ಸಮಯ",
+    saveApptEntryText: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಸೇರಿಸಿ ಮತ್ತು ರಿಮೈಂಡರ್ ಹೊಂದಿಸಿ",
+    noAppointmentsAdded: "ಇನ್ನೂ ಯಾವುದೇ ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಸೇರಿಸಲಾಗಿಲ್ಲ.",
+    reminderBeforeLabel: "ಮೊದಲು ನೆನಪಿಸಿ (ದಿನಗಳು)",
+    reminderOnDayLabel: "ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ದಿನ ನೆನಪಿಸಿ (ನಿಮಿಷಗಳು)",
+    day: "ದಿನ",
+    days: "ದಿನಗಳು",
+    min: "ನಿಮಿಷ",
+    hour: "ಗಂಟೆ",
+    hours: "ಗಂಟೆಗಳು",
+    toastMedicineSaved: "💊 ಔಷಧಿ ಪ್ರಿಸ್ಕ್ರಿಪ್ಷನ್ ಡೇಟಾಬೇಸ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ!",
+    noRemindersSelected: "⚠️ ದಯವಿಟ್ಟು ಕನಿಷ್ಠ ಒಂದು ರಿಮೈಂಡರ್ ಸಮಯ ಆಯ್ಕೆಮಾಡಿ."
+  },
+
+  bn: {
+    healthGuardianTitle: "হেলথ গার্ডিয়ান",
+    greetingPrefix: "সুপ্রভাত",
+    goodAfternoon: "শুভ অপরাহ্ন",
+    goodEvening: "শুভ সন্ধ্যা",
+    goodNight: "শুভ রাত্রি",
+    healthScoreLabel: "স্বাস্থ্য স্কোর",
+    goodLabel: "ভালো",
+    nextMedicineLabel: "পরবর্তী ওষুধ",
+    paracetamolLabel: "প্যারাসিটামল",
+    todaysMedicinesLabel: "অ্যাপয়েন্টমেন্ট",
+    takenLabel: "/ ৫টি নেওয়া হয়েছে",
+    healthMonitoringTitle: "স্বাস্থ্য পর্যবেক্ষণ",
+    bpLabel: "রক্তচাপ",
+    bloodSugarLabel: "রক্তে শর্করা",
+    weightLabel: "ওজন",
+    bloodGroupLabel: "রক্তের গ্রুপ",
+    updateHealthDataLabel: "স্বাস্থ্য তথ্য আপডেট করুন",
+    bpFieldLabel: "রক্তচাপ (mmHg)",
+    sugarFieldLabel: "রক্তে শর্করা (mg/dL)",
+    weightFieldLabel: "ওজন (kg)",
+    bgFieldLabel: "রক্তের গ্রুপ",
+    selectOption: "নির্বাচন করুন",
+    saveHealthBtn: "স্বাস্থ্য তথ্য সংরক্ষণ করুন",
+    uploadReportText: "রিপোর্ট আপলোড করুন (ক্যামেরা / গ্যালারি)",
+    medicineAppointmentTitle: "ওষুধ এবং অ্যাপয়েন্টমেন্ট",
+    healthTrackerTitle: "স্বাস্থ্য ট্র্যাকার — মাসিক গ্রাফ",
+    bpTab: "বিপি",
+    sugarTab: "শর্করা",
+    weightTab: "ওজন",
+    healthGuardianAITitle: "হেলথ গার্ডিয়ান AI",
+    aiDescText: "আপনার স্বাস্থ্য, ওষুধ, উপসর্গ বা রিপোর্ট সম্পর্কে যেকোনো প্রশ্ন করুন। ২৪/৭ উপলব্ধ।",
+    startChatText: "AI-এর সঙ্গে চ্যাট শুরু করুন",
+    emergencyTitle: "জরুরি অবস্থা",
+    emergencyDesc: "জরুরি সাহায্য দরকার? নিচে ট্যাপ করে আপনার জরুরি ও পরিবারের পরিচিতিদের জানান।",
+    emergencyBtn: "⚠ জরুরি সতর্কতা পাঠান",
+    emergencyContactText: "জরুরি যোগাযোগ",
+    familyContactText: "পরিবারের যোগাযোগ",
+    uploadReportModalTitle: "রিপোর্ট আপলোড করুন",
+    cameraText: "ক্যামেরা",
+    galleryText: "গ্যালারি",
+    addMedModalTitle: "নতুন ওষুধ যোগ করুন",
+    scanUploadText: "আপনার ওষুধের প্রেসক্রিপশন স্ক্যান বা আপলোড করুন",
+    medCameraText: "ক্যামেরা",
+    medGalleryText: "গ্যালারি",
+    todaysMedicinesModalTitle: "আজকের ওষুধ",
+    takenStatus: "✓ নেওয়া হয়েছে",
+    upcomingStatus: "⏰ আসন্ন",
+    chatModalTitle: "🛡️ হেলথ গার্ডিয়ান AI",
+    savedHistoryBtn: "সংরক্ষিত ইতিহাস",
+    chatHistoryModalTitle: "সংরক্ষিত ইতিহাস",
+    noChatHistoryMsg: "এখনও কোনো সংরক্ষিত ইতিহাস নেই।",
+    chatWelcomeMsg: "নমস্কার! আজ আমি আপনাকে কীভাবে সাহায্য করতে পারি? 😊",
+    chatSendBtn: "পাঠান",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 ডায়েট সহায়ক AI",
+    dietChatWelcome: "নমস্কার! আমি আপনার ডায়েট AI। খাবার, পুষ্টি বা খাদ্য পরিকল্পনা সম্পর্কে জিজ্ঞাসা করুন! 🥦",
+    dietSendBtn: "পাঠান",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "জরুরি সতর্কতা পাঠানো হয়েছে!",
+    emergencyPopupDesc: "আপনার জরুরি সতর্কতা জরুরি ও পরিবারের যোগাযোগে পাঠানো হয়েছে। সাহায্য আসছে!",
+    emergencyContactSent: "জরুরি যোগাযোগ",
+    familyContactSent: "পরিবারের যোগাযোগ",
+    alertSentText: "সতর্কতা পাঠানো হয়েছে ✓",
+    gotItBtn: "ঠিক আছে",
+    privacyTitle: "🔒 গোপনীয়তা ও নিরাপত্তা",
+    termsTitle: "শর্তাবলি",
+    termsText1: "HealthGuardian ব্যবহার করে আপনি এই শর্তাবলিতে সম্মত হচ্ছেন।",
+    privacyTitle2: "১. তথ্যের গোপনীয়তা",
+    privacyText1: "আপনার দেওয়া স্বাস্থ্য তথ্য নিরাপদে সংরক্ষণ করা হয়।",
+    aiTitle: "২. AI-উৎপন্ন পরামর্শ",
+    aiText1: "AI-এর পরামর্শ শুধুমাত্র তথ্যের উদ্দেশ্যে দেওয়া হয়।",
+    emergencyTitle2: "৩. জরুরি সতর্কতা",
+    emergencyText1: "জরুরি সতর্কতা পূর্বনির্ধারিত যোগাযোগগুলিতে পাঠানো হয়।",
+    voiceTitle: "৪. ভয়েস তথ্য",
+    voiceText1: "ভয়েস ইনপুট আপনার ডিভাইসের মাধ্যমে রিয়েল-টাইমে প্রক্রিয়া করা হয়।",
+    accountTitle: "৫. অ্যাকাউন্ট নিরাপত্তা",
+    accountText1: "আপনার অ্যাকাউন্টের গোপনীয়তা রক্ষা করা আপনার দায়িত্ব।",
+    updatesTitle: "৬. শর্তাবলির আপডেট",
+    updatesText1: "HealthGuardian প্রয়োজনে এই শর্তাবলি আপডেট করতে পারে।",
+    understandBtn: "আমি বুঝেছি এবং গ্রহণ করছি",
+    editProfile: "প্রোফাইল সম্পাদনা করুন",
+    languageChange: "ভাষা পরিবর্তন করুন",
+    privacySecurity: "গোপনীয়তা ও নিরাপত্তা",
+    logOut: "লগ আউট",
+    chatPlaceholder: "আপনার প্রশ্ন লিখুন…",
+    dietPlaceholder: "খাবার ও পুষ্টি সম্পর্কে জিজ্ঞাসা করুন…",
+    langModalTitle: "🌐 ভাষা নির্বাচন করুন",
+    langSelectHint: "ইন্টারফেস পরিবর্তন করতে একটি ভাষা নির্বাচন করুন",
+    toastHealthUpdated: "✅ স্বাস্থ্য তথ্য আপডেট হয়েছে!",
+    toastTaken: "ধন্যবাদ! 💊 ওষুধ নেওয়া হয়েছে হিসেবে চিহ্নিত।",
+    toastMissed: "⚠️ ওষুধ মিস হয়েছে!",
+    toastReportUploaded: "রিপোর্ট আপলোড হয়েছে! AI বিশ্লেষণ করছে…",
+    toastMedicineAdded: "ওষুধ যোগ করা হয়েছে!",
+    toastVoiceNotSupported: "এই ব্রাউজারে ভয়েস সমর্থিত নয়।",
+    toastCouldNotHear: "আপনার কথা শোনা যায়নি। আবার চেষ্টা করুন।",
+    toastLoggedOut: "লগ আউট করা হয়েছে।",
+    toastLanguageChanged: "✅ ভাষা পরিবর্তন হয়েছে: ",
+    profileUsernameFieldLabel: "ইউজারনেম",
+    profileAgeFieldLabel: "বয়স",
+    profileGenderFieldLabel: "লিঙ্গ",
+    profileDobFieldLabel: "জন্মতারিখ",
+    profileContactFieldLabel: "পরিবারের যোগাযোগ নম্বর",
+    addMedFormTitle: "ওষুধ যোগ করুন",
+    medNameFieldLabel: "ওষুধের নাম",
+    medNamePlaceholder: "যেমন Metformin",
+    medTimeFieldLabel: "রিমাইন্ডার সময়",
+    medDaysFieldLabel: "সময়কাল (দিন)",
+    saveMedEntryText: "ওষুধ যোগ করে রিমাইন্ডার সেট করুন",
+    noMedicinesAdded: "এখনও কোনো ওষুধ যোগ করা হয়নি।",
+    scheduleMedTileText: "ওষুধ",
+    scheduleApptTileText: "অ্যাপয়েন্টমেন্ট",
+    todaysApptModalTitle: "আজকের অ্যাপয়েন্টমেন্ট",
+    addApptFormTitle: "অ্যাপয়েন্টমেন্ট যোগ করুন",
+    apptDoctorLabel: "ডাক্তারের নাম",
+    apptHospitalLabel: "হাসপাতাল / ক্লিনিকের নাম",
+    apptDoctorPlaceholder: "যেমন ডা. শর্মা",
+    apptDateLabel: "তারিখ",
+    apptTimeLabel: "সময়",
+    saveApptEntryText: "অ্যাপয়েন্টমেন্ট যোগ করে রিমাইন্ডার সেট করুন",
+    noAppointmentsAdded: "এখনও কোনো অ্যাপয়েন্টমেন্ট যোগ করা হয়নি।",
+    reminderBeforeLabel: "আগে মনে করিয়ে দিন (দিন)",
+    reminderOnDayLabel: "অ্যাপয়েন্টমেন্টের দিন মনে করিয়ে দিন (মিনিট)",
+    day: "দিন",
+    days: "দিন",
+    min: "মিনিট",
+    hour: "ঘণ্টা",
+    hours: "ঘণ্টা",
+    toastMedicineSaved: "💊 ওষুধের প্রেসক্রিপশন ডেটাবেসে সংরক্ষিত হয়েছে!",
+    noRemindersSelected: "⚠️ অন্তত একটি রিমাইন্ডার সময় নির্বাচন করুন।"
+  },
+
+  pa: {
+    healthGuardianTitle: "ਹੈਲਥ ਗਾਰਡੀਅਨ",
+    greetingPrefix: "ਸ਼ੁਭ ਸਵੇਰ",
+    goodAfternoon: "ਸ਼ੁਭ ਦੁਪਹਿਰ",
+    goodEvening: "ਸ਼ੁਭ ਸ਼ਾਮ",
+    goodNight: "ਸ਼ੁਭ ਰਾਤ",
+    healthScoreLabel: "ਸਿਹਤ ਸਕੋਰ",
+    goodLabel: "ਚੰਗਾ",
+    nextMedicineLabel: "ਅਗਲੀ ਦਵਾਈ",
+    paracetamolLabel: "ਪੈਰਾਸੀਟਾਮੋਲ",
+    todaysMedicinesLabel: "ਅਪਾਇੰਟਮੈਂਟ",
+    takenLabel: "/ 5 ਲਈ ਗਈ",
+    healthMonitoringTitle: "ਸਿਹਤ ਨਿਗਰਾਨੀ",
+    bpLabel: "ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ",
+    bloodSugarLabel: "ਬਲੱਡ ਸ਼ੂਗਰ",
+    weightLabel: "ਵਜ਼ਨ",
+    bloodGroupLabel: "ਬਲੱਡ ਗਰੁੱਪ",
+    updateHealthDataLabel: "ਸਿਹਤ ਡਾਟਾ ਅੱਪਡੇਟ ਕਰੋ",
+    bpFieldLabel: "ਬਲੱਡ ਪ੍ਰੈਸ਼ਰ (mmHg)",
+    sugarFieldLabel: "ਬਲੱਡ ਸ਼ੂਗਰ (mg/dL)",
+    weightFieldLabel: "ਵਜ਼ਨ (kg)",
+    bgFieldLabel: "ਬਲੱਡ ਗਰੁੱਪ",
+    selectOption: "ਚੁਣੋ",
+    saveHealthBtn: "ਸਿਹਤ ਡਾਟਾ ਸੇਵ ਕਰੋ",
+    uploadReportText: "ਰਿਪੋਰਟ ਅੱਪਲੋਡ ਕਰੋ (ਕੈਮਰਾ / ਗੈਲਰੀ)",
+    medicineAppointmentTitle: "ਦਵਾਈ ਅਤੇ ਅਪਾਇੰਟਮੈਂਟ",
+    healthTrackerTitle: "ਸਿਹਤ ਟ੍ਰੈਕਰ — ਮਹੀਨਾਵਾਰ ਗ੍ਰਾਫ",
+    bpTab: "ਬੀਪੀ",
+    sugarTab: "ਸ਼ੂਗਰ",
+    weightTab: "ਵਜ਼ਨ",
+    healthGuardianAITitle: "ਹੈਲਥ ਗਾਰਡੀਅਨ AI",
+    aiDescText: "ਆਪਣੀ ਸਿਹਤ, ਦਵਾਈਆਂ, ਲੱਛਣਾਂ ਜਾਂ ਰਿਪੋਰਟਾਂ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ। 24/7 ਉਪਲਬਧ।",
+    startChatText: "AI ਨਾਲ ਚੈਟ ਸ਼ੁਰੂ ਕਰੋ",
+    emergencyTitle: "ਐਮਰਜੈਂਸੀ",
+    emergencyDesc: "ਤੁਰੰਤ ਮਦਦ ਚਾਹੀਦੀ ਹੈ? ਹੇਠਾਂ ਟੈਪ ਕਰਕੇ ਆਪਣੇ ਐਮਰਜੈਂਸੀ ਅਤੇ ਪਰਿਵਾਰਕ ਸੰਪਰਕਾਂ ਨੂੰ ਸੂਚਿਤ ਕਰੋ।",
+    emergencyBtn: "⚠ ਐਮਰਜੈਂਸੀ ਅਲਰਟ ਭੇਜੋ",
+    emergencyContactText: "ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ",
+    familyContactText: "ਪਰਿਵਾਰਕ ਸੰਪਰਕ",
+    uploadReportModalTitle: "ਰਿਪੋਰਟ ਅੱਪਲੋਡ ਕਰੋ",
+    cameraText: "ਕੈਮਰਾ",
+    galleryText: "ਗੈਲਰੀ",
+    addMedModalTitle: "ਨਵੀਂ ਦਵਾਈ ਸ਼ਾਮਲ ਕਰੋ",
+    scanUploadText: "ਆਪਣੀ ਦਵਾਈ ਦੀ ਪ੍ਰਿਸਕ੍ਰਿਪਸ਼ਨ ਸਕੈਨ ਜਾਂ ਅੱਪਲੋਡ ਕਰੋ",
+    medCameraText: "ਕੈਮਰਾ",
+    medGalleryText: "ਗੈਲਰੀ",
+    todaysMedicinesModalTitle: "ਅੱਜ ਦੀਆਂ ਦਵਾਈਆਂ",
+    takenStatus: "✓ ਲਈ ਗਈ",
+    upcomingStatus: "⏰ ਆਉਣ ਵਾਲੀ",
+    chatModalTitle: "🛡️ ਹੈਲਥ ਗਾਰਡੀਅਨ AI",
+    savedHistoryBtn: "ਸੇਵ ਕੀਤਾ ਇਤਿਹਾਸ",
+    chatHistoryModalTitle: "ਸੇਵ ਕੀਤਾ ਇਤਿਹਾਸ",
+    noChatHistoryMsg: "ਅਜੇ ਕੋਈ ਸੇਵ ਕੀਤਾ ਇਤਿਹਾਸ ਨਹੀਂ ਹੈ।",
+    chatWelcomeMsg: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਅੱਜ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ? 😊",
+    chatSendBtn: "ਭੇਜੋ",
+    chatVoiceBtn: "🎙",
+    dietChatModalTitle: "🥗 ਡਾਇਟ ਅਸਿਸਟੈਂਟ AI",
+    dietChatWelcome: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡਾ ਡਾਇਟ AI ਹਾਂ। ਖੁਰਾਕ, ਪੋਸ਼ਣ ਜਾਂ ਖਾਣ-ਪੀਣ ਦੀਆਂ ਆਦਤਾਂ ਬਾਰੇ ਪੁੱਛੋ! 🥦",
+    dietSendBtn: "ਭੇਜੋ",
+    dietVoiceBtn: "🎙",
+    emergencyAlertSent: "ਐਮਰਜੈਂਸੀ ਅਲਰਟ ਭੇਜਿਆ ਗਿਆ!",
+    emergencyPopupDesc: "ਤੁਹਾਡਾ ਐਮਰਜੈਂਸੀ ਅਲਰਟ ਐਮਰਜੈਂਸੀ ਅਤੇ ਪਰਿਵਾਰਕ ਸੰਪਰਕਾਂ ਨੂੰ ਭੇਜਿਆ ਗਿਆ ਹੈ। ਮਦਦ ਆ ਰਹੀ ਹੈ!",
+    emergencyContactSent: "ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ",
+    familyContactSent: "ਪਰਿਵਾਰਕ ਸੰਪਰਕ",
+    alertSentText: "ਅਲਰਟ ਭੇਜਿਆ ਗਿਆ ✓",
+    gotItBtn: "ਠੀਕ ਹੈ",
+    privacyTitle: "🔒 ਪਰਾਈਵੇਸੀ ਅਤੇ ਸੁਰੱਖਿਆ",
+    termsTitle: "ਨਿਯਮ ਅਤੇ ਸ਼ਰਤਾਂ",
+    termsText1: "HealthGuardian ਵਰਤ ਕੇ ਤੁਸੀਂ ਇਹਨਾਂ ਨਿਯਮਾਂ ਨਾਲ ਸਹਿਮਤ ਹੁੰਦੇ ਹੋ।",
+    privacyTitle2: "1. ਡਾਟਾ ਪਰਾਈਵੇਸੀ",
+    privacyText1: "ਤੁਹਾਡਾ ਦਿੱਤਾ ਸਿਹਤ ਡਾਟਾ ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਸਟੋਰ ਕੀਤਾ ਜਾਂਦਾ ਹੈ।",
+    aiTitle: "2. AI ਸਲਾਹ",
+    aiText1: "AI ਦੀਆਂ ਸਲਾਹਾਂ ਸਿਰਫ਼ ਜਾਣਕਾਰੀ ਲਈ ਹਨ।",
+    emergencyTitle2: "3. ਐਮਰਜੈਂਸੀ ਅਲਰਟ",
+    emergencyText1: "ਐਮਰਜੈਂਸੀ ਅਲਰਟ ਪਹਿਲਾਂ ਤੋਂ ਸੈੱਟ ਕੀਤੇ ਸੰਪਰਕਾਂ ਨੂੰ ਭੇਜੇ ਜਾਂਦੇ ਹਨ।",
+    voiceTitle: "4. ਵੌਇਸ ਡਾਟਾ",
+    voiceText1: "ਵੌਇਸ ਇਨਪੁੱਟ ਤੁਹਾਡੇ ਡਿਵਾਈਸ ਰਾਹੀਂ ਰੀਅਲ ਟਾਈਮ ਵਿੱਚ ਪ੍ਰੋਸੈਸ ਕੀਤਾ ਜਾਂਦਾ ਹੈ।",
+    accountTitle: "5. ਖਾਤਾ ਸੁਰੱਖਿਆ",
+    accountText1: "ਆਪਣੇ ਖਾਤੇ ਦੀ ਗੋਪਨੀਯਤਾ ਦੀ ਰੱਖਿਆ ਕਰਨਾ ਤੁਹਾਡੀ ਜ਼ਿੰਮੇਵਾਰੀ ਹੈ।",
+    updatesTitle: "6. ਨਿਯਮਾਂ ਦੇ ਅੱਪਡੇਟ",
+    updatesText1: "HealthGuardian ਨੂੰ ਇਹ ਨਿਯਮ ਅੱਪਡੇਟ ਕਰਨ ਦਾ ਅਧਿਕਾਰ ਹੈ।",
+    understandBtn: "ਮੈਂ ਸਮਝ ਗਿਆ ਅਤੇ ਸਵੀਕਾਰ ਕਰਦਾ ਹਾਂ",
+    editProfile: "ਪ੍ਰੋਫਾਈਲ ਸੋਧੋ",
+    languageChange: "ਭਾਸ਼ਾ ਬਦਲੋ",
+    privacySecurity: "ਪਰਾਈਵੇਸੀ ਅਤੇ ਸੁਰੱਖਿਆ",
+    logOut: "ਲੌਗ ਆਊਟ",
+    chatPlaceholder: "ਆਪਣਾ ਸਵਾਲ ਲਿਖੋ…",
+    dietPlaceholder: "ਡਾਇਟ ਅਤੇ ਪੋਸ਼ਣ ਬਾਰੇ ਪੁੱਛੋ…",
+    langModalTitle: "🌐 ਭਾਸ਼ਾ ਚੁਣੋ",
+    langSelectHint: "ਇੰਟਰਫੇਸ ਬਦਲਣ ਲਈ ਭਾਸ਼ਾ ਚੁਣੋ",
+    toastHealthUpdated: "✅ ਸਿਹਤ ਡਾਟਾ ਅੱਪਡੇਟ ਹੋ ਗਿਆ!",
+    toastTaken: "ਧੰਨਵਾਦ! 💊 ਦਵਾਈ ਲਈ ਹੋਈ ਵਜੋਂ ਦਰਜ ਕੀਤੀ ਗਈ।",
+    toastMissed: "⚠️ ਦਵਾਈ ਰਹਿ ਗਈ!",
+    toastReportUploaded: "ਰਿਪੋਰਟ ਅੱਪਲੋਡ ਹੋ ਗਈ! AI ਵਿਸ਼ਲੇਸ਼ਣ ਕਰ ਰਿਹਾ ਹੈ…",
+    toastMedicineAdded: "ਦਵਾਈ ਸ਼ਾਮਲ ਕੀਤੀ ਗਈ!",
+    toastVoiceNotSupported: "ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਵੌਇਸ ਸਹਾਇਤਾ ਨਹੀਂ ਹੈ।",
+    toastCouldNotHear: "ਤੁਹਾਡੀ ਆਵਾਜ਼ ਸੁਣਾਈ ਨਹੀਂ ਦਿੱਤੀ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    toastLoggedOut: "ਲੌਗ ਆਊਟ ਹੋ ਗਿਆ।",
+    toastLanguageChanged: "✅ ਭਾਸ਼ਾ ਬਦਲੀ ਗਈ: ",
+    profileUsernameFieldLabel: "ਯੂਜ਼ਰਨੇਮ",
+    profileAgeFieldLabel: "ਉਮਰ",
+    profileGenderFieldLabel: "ਲਿੰਗ",
+    profileDobFieldLabel: "ਜਨਮ ਮਿਤੀ",
+    profileContactFieldLabel: "ਪਰਿਵਾਰਕ ਸੰਪਰਕ ਨੰਬਰ",
+    addMedFormTitle: "ਦਵਾਈ ਸ਼ਾਮਲ ਕਰੋ",
+    medNameFieldLabel: "ਦਵਾਈ ਦਾ ਨਾਮ",
+    medNamePlaceholder: "ਉਦਾਹਰਨ: Metformin",
+    medTimeFieldLabel: "ਰਿਮਾਈਂਡਰ ਸਮਾਂ",
+    medDaysFieldLabel: "ਮਿਆਦ (ਦਿਨ)",
+    saveMedEntryText: "ਦਵਾਈ ਸ਼ਾਮਲ ਕਰੋ ਅਤੇ ਰਿਮਾਈਂਡਰ ਸੈੱਟ ਕਰੋ",
+    noMedicinesAdded: "ਅਜੇ ਕੋਈ ਦਵਾਈ ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ।",
+    scheduleMedTileText: "ਦਵਾਈ",
+    scheduleApptTileText: "ਅਪਾਇੰਟਮੈਂਟ",
+    todaysApptModalTitle: "ਅੱਜ ਦੀਆਂ ਅਪਾਇੰਟਮੈਂਟਾਂ",
+    addApptFormTitle: "ਅਪਾਇੰਟਮੈਂਟ ਸ਼ਾਮਲ ਕਰੋ",
+    apptDoctorLabel: "ਡਾਕਟਰ ਦਾ ਨਾਮ",
+    apptHospitalLabel: "ਹਸਪਤਾਲ / ਕਲੀਨਿਕ ਦਾ ਨਾਮ",
+    apptDoctorPlaceholder: "ਉਦਾਹਰਨ: ਡਾ. ਸ਼ਰਮਾ",
+    apptDateLabel: "ਮਿਤੀ",
+    apptTimeLabel: "ਸਮਾਂ",
+    saveApptEntryText: "ਅਪਾਇੰਟਮੈਂਟ ਸ਼ਾਮਲ ਕਰੋ ਅਤੇ ਰਿਮਾਈਂਡਰ ਸੈੱਟ ਕਰੋ",
+    noAppointmentsAdded: "ਅਜੇ ਕੋਈ ਅਪਾਇੰਟਮੈਂਟ ਨਹੀਂ ਜੋੜੀ ਗਈ।",
+    reminderBeforeLabel: "ਪਹਿਲਾਂ ਯਾਦ ਕਰਾਓ (ਦਿਨ)",
+    reminderOnDayLabel: "ਅਪਾਇੰਟਮੈਂਟ ਵਾਲੇ ਦਿਨ ਯਾਦ ਕਰਾਓ (ਮਿੰਟ)",
+    day: "ਦਿਨ",
+    days: "ਦਿਨ",
+    min: "ਮਿੰਟ",
+    hour: "ਘੰਟਾ",
+    hours: "ਘੰਟੇ",
+    toastMedicineSaved: "💊 ਦਵਾਈ ਦੀ ਪ੍ਰਿਸਕ੍ਰਿਪਸ਼ਨ ਡਾਟਾਬੇਸ ਵਿੱਚ ਸੇਵ ਹੋ ਗਈ!",
+    noRemindersSelected: "⚠️ ਕਿਰਪਾ ਕਰਕੇ ਘੱਟੋ-ਘੱਟ ਇੱਕ ਰਿਮਾਈਂਡਰ ਸਮਾਂ ਚੁਣੋ।"
+  }
 };
 
 // ── PER-USER LOCALSTORAGE KEYS ──
-// currentUsername is rendered server-side by Jinja so each logged-in user gets
-// their own isolated storage. New users will NOT see old users' data anymore.
-const currentUsername = "{{ user[0] if user else '' }}";
+const currentUsername = document.body.dataset.username || '';
+
 function userKey(base) {
-  // IMPORTANT: never fall back to the old shared (non-namespaced) key —
-  // that key may still hold a previous user's leftover data.
-  return base + '_' + (currentUsername || 'guest');
+    return base + '_' + (currentUsername || 'guest');
 }
 
-// One-time cleanup: remove old shared keys from before per-user namespacing
-// existed, so they can never leak into any user's view again.
 ['appointments', 'medicines', 'userProfile'].forEach(k => {
   if (localStorage.getItem(k) !== null) localStorage.removeItem(k);
 });
@@ -721,16 +1372,13 @@ function selectLanguage(lang) {
 function applyHomeLanguage() {
   const d = langData;
   document.documentElement.lang = currentLang;
-  
-  // Topbar
+
   document.getElementById('healthGuardianTitle').textContent = d.healthGuardianTitle;
-  
-  // Stat cards
+
   document.getElementById('healthScoreLabel').textContent = d.healthScoreLabel;
   document.getElementById('nextMedicineLabel').textContent = d.nextMedicineLabel;
   document.getElementById('todaysMedicinesLabel').textContent = d.todaysMedicinesLabel;
-  
-  // Health Monitoring
+
   document.getElementById('healthMonitoringTitle').textContent = d.healthMonitoringTitle;
   document.getElementById('bpLabel').textContent = d.bpLabel;
   document.getElementById('bloodSugarLabel').textContent = d.bloodSugarLabel;
@@ -744,29 +1392,24 @@ function applyHomeLanguage() {
   document.getElementById('selectOption').textContent = d.selectOption;
   document.getElementById('saveHealthBtn').textContent = d.saveHealthBtn;
   document.getElementById('uploadReportText').textContent = d.uploadReportText;
-  
-  // Medicine
+
   document.getElementById('medicineAppointmentTitle').textContent = d.medicineAppointmentTitle;
-  
-  // Graph
+
   document.getElementById('healthTrackerTitle').textContent = d.healthTrackerTitle;
   document.getElementById('bpTab').textContent = d.bpTab;
   document.getElementById('sugarTab').textContent = d.sugarTab;
   document.getElementById('weightTab').textContent = d.weightTab;
-  
-  // AI
+
   document.getElementById('healthGuardianAITitle').textContent = d.healthGuardianAITitle;
   document.getElementById('aiDescText').textContent = d.aiDescText;
   document.getElementById('startChatText').textContent = d.startChatText;
-  
-  // Emergency
+
   document.getElementById('emergencyTitle').textContent = d.emergencyTitle;
   document.getElementById('emergencyDesc').textContent = d.emergencyDesc;
   document.getElementById('emergencyBtn').textContent = d.emergencyBtn;
   document.getElementById('emergencyContactText').textContent = d.emergencyContactText;
   document.getElementById('familyContactText').textContent = d.familyContactText;
-  
-  // Modals
+
   document.getElementById('uploadReportModalTitle').textContent = d.uploadReportModalTitle;
   document.getElementById('cameraText').textContent = d.cameraText;
   document.getElementById('galleryText').textContent = d.galleryText;
@@ -775,7 +1418,7 @@ function applyHomeLanguage() {
   document.getElementById('medCameraText').textContent = d.medCameraText;
   document.getElementById('medGalleryText').textContent = d.medGalleryText;
   document.getElementById('todaysMedicinesModalTitle').textContent = d.todaysMedicinesModalTitle;
-  
+
   document.getElementById('chatModalTitle').textContent = d.chatModalTitle;
   document.getElementById('savedHistoryBtn').textContent = d.savedHistoryBtn;
   document.getElementById('chatHistoryModalTitle').textContent = d.chatHistoryModalTitle;
@@ -809,7 +1452,7 @@ function applyHomeLanguage() {
   document.getElementById('updatesTitle').textContent = d.updatesTitle;
   document.getElementById('updatesText1').textContent = d.updatesText1;
   document.getElementById('understandBtn').textContent = d.understandBtn;
-  
+
   document.getElementById('editProfile').textContent = d.editProfile;
   document.getElementById('languageChange').textContent = d.languageChange;
   document.getElementById('privacySecurity').textContent = d.privacySecurity;
@@ -819,13 +1462,11 @@ function applyHomeLanguage() {
   document.getElementById('langModalTitle').textContent = d.langModalTitle;
   document.getElementById('langSelectHint').textContent = d.langSelectHint;
 
-  // Profile dropdown info fields
   document.getElementById('profileUsernameLabel').textContent = d.profileUsernameFieldLabel;
   document.getElementById('profileAgeLabel').textContent = d.profileAgeFieldLabel;
   document.getElementById('profileGenderLabel').textContent = d.profileGenderFieldLabel;
   document.getElementById('profileDobLabel').textContent = d.profileDobFieldLabel;
 
-  // Add Medicine form
   document.getElementById('addMedFormTitle').textContent = d.addMedFormTitle;
   document.getElementById('medNameLabel').textContent = d.medNameFieldLabel;
   document.getElementById('medNameInput').placeholder = d.medNamePlaceholder;
@@ -833,11 +1474,9 @@ function applyHomeLanguage() {
   document.getElementById('medDaysLabel').textContent = d.medDaysFieldLabel;
   document.getElementById('saveMedEntryText').textContent = d.saveMedEntryText;
 
-  // Today's Schedule tiles
   document.getElementById('scheduleMedTileText').textContent = d.scheduleMedTileText;
   document.getElementById('scheduleApptTileText').textContent = d.scheduleApptTileText;
 
-  // Today's Appointments modal
   document.getElementById('todaysApptModalTitle').textContent = d.todaysApptModalTitle;
   document.getElementById('allApptEmpty').textContent = d.noAppointmentsAdded;
   document.getElementById('addApptFormTitle').textContent = d.addApptFormTitle;
@@ -847,8 +1486,7 @@ function applyHomeLanguage() {
   document.getElementById('apptDateLabel').textContent = d.apptDateLabel;
   document.getElementById('apptTimeLabel').textContent = d.apptTimeLabel;
   document.getElementById('saveApptEntryText').textContent = d.saveApptEntryText;
-  
-  // Reminder labels
+
   document.getElementById('reminderBeforeLabel').textContent = d.reminderBeforeLabel;
   document.getElementById('reminderOnDayLabel').textContent = d.reminderOnDayLabel;
 
@@ -876,7 +1514,6 @@ function setDynamicGreeting() {
   document.getElementById("dynamicGreeting").textContent = greeting + ",";
 }
 
-// Apply on load
 try { applyHomeLanguage(); } catch (e) { console.error('applyHomeLanguage error:', e); }
 renderHomeMedicineList();
 renderNextMedicineStat();
@@ -912,8 +1549,8 @@ function closeUploadModal() {
 async function openCamera() {
   try {
     const video = document.getElementById('cameraPreview');
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: 'environment' } 
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
     });
     cameraStream = stream;
     video.srcObject = stream;
@@ -933,7 +1570,7 @@ function capturePhoto() {
   canvas.height = video.videoHeight || 480;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  
+
   canvas.toBlob(function(blob) {
     const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
     processReportFile(file);
@@ -976,7 +1613,6 @@ function processReportFile(file) {
     if (data.success) {
       const reply = data.reply || 'Report saved. No readable text found for analysis.';
       thinking.textContent = reply;
-      // Voice फक्त तेव्हाच बोलेल जेव्हा user ने voice input वापरलं असेल
       if (isVoiceInput && typeof speakText === 'function') {
         speakText(reply);
       }
@@ -1023,8 +1659,8 @@ function closeMedModal() {
 async function openMedCamera() {
   try {
     const video = document.getElementById('medCameraPreview');
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: 'environment' } 
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
     });
     medCameraStream = stream;
     video.srcObject = stream;
@@ -1044,7 +1680,7 @@ function captureMedPhoto() {
   canvas.height = video.videoHeight || 480;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  
+
   canvas.toBlob(function(blob) {
     const file = new File([blob], 'med-prescription.jpg', { type: 'image/jpeg' });
     processMedFile(file);
@@ -1068,26 +1704,88 @@ function processMedFile(file) {
 }
 
 // ── EXISTING FUNCTIONS ──
+// CHANGED: 6 months -> 12 months
+const GRAPH_MONTH_COUNT = 12;
+
 function getLast6MonthLabels() {
   const labels = [];
-  const now = new Date();
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+  const year = new Date().getFullYear();
+  for (let m = 1; m <= 12; m++) {
+    const d = new Date(year, m - 1, 1);
     labels.push(d.toLocaleString('en-US', { month: 'short' }));
   }
   return labels;
 }
-const months = getLast6MonthLabels();
+
+// FIX: "months" is now `let` so it can be recalculated (was `const` before,
+// which meant the x-axis labels were frozen at whatever they were on page load
+// and never refreshed even when new months' data was saved).
+let months = getLast6MonthLabels();
+
 const graphData = {
-  bp:     [null, null, null, null, null, null],
-  sugar:  [null, null, null, null, null, null],
-  weight: [null, null, null, null, null, null]
+  bp:     new Array(GRAPH_MONTH_COUNT).fill(null),
+  sugar:  new Array(GRAPH_MONTH_COUNT).fill(null),
+  weight: new Array(GRAPH_MONTH_COUNT).fill(null)
 };
 const graphLabels = { bp:'Blood Pressure (mmHg)', sugar:'Blood Sugar (mg/dL)', weight:'Weight (kg)' };
 let currentGraph = 'bp';
 let chart;
 
+// NEW: wraps the <canvas id="healthChart"> in a horizontally scrollable
+// inner div so 12 months of data have room to breathe instead of being
+// squeezed into the visible width. The OUTER container (canvas's current
+// parent) becomes the scroll viewport; an INNER div (wider than the
+// viewport) holds the canvas so Chart.js draws it at full width.
+function setupScrollableChartContainer() {
+  const canvas = document.getElementById('healthChart');
+  if (!canvas) return;
+
+  // already wrapped (e.g. initChart called again) — nothing to do
+  if (canvas.parentElement && canvas.parentElement.id === 'healthChartScrollInner') return;
+
+  const outer = canvas.parentElement;
+  if (!outer) return;
+
+  // IMPORTANT — measure BEFORE inserting the wide inner content.
+  // `.graph-wrap` is a flex item (inside `.card`, itself a CSS grid item).
+  // Flex/grid items default to `min-width: auto`, meaning they grow to
+  // fit their content's min-content size instead of shrinking — so once
+  // a wide (1800px) div goes inside, `.graph-wrap`, `.card`, and the grid
+  // track around it all stretch to fit it, blowing out the whole page
+  // horizontally instead of scrolling locally. Locking the container to
+  // its real (pre-injection) width, and forcing min-width:0, stops that:
+  // the oversized inner div then overflows only within this fixed box.
+  const naturalWidth = outer.getBoundingClientRect().width;
+  outer.style.width = naturalWidth + 'px';
+  outer.style.maxWidth = naturalWidth + 'px';
+  outer.style.minWidth = '0';
+
+  const inner = document.createElement('div');
+  inner.id = 'healthChartScrollInner';
+
+  // width per month "column". This must exceed the card's own width for
+  // the scroll to actually trigger — the "Health Tracker" card sits in a
+  // 2-column CSS grid (.content { grid-template-columns: 1fr 1fr }), so on
+  // most screens it's comfortably wider than a small fixed width, meaning
+  // the graph would just fit with no scroll at all. 150px/month keeps the
+  // total width (150 * 12 = 1800px) reliably wider than the card on
+  // virtually any screen, so the scroll shows up consistently. Tweak this
+  // number directly if it still doesn't scroll on your screen, or feels
+  // too spread out / cramped.
+  const pxPerMonth = 150;
+  inner.style.width = (pxPerMonth * GRAPH_MONTH_COUNT) + 'px';
+  inner.style.height = '100%';
+
+  outer.style.overflowX = 'auto';
+  outer.style.overflowY = 'hidden';
+  outer.style.webkitOverflowScrolling = 'touch'; // smooth momentum scroll on iOS
+
+  outer.insertBefore(inner, canvas);
+  inner.appendChild(canvas);
+}
+
 function initChart() {
+  setupScrollableChartContainer();
   const ctx = document.getElementById('healthChart').getContext('2d');
   chart = new Chart(ctx, {
     type: 'line',
@@ -1126,27 +1824,89 @@ function switchGraph(el, key) {
 
 initChart();
 
+function formatMonthLabel(raw) {
+  if (!raw) return '';
+  let d = new Date(raw);
+  if (isNaN(d)) {
+    const parts = String(raw).split('-');
+    if (parts.length >= 2) {
+      d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+    }
+  }
+  if (isNaN(d)) return String(raw);
+  return d.toLocaleString('en-US', { month: 'short' });
+}
+
+// NEW: real "YYYY-MM" calendar-month key, used to align backend data to
+// actual calendar months instead of raw array position (fixes months
+// getting skipped/compressed when a month has no saved data).
+function monthKeyFromRaw(raw) {
+  if (!raw) return null;
+  let d = new Date(raw);
+  if (isNaN(d)) {
+    const parts = String(raw).split('-');
+    if (parts.length >= 2) {
+      d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+    }
+  }
+  if (isNaN(d)) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getLastNMonthKeys(n) {
+  const keys = [];
+  const year = new Date().getFullYear();
+  for (let m = 1; m <= 12; m++) {
+    keys.push(`${year}-${String(m).padStart(2, '0')}`);
+  }
+  return keys;
+}
+
 async function loadHealthHistory() {
   try {
     const res = await fetch('/get_health_history');
     const data = await res.json();
     if (!data.months || !data.months.length) return;
 
-    const len = graphData.bp.length; // 6 months
-    for (let i = 0; i < len; i++) {
-      const idx = data.bp.length - (len - i);
-      graphData.bp[i]     = idx >= 0 ? data.bp[idx]     : null;
-      graphData.sugar[i]  = idx >= 0 ? data.sugar[idx]  : null;
-      graphData.weight[i] = idx >= 0 ? data.weight[idx] : null;
-    }
+    // Map backend rows by real calendar-month key so a month with no
+    // saved data becomes a gap (null) instead of shifting every later
+    // month backward.
+    const map = {};
+    data.months.forEach((raw, idx) => {
+      const key = monthKeyFromRaw(raw);
+      if (key) {
+        map[key] = {
+          bp: data.bp ? data.bp[idx] : null,
+          sugar: data.sugar ? data.sugar[idx] : null,
+          weight: data.weight ? data.weight[idx] : null
+        };
+      }
+    });
 
+    const keys = getLastNMonthKeys(GRAPH_MONTH_COUNT);
+    const newLabels = keys.map(k => formatMonthLabel(k + '-01'));
+
+    keys.forEach((key, i) => {
+      const entry = map[key];
+      graphData.bp[i]     = entry ? entry.bp     : null;
+      graphData.sugar[i]  = entry ? entry.sugar  : null;
+      graphData.weight[i] = entry ? entry.weight : null;
+    });
+
+    months = newLabels;
+    chart.data.labels = months;
     chart.data.datasets[0].data = graphData[currentGraph];
     chart.update();
 
-    const lastIdx = data.months.length - 1;
-    if (lastIdx >= 0) {
-      if (data.sugar[lastIdx] != null) document.getElementById('sugarVal').textContent = data.sugar[lastIdx];
-      if (data.weight[lastIdx] != null) document.getElementById('weightVal').textContent = data.weight[lastIdx];
+    // most recent calendar month (within the window) that actually has data
+    let lastKey = null;
+    for (let i = keys.length - 1; i >= 0; i--) {
+      if (map[keys[i]]) { lastKey = keys[i]; break; }
+    }
+    if (lastKey) {
+      const entry = map[lastKey];
+      if (entry.sugar != null) document.getElementById('sugarVal').textContent = entry.sugar;
+      if (entry.weight != null) document.getElementById('weightVal').textContent = entry.weight;
       updateHealthScoreDisplay();
     }
   } catch (e) {
@@ -1196,6 +1956,7 @@ function saveHealthData() {
   .then(data => {
     if (data === "success") {
       console.log("Health data saved successfully.");
+      loadHealthHistory();
     } else {
       console.log("Database save failed.");
     }
@@ -1947,7 +2708,7 @@ function addAppointmentEntry() {
   const hospital = document.getElementById('apptHospitalInput').value.trim();
   const date = document.getElementById('apptDateInput').value;
   const time = get24HourTime('apptHourInput', 'apptMinuteInput', 'apptAmPmInput');
-  
+
   const beforeDays = getSelectedCheckboxValues('beforeDaysCheckboxes');
   const onDayMinutes = getSelectedCheckboxValues('onDayCheckboxes');
 
@@ -1973,15 +2734,13 @@ function addAppointmentEntry() {
     fired: false,
     remindersFired: {}
   });
-  
-  // Initialize remindersFired for each selected reminder
+
   const newAppt = appointments[appointments.length - 1];
   beforeDays.forEach(d => { newAppt.remindersFired['before_' + d] = false; });
   onDayMinutes.forEach(m => { newAppt.remindersFired['onDay_' + m] = false; });
-  
+
   saveAppointments(appointments);
 
-  // Save to DB
   const formData = new FormData();
   formData.append("doctor_name", doctor);
   formData.append("hospital_name", hospital || '');
@@ -1998,27 +2757,25 @@ function addAppointmentEntry() {
   .then(data => console.log(data))
   .catch(err => console.error(err));
 
-  // Clear form
   document.getElementById('apptDoctorInput').value = '';
   document.getElementById('apptHospitalInput').value = '';
   document.getElementById('apptDateInput').value = '';
   document.getElementById('apptHourInput').selectedIndex = 0;
   document.getElementById('apptMinuteInput').selectedIndex = 0;
   document.getElementById('apptAmPmInput').selectedIndex = 0;
-  
-  // Uncheck all checkboxes
+
   document.querySelectorAll('#beforeDaysCheckboxes input, #onDayCheckboxes input').forEach(cb => cb.checked = false);
 
   renderAppointmentList();
   if (typeof renderNextApptStat === 'function') renderNextApptStat();
-  
+
   let reminderText = '';
   if (beforeDays.length) reminderText += beforeDays.map(d => d + 'd before').join(', ');
   if (onDayMinutes.length) {
     if (reminderText) reminderText += ' & ';
     reminderText += onDayMinutes.map(m => m + 'min before').join(', ');
   }
-  
+
   showToast('📅 Appointment added — Reminders: ' + reminderText, 'green');
 }
 
@@ -2050,13 +2807,8 @@ function checkAppointmentReminders() {
       changed = true;
     }
 
-    // Full appointment date+time (actual appointment time)
     const apptDateTime = new Date(a.date + 'T' + a.time + ':00');
 
-    // Before-day reminders — fire at the SAME time as the appointment, X days earlier.
-    // e.g. appointment 5:00 PM + "3 days before" -> reminder fires at 5:00 PM, 3 days prior.
-    // Catch-up: if that exact moment was missed (app closed), it fires on the very next
-    // check, as long as the appointment itself hasn't happened yet.
     if (a.reminderBeforeDays && a.reminderBeforeDays.length) {
       a.reminderBeforeDays.forEach(days => {
         const key = 'before_' + days;
@@ -2072,7 +2824,6 @@ function checkAppointmentReminders() {
       });
     }
 
-    // On-day reminders (minutes before appointment time) — already based on actual time.
     if (todayStr === a.date && a.reminderOnDayMin && a.reminderOnDayMin.length) {
       const apptTime = a.time.split(':').map(Number);
       const apptMinutes = apptTime[0] * 60 + apptTime[1];
@@ -2194,7 +2945,7 @@ function startVoiceInput() {
   r.onresult = (e) => {
     const transcript = e.results[0][0].transcript;
 
-    isVoiceInput = true;   // <-- Add this
+    isVoiceInput = true;
 
     document.getElementById('chatInput').value = transcript;
     status.style.display = 'none';
@@ -2398,15 +3149,12 @@ async function openSavedChat(chatId) {
 
         const chat = await response.json();
 
-        // History modal बंद
         document.getElementById("chatHistoryModal").classList.remove("open");
 
-        // Chat modal open
         document.getElementById("chatPageModal").classList.add("open");
 
         const chatWindow = document.getElementById("chatWindow");
 
-        // Question + AI answer दाखव
         chatWindow.innerHTML = `
             <div class="chat-msg user">
                 ${escapeHtml(chat.question)}
@@ -2443,11 +3191,9 @@ async function sendChat() {
 
   const win = document.getElementById('chatWindow');
 
-  // Show user message
   win.innerHTML += `<div class="chat-msg user">${msg}</div>`;
   win.scrollTop = win.scrollHeight;
 
-  // Show thinking message
   const thinking = document.createElement('div');
   thinking.className = 'chat-msg ai';
   thinking.textContent = 'Thinking...';
@@ -2455,7 +3201,6 @@ async function sendChat() {
   win.scrollTop = win.scrollHeight;
 
   try {
-    // Send question to Flask
     const resp = await fetch('/chat', {
       method: 'POST',
       headers: {
@@ -2474,10 +3219,8 @@ async function sendChat() {
 
     const reply = data.reply;
 
-    // Show AI response
     thinking.textContent = reply;
 
-    // Voice response
     if (isVoiceInput && typeof speakText === 'function') {
     speakText(reply);
 }
@@ -2500,10 +3243,8 @@ function openSavedChat(chatId) {
     .then(res => res.json())
     .then(chat => {
 
-        // History modal बंद
         document.getElementById("chatHistoryModal").classList.remove("open");
 
-        // Chat modal open
         document.getElementById("chatPageModal").classList.add("open");
 
         const win = document.getElementById("chatWindow");
@@ -2528,7 +3269,6 @@ function sendEmergency() {
 
     document.getElementById('emergencyPopup').classList.add('open');
 
-    // 🔊 Emergency Siren
     try {
         const ac = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -2653,17 +3393,14 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
 });
 
-// Add click handlers for checkbox styling
 document.querySelectorAll('.checkbox-item').forEach(item => {
   item.addEventListener('click', function(e) {
-    // Don't toggle if clicking the checkbox itself (it handles its own toggle)
     if (e.target.tagName === 'INPUT') return;
     const checkbox = this.querySelector('input[type="checkbox"]');
     checkbox.checked = !checkbox.checked;
     this.classList.toggle('checked', checkbox.checked);
   });
-  
-  // Also handle checkbox change event
+
   const checkbox = item.querySelector('input[type="checkbox"]');
   checkbox.addEventListener('change', function() {
     this.closest('.checkbox-item').classList.toggle('checked', this.checked);

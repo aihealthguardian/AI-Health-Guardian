@@ -3,7 +3,7 @@
 // ============================================
 const translations = {
     en: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "Location Permission", desc: "Allow location access for emergency services and nearby healthcare support.", icon: "ti-map-pin" },
             { title: "Microphone Permission", desc: "Allow microphone access for Voice Assistant and AI Health Guardian.", icon: "ti-microphone" },
@@ -16,7 +16,7 @@ const translations = {
         progress: "Permission {current} of {total}"
     },
     mr: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "लोकेशन परवानगी", desc: "आपत्कालीन सेवा आणि जवळच्या आरोग्य सुविधांसाठी लोकेशन परवानगी द्या.", icon: "ti-map-pin" },
             { title: "मायक्रोफोन परवानगी", desc: "व्हॉइस असिस्टंट आणि AI Health Guardian साठी मायक्रोफोन वापरण्याची परवानगी द्या.", icon: "ti-microphone" },
@@ -29,7 +29,7 @@ const translations = {
         progress: "परवानगी {current}-{total} पैकी"
     },
     hi: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "लोकेशन अनुमति", desc: "आपातकालीन सेवाओं और नजदीकी स्वास्थ्य सहायता के लिए लोकेशन एक्सेस दें।", icon: "ti-map-pin" },
             { title: "माइक्रोफोन अनुमति", desc: "वॉयस असिस्टेंट और AI Health Guardian के लिए माइक्रोफोन एक्सेस दें।", icon: "ti-microphone" },
@@ -42,7 +42,7 @@ const translations = {
         progress: "अनुमति {current} का {total}"
     },
     gu: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "સ્થાન પરવાનગી", desc: "આપાતકાલીન સેવાઓ અને નજીકની આરોગ્ય સહાય માટે સ્થાનની મંજૂરી આપો.", icon: "ti-map-pin" },
             { title: "માઇક્રોફોન પરવાનગી", desc: "માઇક્રોફોનની મંજૂરી આપો.", icon: "ti-microphone" },
@@ -55,7 +55,7 @@ const translations = {
         progress: "પરવાનગી {current} નો {total}"
     },
     ta: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "இருப்பிட அனுமதி", desc: "அவசர சேவைகளுக்காக இருப்பிட அணுகலை அனுமதிக்கவும்.", icon: "ti-map-pin" },
             { title: "மைக்ரோஃபோன் அனுமதி", desc: "குரல் உதவியாளருக்காக மைக்ரோஃபோன் அனுமதி வழங்கவும்.", icon: "ti-microphone" },
@@ -68,7 +68,7 @@ const translations = {
         progress: "அனுமதி {current} / {total}"
     },
     te: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "స్థాన అనుమతి", desc: "అత్యవసర సేవల కోసం స్థాన యాక్సెస్‌ను అనుమతించండి.", icon: "ti-map-pin" },
             { title: "మైక్రోఫోన్ అనుమతి", desc: "వాయిస్ అసిస్టెంట్ కోసం మైక్రోఫోన్ యాక్సెస్ ఇవ్వండి.", icon: "ti-microphone" },
@@ -81,7 +81,7 @@ const translations = {
         progress: "అనుమతి {current} / {total}"
     },
     kn: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "ಸ್ಥಳ ಅನುಮತಿ", desc: "ತುರ್ತು ಸೇವೆಗಳಿಗಾಗಿ ಸ್ಥಳ ಪ್ರವೇಶಕ್ಕೆ ಅನುಮತಿ ನೀಡಿ.", icon: "ti-map-pin" },
             { title: "ಮೈಕ್ರೋಫೋನ್ ಅನುಮತಿ", desc: "ವಾಯ್ಸ್ ಅಸಿಸ್ಟೆಂಟ್‌ಗಾಗಿ ಮೈಕ್ರೋಫೋನ್ ಅನುಮತಿ ನೀಡಿ.", icon: "ti-microphone" },
@@ -94,7 +94,7 @@ const translations = {
         progress: "ಅನುಮತಿ {current} / {total}"
     },
     bn: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "অবস্থান অনুমতি", desc: "জরুরি পরিষেবার জন্য অবস্থান অ্যাক্সেস দিন।", icon: "ti-map-pin" },
             { title: "মাইক্রোফোন অনুমতি", desc: "ভয়েস অ্যাসিস্ট্যান্টের জন্য মাইক্রোফোন অ্যাক্সেস দিন।", icon: "ti-microphone" },
@@ -107,7 +107,7 @@ const translations = {
         progress: "অনুমতি {current} / {total}"
     },
     pa: {
-        appName: "Agentic AI Healthcare",
+        appName: "AI Health Guardian",
         permissions: [
             { title: "ਲੋਕੇਸ਼ਨ ਇਜਾਜ਼ਤ", desc: "ਐਮਰਜੈਂਸੀ ਸੇਵਾਵਾਂ ਲਈ ਲੋਕੇਸ਼ਨ ਐਕਸੈੱਸ ਦਿਓ।", icon: "ti-map-pin" },
             { title: "ਮਾਈਕ੍ਰੋਫੋਨ ਇਜਾਜ਼ਤ", desc: "ਵੋਇਸ ਅਸਿਸਟੈਂਟ ਲਈ ਮਾਈਕ੍ਰੋਫੋਨ ਐਕਸੈੱਸ ਦਿਓ।", icon: "ti-microphone" },
