@@ -7,6 +7,8 @@ import requests
 import os
 import uuid
 import re
+import json
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = "health_guardian"
@@ -34,12 +36,12 @@ def ask_ollama(messages):
     response = requests.post(
         "http://localhost:11434/api/chat",
         json={
-            "model": "health-guardian",
+            "model":"llama3.2:3b",
             "messages": messages,
             "stream": False,
             "keep_alive": "30m",
             "options": {
-                "num_predict": 200,
+                "num_predict": 800,
                 "num_ctx": 1024
             }
         },
@@ -52,6 +54,89 @@ def ask_ollama(messages):
     print("Ollama Error:", response.text)
 
     return "Sorry, I could not connect to the AI model."
+
+def extract_report_data(report_text):
+    prompt = f"""
+You are a medical report data extraction assistant.
+
+Read the following medical report and extract only information that is
+explicitly present in the report.
+
+Return ONLY valid JSON.
+Do not add explanations.
+Do not guess missing medical information.
+
+JSON format:
+
+{{
+    "health": {{
+        "bp": null,
+        "sugar": null,
+        "weight": null,
+        "blood_group": null
+    }},
+    "medicines": [
+        {{
+            "name": null,
+            "dosage": null,
+            "time": null,
+            "frequency": null,
+            "duration_days": null
+        }}
+    ],
+    "appointments": [
+        {{
+            "doctor": null,
+            "hospital": null,
+            "date": null,
+            "time": null
+        }}
+    ]
+}}
+
+Rules:
+
+1. BP example: "120/80"
+2. Sugar should be numeric if available.
+3. Weight should be numeric if available.
+4. Blood group example: "B+"
+5. Medicine time must be in 24-hour HH:MM format when explicitly available.
+6. Convert AM/PM times to 24-hour format.
+7. Appointment date must be YYYY-MM-DD.
+8. Appointment time must be HH:MM.
+9. If information is missing, use null.
+10. Do NOT invent medicine names, times, appointments or health values.
+
+Medical Report:
+{report_text}
+"""
+
+    try:
+        result = ask_ollama([
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ])
+
+        print("STRUCTURED REPORT DATA:")
+        print(result)
+
+        # Remove markdown JSON fences if Ollama adds them
+        result = result.strip()
+
+        if result.startswith("```"):
+            result = re.sub(r"```json|```", "", result).strip()
+
+        return json.loads(result)
+
+    except Exception as e:
+        print("STRUCTURED REPORT EXTRACTION ERROR:", e)
+        return {
+            "health": {},
+            "medicines": [],
+            "appointments": []
+        }
 
 
 @app.route("/chat", methods=["POST"])
@@ -202,6 +287,252 @@ def upload_report():
         report_id = cur.fetchone()[0]
 
         conn.commit()
+
+            # ============================================================
+    # AUTOMATIC REPORT DATA EXTRACTION
+    # ============================================================
+
+    extracted_data = {
+        "health": {},
+        "medicines": [],
+        "appointments": []
+    }
+
+    if ocr_text.strip():
+
+        try:
+            extracted_data = extract_report_data(ocr_text)
+
+            print("===================================")
+            print("EXTRACTED REPORT DATA")
+            print(extracted_data)
+            print("===================================")
+
+        except Exception as e:
+            print("REPORT DATA EXTRACTION ERROR:", e)
+
+
+    # ============================================================
+    # SAVE EVERYTHING TO DATABASE
+    # ============================================================
+
+    try:
+
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # --------------------------------------------------------
+        # 1. HEALTH DATA
+        # --------------------------------------------------------
+
+        health = extracted_data.get("health", {})
+
+        bp = health.get("bp")
+        sugar = health.get("sugar")
+        weight = health.get("weight")
+        blood_group = health.get("blood_group")
+
+        # Save health data only if at least one value exists
+        if any([
+            bp,
+            sugar,
+            weight,
+            blood_group
+        ]):
+
+            cur.execute("""
+                INSERT INTO health_records
+                (
+                    user_id,
+                    bp,
+                    sugar,
+                    weight,
+                    blood_group
+                )
+                VALUES (%s,%s,%s,%s,%s)
+            """, (
+                user_id,
+                bp,
+                sugar,
+                weight,
+                blood_group
+            ))
+
+            print("Health data saved from report.")
+
+
+        # --------------------------------------------------------
+        # 2. MEDICINES + MEDICINE REMINDERS
+        # --------------------------------------------------------
+
+        saved_medicines = []
+
+        for med in extracted_data.get("medicines", []):
+
+            medicine_name = med.get("name")
+            dosage = med.get("dosage") or ""
+            medicine_time = med.get("time")
+            frequency = med.get("frequency") or ""
+            duration_days = med.get("duration_days")
+
+            if not medicine_name:
+                continue
+
+            # If report does not contain reminder time,
+            # do not create a fake time.
+            if not medicine_time:
+                print(
+                    "Medicine found but reminder time missing:",
+                    medicine_name
+                )
+                continue
+
+            cur.execute("""
+                INSERT INTO medicines
+                (
+                    user_id,
+                    medicine_name,
+                    dosage,
+                    medicine_time,
+                    medicine_status
+                )
+                VALUES (%s,%s,%s,%s,%s)
+                RETURNING medicine_id
+            """, (
+                user_id,
+                medicine_name,
+                dosage,
+                medicine_time,
+                "Pending"
+            ))
+
+            medicine_id = cur.fetchone()[0]
+
+            # Medicine reminder
+            reminder_text = f"Take {medicine_name}"
+
+            if dosage:
+                reminder_text += f" - {dosage}"
+
+            cur.execute("""
+                INSERT INTO medicine_reminders
+                (
+                    medicine_id,
+                    reminder_time,
+                    reminder_text,
+                    reminder_status
+                )
+                VALUES (%s,%s,%s,%s)
+            """, (
+                medicine_id,
+                medicine_time,
+                reminder_text,
+                "Pending"
+            ))
+
+            saved_medicines.append({
+                "id": medicine_id,
+                "name": medicine_name,
+                "dosage": dosage,
+                "time": medicine_time,
+                "frequency": frequency,
+                "duration_days": duration_days
+            })
+
+            print(
+                "Medicine + reminder saved:",
+                medicine_name,
+                medicine_time
+            )
+
+
+        # --------------------------------------------------------
+        # 3. APPOINTMENTS + REMINDERS
+        # --------------------------------------------------------
+
+        saved_appointments = []
+
+        for appt in extracted_data.get("appointments", []):
+
+            doctor = appt.get("doctor")
+            hospital = appt.get("hospital") or ""
+            appointment_date = appt.get("date")
+            appointment_time = appt.get("time")
+
+            if not doctor or not appointment_date or not appointment_time:
+                print("Incomplete appointment skipped:", appt)
+                continue
+
+            # Default reminders
+            # 1 day before + 30 minutes before
+            reminder_before_days = [1]
+            reminder_on_day_min = [30]
+
+            cur.execute("""
+                INSERT INTO appointments
+                (
+                    user_id,
+                    doctor_name,
+                    hospital_name,
+                    appointment_date,
+                    appointment_time,
+                    appointment_status,
+                    notes,
+                    reminder_before_days,
+                    reminder_on_day_min
+                )
+                VALUES
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                RETURNING appointment_id
+            """, (
+                user_id,
+                doctor,
+                hospital,
+                appointment_date,
+                appointment_time,
+                "Upcoming",
+                "Automatically added from uploaded medical report",
+                json.dumps(reminder_before_days),
+                json.dumps(reminder_on_day_min)
+            ))
+
+            appointment_id = cur.fetchone()[0]
+
+            saved_appointments.append({
+                "id": appointment_id,
+                "doctor": doctor,
+                "hospital": hospital,
+                "date": appointment_date,
+                "time": appointment_time,
+                "reminderBeforeDays": reminder_before_days,
+                "reminderOnDayMin": reminder_on_day_min
+            })
+
+            print(
+                "Appointment + reminders saved:",
+                doctor,
+                appointment_date,
+                appointment_time
+            )
+
+
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        print("All extracted report data saved successfully.")
+
+    except Exception as e:
+
+        print("AUTOMATIC REPORT DATA DB ERROR:", e)
+
+        try:
+            conn.rollback()
+            cur.close()
+            conn.close()
+        except:
+            pass
         cur.close()
         conn.close()
 
