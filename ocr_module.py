@@ -1,5 +1,5 @@
 """
-AI Health Guardian - OCR Module (v8, DUAL-ENGINE, ACCURACY-FIRST)
+AI Health Guardian - OCR Module (v9, DUAL-ENGINE + GEMINI FALLBACK)
 ====================================================
 Uses BOTH Tesseract and EasyOCR and keeps whichever attempt scores
 highest confidence -- printed/digital reports (BP machines, thermometer
@@ -31,6 +31,30 @@ image. If its confidence clears FAST_PATH_CONFIDENCE_THRESHOLD, we skip
 EasyOCR and the rest of the sweep entirely -- this keeps clean, well-lit
 photos fast, while harder images still get the full accuracy-first sweep.
 
+NEW IN v9 -- GEMINI FALLBACK (opt-in, only runs when needed):
+    After the Tesseract+EasyOCR sweep finishes, if the regex-based
+    extract_vitals() still has NOT DETECTED fields, we make ONE call to
+    the Gemini API (gemini-1.5-flash or newer) with the ORIGINAL image
+    and ask it to return the vitals directly as JSON. Gemini is good at:
+      - Reading handwriting/messy photos regex+OCR both failed on
+      - Understanding context (e.g. knowing "98.6" next to a thermometer
+        icon is a temperature even without an explicit unit)
+    This is deliberately a LAST-RESORT fallback, not a replacement for
+    the free OCR engines above, to keep API usage (and cost) low:
+      - It is skipped entirely if Tesseract/EasyOCR already found every
+        field.
+      - It only ever makes ONE call per image/page, not a sweep.
+      - It never overwrites a field the OCR sweep already found -- it
+        only fills in fields that are still "NOT DETECTED".
+    Requires: pip install google-generativeai
+    Requires: GEMINI_API_KEY environment variable set (get one at
+        https://aistudio.google.com/apikey -- note that Google's FREE
+        tier is rate-limited and meant for testing/low volume; for
+        production traffic you will need to enable billing on the
+        Google Cloud project tied to the key).
+    If the package isn't installed or the key isn't set, this fallback
+    is silently skipped and the module behaves exactly like v8.
+
 PDF SUPPORT:
     PDFs are rasterized page-by-page into images (via pdf2image, which
     wraps the poppler `pdftoppm` binary) and then each page image is run
@@ -38,9 +62,13 @@ PDF SUPPORT:
     Per-page best text is joined together for the final text, and vitals
     are searched across every attempt from every page (same "search
     everything, keep whichever field is found" approach used for images).
+    The Gemini fallback (if triggered) runs once on the FIRST page only,
+    since vitals reports are almost always single-page and this avoids
+    one API call per page.
 
 REQUIREMENTS:
     pip install easyocr opencv-python-headless pillow numpy pytesseract pdf2image
+    pip install google-generativeai   # optional, for the Gemini fallback
 
     Tesseract ALSO needs its separate program installed (pytesseract is just
     a Python wrapper around it, not the OCR engine itself):
@@ -73,6 +101,7 @@ import re
 import sys
 import io
 import os
+import json
 import shutil
 from PIL import Image
 
@@ -82,6 +111,32 @@ try:
     PDF_SUPPORT_AVAILABLE = True
 except ImportError:
     PDF_SUPPORT_AVAILABLE = False
+
+# ------------------------------------------------------------------
+# Gemini fallback: optional. Only enabled if the package is installed
+# AND an API key is present in the environment. Missing either one just
+# disables the fallback -- it never crashes the rest of the OCR pipeline.
+# ------------------------------------------------------------------
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GEMINI_MODEL_NAME = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+
+try:
+    import google.generativeai as genai
+    if GEMINI_API_KEY:
+        genai.configure(api_key=GEMINI_API_KEY)
+        GEMINI_AVAILABLE = True
+    else:
+        GEMINI_AVAILABLE = False
+        print(
+            "NOTE: google-generativeai is installed but GEMINI_API_KEY is "
+            "not set -- Gemini fallback is disabled. Set the GEMINI_API_KEY "
+            "environment variable to enable it (see module docstring)."
+        )
+except ImportError:
+    GEMINI_AVAILABLE = False
+    # Not printing a warning here on purpose: Gemini is optional, unlike
+    # Tesseract/poppler which the OCR pipeline actually depends on. Silently
+    # skipping keeps the console clean for people who don't want this feature.
 
 # ------------------------------------------------------------------
 # Tesseract path: only hardcode it if tesseract isn't already found
@@ -335,6 +390,182 @@ def run_tesseract_line_by_line(img):
 
 
 # ============================================================
+# ENGINE 3: Gemini -- structured extraction (vitals gap-fill +
+# medicines + appointments) in a single call per image/page.
+# ============================================================
+
+# Single combined prompt: fills in any vitals the OCR sweep missed, AND
+# extracts medicines / appointments (which OCR+regex can't reliably do
+# on their own -- names and dates need real language understanding, not
+# just character recognition). One call covers all three so we don't pay
+# for three separate Gemini requests per upload.
+GEMINI_STRUCTURED_PROMPT = """You are looking at a photo or scan of a
+medical report, prescription, appointment slip, or handwritten health
+note. Extract ONLY information that is ACTUALLY visible in the image.
+Never guess, estimate, or invent a value that isn't really written there.
+
+Return ONLY a raw JSON object (no markdown fences, no extra text) in
+exactly this shape:
+
+{
+  "vitals": {
+    "blood_pressure": "<systolic>/<diastolic>, e.g. 120/80, or null",
+    "pulse": "<number> bpm, e.g. 78 bpm, or null",
+    "temperature": "<number> in Celsius, e.g. 37.0°C, or null (convert from °F if needed)",
+    "sugar": "<number> as a plain string (mg/dL), or null",
+    "weight": "<number> as a plain string (kg), or null (convert from lb if needed)",
+    "blood_group": "<e.g. A+, O-, AB+, or null if not stated>",
+    "report_date": "<YYYY-MM-DD -- the date this report/test was taken or issued, as printed on the document itself, or null if no date is visible anywhere on it>"
+  },
+  "medicines": [
+    {
+      "medicine_name": "<name as written>",
+      "dosage": "<e.g. '500mg', '1 tablet', or null if not stated>",
+      "medicine_time": "<time to take it, 24-hour HH:MM format, or null if no time is given>",
+      "duration_days": "<number of days to take this medicine, as a plain integer, or null if no duration/course-length is stated (e.g. 'for 5 days' -> 5, 'for 1 week' -> 7)>"
+    }
+  ],
+  "appointments": [
+    {
+      "doctor_name": "<doctor's name, or null>",
+      "hospital_name": "<hospital/clinic name, or null>",
+      "appointment_date": "<YYYY-MM-DD, or null if no date is given>",
+      "appointment_time": "<24-hour HH:MM, or null if no time is given>"
+    }
+  ]
+}
+
+Rules:
+- "medicines" and "appointments" should be EMPTY LISTS ([]) if none are
+  visible in the image -- do not invent entries.
+- Only include a medicine entry if a medicine NAME is actually visible.
+- Only include an appointment entry if AT LEAST a date or a doctor/hospital
+  name is visible -- don't invent an appointment from a stray date.
+- Any field you cannot actually read from the image MUST be null."""
+
+
+def _cv_image_to_png_bytes(img):
+    return cv2.imencode(".png", img)[1].tobytes()
+
+
+def run_gemini_structured(cv_image):
+    """
+    Single Gemini call: returns a dict with keys "vitals" (dict),
+    "medicines" (list of dicts), "appointments" (list of dicts) --
+    always all three keys present, defaulting to {} / [] / [] on any
+    failure so callers never need to check for missing keys.
+
+    Never raises -- any failure (network, bad JSON, missing key, Gemini
+    not configured, etc.) is caught and results in the empty-but-valid
+    shape above, so a Gemini outage never breaks the rest of the OCR
+    pipeline.
+    """
+    empty = {"vitals": {}, "medicines": [], "appointments": [], "report_date": None}
+    if not GEMINI_AVAILABLE:
+        return empty
+
+    try:
+        model = genai.GenerativeModel(GEMINI_MODEL_NAME)
+        png_bytes = _cv_image_to_png_bytes(cv_image)
+        response = model.generate_content(
+            [
+                GEMINI_STRUCTURED_PROMPT,
+                {"mime_type": "image/png", "data": png_bytes},
+            ],
+            generation_config={"temperature": 0, "response_mime_type": "application/json"},
+        )
+        raw = response.text.strip()
+        # Defensive: strip markdown fences if the model adds them anyway
+        raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
+        parsed = json.loads(raw)
+    except Exception as e:
+        print(f"NOTE: Gemini structured extraction failed, skipping ({e})")
+        return empty
+
+    def _clean(v):
+        if v is None:
+            return None
+        s = str(v).strip()
+        return s if s and s.lower() not in ("null", "none") else None
+
+    vitals_raw = parsed.get("vitals") or {}
+    vitals = {}
+    for key in ("blood_pressure", "pulse", "temperature", "sugar", "weight", "blood_group"):
+        cleaned = _clean(vitals_raw.get(key))
+        if cleaned:
+            vitals[key] = cleaned
+    report_date = _clean(vitals_raw.get("report_date"))
+
+    medicines = []
+    for m in (parsed.get("medicines") or []):
+        name = _clean(m.get("medicine_name"))
+        if not name:
+            continue  # a medicine entry with no name isn't usable
+        duration_raw = _clean(m.get("duration_days"))
+        duration_days = None
+        if duration_raw:
+            try:
+                duration_days = int(float(duration_raw))
+                if duration_days <= 0:
+                    duration_days = None
+            except (TypeError, ValueError):
+                duration_days = None
+        medicines.append({
+            "medicine_name": name,
+            "dosage": _clean(m.get("dosage")) or "",
+            "medicine_time": _clean(m.get("medicine_time")),
+            "duration_days": duration_days,
+        })
+
+    appointments = []
+    for a in (parsed.get("appointments") or []):
+        doctor = _clean(a.get("doctor_name"))
+        hospital = _clean(a.get("hospital_name"))
+        date = _clean(a.get("appointment_date"))
+        if not (doctor or hospital or date):
+            continue  # nothing usable in this entry
+        appointments.append({
+            "doctor_name": doctor or "",
+            "hospital_name": hospital or "",
+            "appointment_date": date,
+            "appointment_time": _clean(a.get("appointment_time")),
+        })
+
+    return {"vitals": vitals, "medicines": medicines, "appointments": appointments, "report_date": report_date}
+
+
+def _missing_vitals_fields(vitals):
+    return [k for k, v in vitals.items() if v == "NOT DETECTED - please verify manually"]
+
+
+def apply_gemini_structured(vitals, cv_image):
+    """
+    Runs the single combined Gemini call and returns
+    (vitals, medicines, appointments, report_date):
+      - vitals: the input dict with ONLY the still-missing fields filled
+        in from Gemini (OCR-found values are never overridden), tagged
+        "(via Gemini)".
+      - medicines / appointments: whatever Gemini found, as lists of
+        dicts ready to insert into the medicines/appointments tables.
+      - report_date: "YYYY-MM-DD" if a date was visible on the report
+        itself, else None.
+    Safe to call even if Gemini isn't configured -- returns
+    (vitals unchanged, [], [], None).
+    """
+    if not GEMINI_AVAILABLE:
+        return vitals, [], [], None
+
+    result = run_gemini_structured(cv_image)
+
+    missing = _missing_vitals_fields(vitals)
+    for field in missing:
+        if field in result["vitals"]:
+            vitals[field] = result["vitals"][field] + "  (via Gemini)"
+
+    return vitals, result["medicines"], result["appointments"], result["report_date"]
+
+
+# ============================================================
 # COMBINE: fast path first (Tesseract, standard passes, on the raw image).
 # If that's confident enough, return immediately. Otherwise fall back to
 # the full sweep -- preprocessed variants, the digit-only pass, and the
@@ -359,7 +590,7 @@ def extract_text_from_image(image_bytes_or_path, return_debug=False):
     ):
         combined_text = fast_text
         if return_debug:
-            return fast_text, attempts, combined_text
+            return fast_text, attempts, combined_text, original
         return fast_text
 
     # ---- SLOW PATH: fast path wasn't confident enough, try everything else ----
@@ -397,7 +628,7 @@ def extract_text_from_image(image_bytes_or_path, return_debug=False):
     combined_text = "\n".join(t for _, t, c in attempts)
 
     if return_debug:
-        return best_text, attempts, combined_text
+        return best_text, attempts, combined_text, original
     return best_text
 
 
@@ -428,10 +659,11 @@ def extract_text_from_pdf(pdf_bytes_or_path, return_debug=False):
         ) from e
 
     if not pages:
-        return ("", [], "") if return_debug else ""
+        return ("", [], "", None) if return_debug else ""
 
     all_attempts = []
     best_page_texts = []
+    first_page_cv = None
 
     for page_num, pil_page in enumerate(pages, start=1):
         # Reuse the image pipeline: convert the rendered PDF page (PIL,
@@ -440,9 +672,11 @@ def extract_text_from_pdf(pdf_bytes_or_path, return_debug=False):
         # behaves identically regardless of whether the source was an
         # uploaded image or a PDF page.
         page_bgr = cv2.cvtColor(np.array(pil_page.convert("RGB")), cv2.COLOR_RGB2BGR)
+        if page_num == 1:
+            first_page_cv = page_bgr
         page_bytes = cv2.imencode(".png", page_bgr)[1].tobytes()
 
-        page_best_text, page_attempts, page_combined = extract_text_from_image(
+        page_best_text, page_attempts, page_combined, _ = extract_text_from_image(
             page_bytes, return_debug=True
         )
 
@@ -456,7 +690,7 @@ def extract_text_from_pdf(pdf_bytes_or_path, return_debug=False):
     combined_text = "\n".join(t for _, t, c in all_attempts)
 
     if return_debug:
-        return best_text, all_attempts, combined_text
+        return best_text, all_attempts, combined_text, first_page_cv
     return best_text
 
 
@@ -507,30 +741,66 @@ def extract_vitals(raw_text):
         if 2 <= val <= 300:
             vitals["weight"] = str(val)
 
+    # Blood group -- A/B/AB/O + positive/negative sign
+    vitals["blood_group"] = "NOT DETECTED - please verify manually"
+    bg_match = re.search(r"\b(A|B|AB|O)\s*([+-]|positive|negative)\b", raw_text, re.IGNORECASE)
+    if bg_match:
+        letter = bg_match.group(1).upper()
+        sign_raw = bg_match.group(2).lower()
+        sign = "+" if sign_raw in ("+", "positive") else "-"
+        vitals["blood_group"] = f"{letter}{sign}"
+
     return vitals
 
 
-def extract_text_and_vitals(file_bytes_or_path, is_pdf=False):
-    """Convenience function for Flask: returns (best_text, vitals_dict),
-    where vitals are searched across every OCR attempt that actually ran
-    (just the fast-path Tesseract pass on easy images, or the full
-    dual-engine sweep -- both engines, all passes -- on harder ones, times
-    every page if it's a PDF) since different attempts sometimes catch
-    different fields.
+def extract_text_and_vitals(file_bytes_or_path, is_pdf=False, use_gemini_fallback=True):
+    """Convenience function for Flask: returns
+    (best_text, vitals_dict, medicines_list, appointments_list, report_date).
+
+    vitals are searched across every OCR attempt that actually ran (just
+    the fast-path Tesseract pass on easy images, or the full dual-engine
+    sweep -- both engines, all passes -- on harder ones, times every page
+    if it's a PDF) since different attempts sometimes catch different
+    fields.
+
+    medicines_list / appointments_list come ONLY from the Gemini call
+    (regex/OCR alone can't reliably pull out medicine names or dates) --
+    they are always [] if Gemini isn't configured or found nothing.
+    Each medicine dict has keys: medicine_name, dosage, medicine_time.
+    Each appointment dict has keys: doctor_name, hospital_name,
+    appointment_date, appointment_time -- these match the
+    medicines/appointments Postgres tables' column names directly.
+
+    report_date is "YYYY-MM-DD" if a date was visible on the report
+    itself (also Gemini-only), else None -- lets the caller store health
+    data under the report's own date instead of today's date.
 
     Set is_pdf=True to treat the input as a PDF (rasterized page-by-page)
-    instead of a single image.
+    instead of a single image. Only the FIRST page is sent to Gemini for
+    medicines/appointments, since reports are almost always single-page
+    and this avoids one API call per page.
+
+    Set use_gemini_fallback=False to disable the Gemini step for a
+    specific call even if GEMINI_API_KEY is configured (e.g. if you want
+    a "fast/free-only" mode as a user-facing toggle) -- in that case
+    medicines_list and appointments_list will always be [], and
+    report_date will always be None.
     """
     if is_pdf:
-        best_text, attempts, combined_text = extract_text_from_pdf(
+        best_text, attempts, combined_text, cv_image = extract_text_from_pdf(
             file_bytes_or_path, return_debug=True
         )
     else:
-        best_text, attempts, combined_text = extract_text_from_image(
+        best_text, attempts, combined_text, cv_image = extract_text_from_image(
             file_bytes_or_path, return_debug=True
         )
     vitals = extract_vitals(combined_text)
-    return best_text, vitals
+    medicines, appointments, report_date = [], [], None
+
+    if use_gemini_fallback and cv_image is not None:
+        vitals, medicines, appointments, report_date = apply_gemini_structured(vitals, cv_image)
+
+    return best_text, vitals, medicines, appointments, report_date
 
 
 if __name__ == "__main__":
@@ -542,9 +812,9 @@ if __name__ == "__main__":
     is_pdf = path.lower().endswith(".pdf")
 
     if is_pdf:
-        best_text, attempts, combined_text = extract_text_from_pdf(path, return_debug=True)
+        best_text, attempts, combined_text, cv_image = extract_text_from_pdf(path, return_debug=True)
     else:
-        best_text, attempts, combined_text = extract_text_from_image(path, return_debug=True)
+        best_text, attempts, combined_text, cv_image = extract_text_from_image(path, return_debug=True)
 
     print("----- Confidence per attempt -----")
     for label, text, conf in attempts:
@@ -553,6 +823,28 @@ if __name__ == "__main__":
     print("\n----- BEST Extracted Text -----")
     print(best_text)
 
-    print("\n----- Vitals (validated, searched across all attempts) -----")
-    for k, v in extract_vitals(combined_text).items():
+    vitals = extract_vitals(combined_text)
+    medicines, appointments, report_date = [], [], None
+    if cv_image is not None:
+        vitals, medicines, appointments, report_date = apply_gemini_structured(vitals, cv_image)
+
+    print("\n----- Vitals (validated, searched across all attempts, Gemini-filled if needed) -----")
+    for k, v in vitals.items():
         print(f"{k}: {v}")
+
+    print("\n----- Medicines detected (via Gemini) -----")
+    if medicines:
+        for m in medicines:
+            print(m)
+    else:
+        print("(none found)")
+
+    print("\n----- Appointments detected (via Gemini) -----")
+    if appointments:
+        for a in appointments:
+            print(a)
+    else:
+        print("(none found)")
+
+    print("\n----- Report date detected (via Gemini) -----")
+    print(report_date or "(none found)")

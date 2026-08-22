@@ -58,7 +58,7 @@
                 </span>
               </div>
               <div class="profile-info-row profile-info-row-block">
-              <span class="profile-info-label" id="profileContactFieldLabel">Family Contact No.</span>
+              <span class="profile-info-label">Family Contact No.</span>
               <div class="profile-contact-sublist">
               <div class="profile-contact-item">
               <span class="profile-info-value">
@@ -184,7 +184,7 @@
             <label class="field-label" id="weightFieldLabel">Weight (kg)</label>
             <input id="inputWeight" class="field-input" type="number" placeholder="60">
           </div>
-          <div class="field-group">
+          <div class="field-group" id="bgFieldGroup">
             <label class="field-label" id="bgFieldLabel">Blood Group</label>
             <select id="inputBG" class="field-input">
               <option value="" id="selectOption">Select</option>
@@ -279,7 +279,7 @@
       <div class="lang-btn" data-lang="ta" onclick="selectLanguage('ta')">Tamil <span class="native">(தமிழ்)</span></div>
       <div class="lang-btn" data-lang="te" onclick="selectLanguage('te')">Telugu <span class="native">(తెలుగు)</span></div>
       <div class="lang-btn" data-lang="kn" onclick="selectLanguage('kn')">Kannada <span class="native">(ಕನ್ನಡ)</span></div>
-      <div class="lang-btn" data-lang="bn" onclick="selectLanguage('bn')">Bengali <span class="native">(বাংলা)</span></div>
+      <div class="lang-btn" data-lang="bn" onclick="selectLanguage('bn')">Bangali <span class="native">(বাংলা)</span></div>
       <div class="lang-btn" data-lang="pa" onclick="selectLanguage('pa')">Punjabi <span class="native">(ਪੰਜਾਬੀ)</span></div>
     </div>
     <p style="font-size:12px;color:var(--text-mid);margin-top:14px;text-align:center;" id="langSelectHint">Select a language to change the interface</p>
@@ -496,6 +496,7 @@
       <div class="chat-msg ai" id="chatWelcomeMsg">Hello! How can I help you today? 😊</div>
     </div>
     <div class="chat-input-row" style="margin-top:10px;">
+      <button class="btn-blue" onclick="openUploadModal()" title="Attach photo" style="padding:6px 10px;font-size:16px;font-weight:700;line-height:1;background:var(--blue-mid);color:var(--blue);border:1.5px solid var(--blue);" id="chatAttachBtn">+</button>
       <input id="chatInput" class="chat-input" style="padding:6px 10px;font-size:12px;" placeholder="Type your question…" onkeydown="if(event.key==='Enter'){ isVoiceInput=false; sendChat(); }">
       <button class="btn-blue" onclick="startVoiceInput()" title="Voice input" style="padding:6px 10px;font-size:12px;background:var(--blue-mid);color:var(--blue);border:1.5px solid var(--blue);" id="voiceBtn">🎙</button>
       <button class="btn-blue" onclick="isVoiceInput=false; sendChat();" style="padding:6px 12px;font-size:12px;" id="chatSendBtn">Send</button>
